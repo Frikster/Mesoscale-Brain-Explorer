@@ -35,8 +35,10 @@ class PipelineModel(QStandardItemModel):
   def selection_changed(self, index, prev):
     item = self.itemFromIndex(index)
     item.setData(QIcon('pics/active.png'), Qt.DecorationRole)
+    
     item = self.itemFromIndex(prev)
-    item.setData(QIcon('pics/done.png'), Qt.DecorationRole)
+    if item: 
+      item.setData(QIcon('pics/done.png'), Qt.DecorationRole)
 
     plugin_id, ok = index.data(Qt.UserRole).toInt()
     self.active_plugin_changed.emit(plugin_id)
