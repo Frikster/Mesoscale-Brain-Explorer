@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 import sys
 import imp
 
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 import qtutil
 
@@ -39,7 +38,7 @@ class PipelineModel(QStandardItemModel):
     item = self.itemFromIndex(prev)
     item.setData(QIcon('pics/done.png'), Qt.DecorationRole)
 
-    plugin_id = index.data(Qt.UserRole)
+    plugin_id, ok = index.data(Qt.UserRole).toInt()
     self.active_plugin_changed.emit(plugin_id)
 
 class PipelineView(QListView):
@@ -117,9 +116,12 @@ class MainWindow(QMainWindow):
 
     self.plugins = {}
 
+    self.load_plugin('imageviewer', 'plugins/imageviewer.py')
     self.load_plugin('colorinverter', 'plugins/colorinverter.py')
     self.load_plugin('imagecropper', 'plugins/imagecropper.py')
-    self.load_plugin('imageviewer', 'plugins/imageviewer.py')
+    self.load_plugin('imagerotator', 'plugins/imagerotator.py')
+    self.load_plugin('connectivity_diagram', 'plugins/connectivity_diagram.py')
+    self.load_plugin('scatterplot', 'plugins/scatterplot.py')
 
     for plugin in self.plugins:
       self.pl_model.add_plugin(self.plugins[plugin], plugin)

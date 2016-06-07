@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 import sys
 
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 class Widget(QWidget):
   def __init__(self, parent=None):

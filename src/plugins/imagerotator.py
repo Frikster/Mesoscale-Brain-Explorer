@@ -21,8 +21,14 @@ class Widget(QWidget):
     lt_right = QVBoxLayout()
     lt_right.setContentsMargins(8,8,8,8)
 
-
-    lt_right.addWidget(QPushButton('Invert colors no&w'))
+    lt_right.addWidget(QLabel('Rotate by angle:'))
+   
+    sb = QSpinBox()
+    sb.setMaximum(360)
+    sb.setValue(180)
+    lt_right.addWidget(sb)
+  
+    lt_right.addWidget(QPushButton('&Rotate'))
 
     lt_right.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
     pb_done = QPushButton('&Done')
@@ -30,7 +36,7 @@ class Widget(QWidget):
 
     right.setLayout(lt_right)
 
-    self.pixmap = QPixmap('../data/flower1.jpg')
+    self.pixmap = QPixmap('../data/flower2.jpg')
     self.pic = QLabel()
     self.pic.setStyleSheet('background-color: black')
     self.pic.setPixmap(self.pixmap)
@@ -45,12 +51,11 @@ class Widget(QWidget):
     self.setLayout(hbox)
 
 
-
-
 class MyPlugin:
-  name = 'ColorInverter'
+  name = 'ImageRotator'
   widget = Widget()
 
   def run(self):
     pass
+
 
