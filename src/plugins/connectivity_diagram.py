@@ -10,7 +10,7 @@ from PyQt4.QtCore import *
 class TableModel(QStandardItemModel):
   def __init__(self, parent=None):
     super(TableModel, self).__init__(parent)
-  
+
     self.setRowCount(20)
     self.setColumnCount(16)
 
@@ -36,9 +36,18 @@ class TableView(QTableView):
      self.setModel(TableModel())
 
 class MyPlugin:
-  name = 'ConnectivityDiagram'
-  widget = TableView()
+  def __init__(self):
+    self.name = 'ConnectivityDiagram'
+    self.widget = TableView()
 
   def run(self):
     pass
 
+if __name__=='__main__':
+  app = QApplication(sys.argv)
+  app.aboutToQuit.connect(app.deleteLater)
+  w = QMainWindow()
+  w.setCentralWidget(TableView())
+  w.show()
+  app.exec_()
+  sys.exit()

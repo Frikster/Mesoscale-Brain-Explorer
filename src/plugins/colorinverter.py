@@ -15,11 +15,11 @@ class Widget(QWidget):
     right = QFrame()
     right.setFrameShadow(QFrame.Raised)
     right.setFrameShape(QFrame.Panel)
-    right.setContentsMargins(10,0,1,0)
+    right.setContentsMargins(10, 0, 1, 0)
     right.setMinimumWidth(200)
 
     lt_right = QVBoxLayout()
-    lt_right.setContentsMargins(8,8,8,8)
+    lt_right.setContentsMargins(8, 8, 8, 8)
 
 
     lt_right.addWidget(QPushButton('Invert colors no&w'))
@@ -48,9 +48,18 @@ class Widget(QWidget):
 
 
 class MyPlugin:
-  name = 'ColorInverter'
-  widget = Widget()
+  def __init__(self):
+    self.name = 'ColorInverter'
+    self.widget = Widget()
 
   def run(self):
     pass
 
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    app.aboutToQuit.connect(app.deleteLater)
+    w = QMainWindow()
+    w.setCentralWidget(Widget())
+    w.show()
+    app.exec_()
+    sys.exit()

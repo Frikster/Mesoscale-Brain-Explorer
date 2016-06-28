@@ -118,6 +118,7 @@ class MainWindow(QMainWindow):
 
     self.plugins = {}
 
+    self.load_plugin('empty_plugin', 'plugins/empty_plugin.py')
     self.load_plugin('imageviewer', 'plugins/imageviewer.py')
     self.load_plugin('colorinverter', 'plugins/colorinverter.py')
     self.load_plugin('imagecropper', 'plugins/imagecropper.py')

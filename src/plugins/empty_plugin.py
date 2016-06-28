@@ -16,8 +16,18 @@ class Widget(QWidget):
     self.setLayout(lt)
 
 class MyPlugin:
-  name = 'Plugin'
-  widget = Widget()
+  def __init__(self):
+    self.name = 'Plugin'
+    self.widget = Widget()
 
   def run(self):
     pass
+
+if __name__=='__main__':
+  app = QApplication(sys.argv)
+  app.aboutToQuit.connect(app.deleteLater)
+  w = QMainWindow()
+  w.setCentralWidget(Widget())
+  w.show()
+  app.exec_()
+  sys.exit()
