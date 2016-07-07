@@ -13,10 +13,10 @@ class Widget(QWidget):
     def __init__(self, parent=None):
         super(Widget, self).__init__(parent)
 
-        #lt = QVBoxLayout()
-        #lt.addWidget(QLabel('<i>No plugin running.</i>'))
-        #lt.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        #self.setLayout(lt)
+        # lt = QVBoxLayout()
+        # lt.addWidget(QLabel('<i>No plugin running.</i>'))
+        # lt.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        # self.setLayout(lt)
 
         hbox = QHBoxLayout()
         left = QVBoxLayout()

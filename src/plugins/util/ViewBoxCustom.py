@@ -14,8 +14,8 @@ import pickle
 import pyqtgraph.functions as fn
 import types
 import matplotlib.pyplot as plt
-import SPCExplorer.filter_jeff as fj
-import SPCExplorer.displacement_jeff as dj
+#import SPCExplorer.filter_jeff as fj
+#import SPCExplorer.displacement_jeff as dj
 import logging
 
 __all__=['ImageAnalysisViewBox','ViewMode','MultiRoiViewBox']
@@ -26,7 +26,6 @@ class ImageAnalysisViewBox(pg.ViewBox):
     Custom ViewBox used to over-ride the context menu. I don't want the full context menu, 
     just a view all and an export. Export does not call a dialog, just prompts user for filename.
     """
-
     def __init__(self,parent=None,border=None,lockAspect=False,enableMouse=True,invertY=False,enableMenu=True,name=None):
         pg.ViewBox.__init__(self, parent, border, lockAspect, enableMouse, invertY, enableMenu, name)
    
