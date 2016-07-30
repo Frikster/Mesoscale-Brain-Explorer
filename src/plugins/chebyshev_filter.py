@@ -4,6 +4,7 @@ import os, sys
 import numpy as np
 import pyqtgraph as pg
 import matplotlib.pyplot as plt
+from scipy import signal
 
 from pyqtgraph.Qt import QtCore, QtGui
 from PyQt4.QtGui import *
@@ -11,6 +12,8 @@ from PyQt4.QtCore import *
 
 from util.ViewBoxCustom import MultiRoiViewBox, ImageAnalysisViewBox
 
+import h5py
+import psutil
 
 class Widget(QWidget):
     def __init__(self, parent=None):
@@ -48,6 +51,9 @@ class Widget(QWidget):
         butt_file_load = QPushButton('&Load File')
         lt_right.addWidget(butt_file_load)
 
+        temp_filter = QPushButton('&Apply Filter')
+        lt_right.addWidget(temp_filter)
+
         lt_right.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
         pb_done = QPushButton('&Done')
         lt_right.addWidget(pb_done)
@@ -55,25 +61,19 @@ class Widget(QWidget):
         right.setLayout(lt_right)
         self.setup_left_interface(left)
 
-        # self.pixmap = QPixmap('../data/flower2.jpg')
-        # self.pic = QLabel()
-        # self.pic.setStyleSheet('background-color: black')
-        # self.pic.setPixmap(self.pixmap)
-        # left.addWidget(self.pic)
-
         hbox.addLayout(left)
         hbox.addWidget(right)
-
         hbox.setStretch(0, 1)
         hbox.setStretch(1, 0)
-
         self.setLayout(hbox)
 
         # setup connections
         butt_file_load.clicked.connect(self.load_file)
+        temp_filter.clicked.connect(self.temporal_filter)
 
         # define class variables
         self.reference_frames_dict = {}
+        self.filename = None
 
     def setup_left_interface(self, left_frame_layout):
         """ Initialise the PyQtGraph Interface """
@@ -102,14 +102,72 @@ class Widget(QWidget):
 
         self.vb.enableAutoRange()
 
-
     def load_file(self):
         file_names = QtGui.QFileDialog.getOpenFileNames(self, self.tr("Load images"), QtCore.QDir.currentPath())
         filename = str(file_names[0])
+        self.filename = filename
+
+        # todo: Complete HDF5 integration. Remove .npy
         frames = np.load(filename)
+        h5f = h5py.File('C:/Users/Cornelis Dirk Haupt/Downloads/cheby_input.h5', 'w')
+        h5f.create_dataset('default', data=frames, maxshape=(None, frames.shape[1], frames.shape[2]))
+        h5f.close()
 
+        h5f = h5py.File('C:/Users/Cornelis Dirk Haupt/Downloads/cheby_output.h5', 'w')
+        h5f.create_dataset('default', data=frames, maxshape=(None, frames.shape[1], frames.shape[2]))
+        h5f.close()
 
+        img_arr = frames[0]
+        img_arr = img_arr.swapaxes(0, 1)
+        if img_arr.ndim == 2:
+            img_arr = img_arr[:, ::-1]
+        elif img_arr.ndim == 3:
+            img_arr = img_arr[:, ::-1, :]
 
+        self.vb.showImage(img_arr)
+
+    def temporal_filter(self):
+        # Collect all user-defined variables (and variables immediately inferred from user-selections)
+        # fileName = str(self.sidePanel.imageFileList.currentItem().text())
+        frame_rate = self.frame_rate.value()
+        f_high = self.f_high.value()
+        f_low = self.f_low.value()
+        # dtype_string = str(self.sidePanel.dtypeValue.text())
+
+        # todo: complete hdf5 integration
+        h5f_in = h5py.File('C:/Users/Cornelis Dirk Haupt/Downloads/cheby_input.h5', 'r+')
+        h5f_out = h5py.File('C:/Users/Cornelis Dirk Haupt/Downloads/cheby_output.h5', 'r+')
+
+        for x in range(0, 256):
+            for y in range(0, 256):
+                frames = h5f_in['default'][:, x, y]
+
+                # Compute df/d0 and save to file
+                avg_frames = np.mean(frames, axis=0)
+                frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+                frames += avg_frames
+
+                h5f_out['default'][:, x, y] = frames
+
+        h5f_in.close()
+        h5f_out.close()
+
+    def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
+        nyq = frame_rate / 2.0
+        low_limit = low_limit / nyq
+        high_limit = high_limit / nyq
+        order = 4
+        rp = 0.1
+        Wn = [low_limit, high_limit]
+
+        b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+        print("Filtering...")
+        frames = signal.filtfilt(b, a, frames, axis=0)
+        # frames = parmap.map(filt, frames.T, b, a)
+        # for i in range(frames.shape[-1]):
+        #    frames[:, i] = signal.filtfilt(b, a, frames[:, i])
+        print("Done!")
+        return frames
 
 class MyPlugin:
     def __init__(self):
