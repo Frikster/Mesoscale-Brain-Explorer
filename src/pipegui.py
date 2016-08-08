@@ -108,12 +108,15 @@ class MainWindow(QMainWindow):
     for filename in filenames:
       name, ext = os.path.splitext(filename)
       p = self.load_plugin('plugins.' + name)
-      plugins[name] = p
+      if p:
+        plugins[name] = p
     return plugins
 
   def load_plugin(self, module):
     try:
       m = importlib.import_module(module)
+      if not hasattr(m, 'MyPlugin'):
+        return None
       p = m.MyPlugin()
       #p.run()
     except:
