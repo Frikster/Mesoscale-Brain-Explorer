@@ -10,7 +10,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.ViewBoxCustom import MultiRoiViewBox, ImageAnalysisViewBox
+from util.viewboxcustom import MultiRoiViewBox, ImageAnalysisViewBox
 
 import h5py
 import psutil
@@ -171,7 +171,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self):
-        self.name = 'Plugin'
+        self.name = 'Chebyshev filter'
         self.widget = Widget()
 
     def run(self):

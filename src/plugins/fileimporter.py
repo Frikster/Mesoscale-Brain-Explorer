@@ -156,7 +156,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self):
-        self.name = 'Plugin'
+        self.name = 'Import files'
         self.widget = Widget()
 
     def run(self):

@@ -37,7 +37,7 @@ class TableView(QTableView):
 
 class MyPlugin:
   def __init__(self):
-    self.name = 'ConnectivityDiagram'
+    self.name = 'Connectivity Diagram'
     self.widget = TableView()
 
   def run(self):

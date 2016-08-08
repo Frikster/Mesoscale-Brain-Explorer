@@ -2,12 +2,21 @@
 
 import os
 import sys
-import imp
+import importlib
+import collections
+import multiprocessing
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 import qtutil
+
+from pipeconf import PipeconfDialog, PipelineModel
+from datadialog import DataDialog
+from project import ProjectManager
+
+APPNAME = 'spcanalyse'
+VERSION = open('../VERSION').read()
 
 def clear_layout(layout):
   while True:
@@ -20,43 +29,29 @@ def clear_layout(layout):
       clear_layout(child)
     del item
 
-class PipelineModel(QStandardItemModel):
-  active_plugin_changed = pyqtSignal(int)
-  
-  def __init__(self, parent=None):
-    super(PipelineModel, self).__init__(parent)
-
-  def add_plugin(self, plugin, id_):
-    item = QStandardItem(plugin.name)
-    item.setData(QIcon('pics/idle.png'), Qt.DecorationRole)
-    item.setData(id_, Qt.UserRole)
-    self.appendRow(item)
-
-  def selection_changed(self, index, prev):
-    item = self.itemFromIndex(index)
-    item.setData(QIcon('pics/active.png'), Qt.DecorationRole)
-    
-    item = self.itemFromIndex(prev)
-    if item: 
-      item.setData(QIcon('pics/done.png'), Qt.DecorationRole)
-
-    plugin_id, ok = index.data(Qt.UserRole).toInt()
-    self.active_plugin_changed.emit(plugin_id)
-
 class PipelineView(QListView):
+  active_plugin_changed = pyqtSignal(str)
+
   def __init__(self, parent=None):
     super(PipelineView, self).__init__(parent)
 
+    self.setStyleSheet('QListView::item { border: 0px; padding-left: 4px;'
+      'height: 26px; }'
+      'QListView::item::selected { background-color: #ccf; }')
+
   def currentChanged(self, current, previous):
     super(PipelineView, self).currentChanged(current, previous)
-
-    self.model().selection_changed(current, previous)
+    plugin_name = str(current.data(Qt.UserRole).toString())
+    self.active_plugin_changed.emit(plugin_name)
 
 class ToolButton(QToolButton):
   def __init__(self, parent=None):
     super(ToolButton, self).__init__(parent)
 
 class Sidebar(QWidget):
+  open_pipeconf_requested = pyqtSignal()
+  open_datadialog_requested = pyqtSignal()
+
   def __init__(self, parent=None):
     super(Sidebar, self).__init__(parent)
 
@@ -67,79 +62,82 @@ class Sidebar(QWidget):
 
     vbox = QVBoxLayout()
 
-    hbox = QHBoxLayout()
-    
-    tb = QToolButton()
-    tb.setIcon(QIcon('pics/add.png'))
-    tb.setIconSize(QSize(20, 20))
-    hbox.addWidget(tb)
-
-    tb = QToolButton()
-    tb.setIcon(QIcon('pics/delete.png'))
-    tb.setIconSize(QSize(20, 20))
-    hbox.addWidget(tb)
-
-    tb = QToolButton()
-    tb.setIcon(QIcon('pics/up.png'))
-    tb.setIconSize(QSize(20, 20))
-    hbox.addWidget(tb)
-
-    tb = QToolButton()
-    tb.setIcon(QIcon('pics/down.png'))
-    tb.setIconSize(QSize(20, 20))
-    hbox.addWidget(tb)
-
-    hbox.addSpacerItem(QSpacerItem(1, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
-
     self.pl_list = PipelineView()
-    self.pl_list.setStyleSheet('QListView::item { height: 26px; }')
     self.pl_list.setIconSize(QSize(18, 18))
 
-    vbox.addWidget(QLabel('Processing pipeline:'))
+    vbox.addWidget(QLabel('Pipeline:'))
     vbox.addWidget(self.pl_list)
    
-    vbox.addLayout(hbox)
     vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+    pb = QPushButton('&Configure Pipeline')
+    pb.clicked.connect(self.open_pipeconf_requested)
+    vbox.addWidget(pb)
+    pb = QPushButton('&Manage Data')
+    pb.clicked.connect(self.open_datadialog_requested)
+    vbox.addWidget(pb)
 
     vbox.setStretch(0, 0)
     vbox.setStretch(1, 0)
-    vbox.setStretch(2, 1)
+    vbox.setStretch(2, 0)
 
     self.setLayout(vbox)
 
 class MainWindow(QMainWindow):
   def __init__(self, parent=None):
     super(MainWindow, self).__init__(parent)
-    self.setWindowTitle('SPCanalyse')
+    self.setWindowTitle(APPNAME)
 
-    self.plugin_count = 0
-
+    self.project_manager = ProjectManager(self)
+    self.plugins = self.load_plugins()
     self.setup_ui()
 
-    self.plugins = {}
+    self.enable(False)
 
-    self.load_plugin('empty_plugin', 'plugins/empty_plugin.py')
-    self.load_plugin('imageviewer', 'plugins/imageviewer.py')
-    self.load_plugin('colorinverter', 'plugins/colorinverter.py')
-    self.load_plugin('imagecropper', 'plugins/imagecropper.py')
-    self.load_plugin('imagerotator', 'plugins/imagerotator.py')
-    self.load_plugin('connectivity_diagram', 'plugins/connectivity_diagram.py')
-    self.load_plugin('scatterplot', 'plugins/scatterplot.py')
+    self.pipeline_model = PipelineModel()
+    self.sidebar.pl_list.setModel(self.pipeline_model)
+    self.pipeconf.pipeline_list.setModel(self.pipeline_model)
 
-    for plugin in self.plugins:
-      self.pl_model.add_plugin(self.plugins[plugin], plugin)
+    last = str(QSettings().value('path_of_last_project').toString())
+    if last:
+      self.open_project(last)
 
-    #self.set_plugin(self.load_plugin('empty_plugin', 'plugins/empty_plugin.py'))
+  def load_plugins(self):
+    plugins = collections.OrderedDict()
+    filenames = [f for f in sorted(os.listdir('plugins')) if f.endswith('.py')]
+    for filename in filenames:
+      name, ext = os.path.splitext(filename)
+      p = self.load_plugin('plugins.' + name)
+      plugins[name] = p
+    return plugins
+
+  def load_plugin(self, module):
+    try:
+      m = importlib.import_module(module)
+      p = m.MyPlugin()
+      #p.run()
+    except:
+      print('Failed to import \'{}\'.'.format(module))
+      raise
+    else:
+      return p
 
   def setup_ui(self):
+    self.pipeconf = PipeconfDialog(self.plugins, self)
+    self.datadialog = DataDialog(self)
+
     self.sidebar = Sidebar()
+    self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
+    self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
+
     self.pl_frame = QFrame()
 
-    self.pl_model = PipelineModel()
-    self.pl_model.active_plugin_changed[int].connect(self.set_plugin)
-    self.sidebar.pl_list.setModel(self.pl_model)
+    self.sidebar.pl_list.active_plugin_changed[str].connect(self.set_plugin)
+    self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
     splitter = QSplitter(self)
+    self.enable = lambda yes: splitter.setEnabled(yes)
+
     splitter.setHandleWidth(3)
     splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
 
@@ -150,64 +148,153 @@ class MainWindow(QMainWindow):
     splitter.setStretchFactor(1, 1)
 
     self.setCentralWidget(splitter)
- 
-    quit_action = QAction("&Quit", self)
-    quit_action.setShortcut("Ctrl+Q")
-    quit_action.setStatusTip('Leave The App')
-    quit_action.setIcon(QIcon('pics/quit.png'))
-    quit_action.triggered.connect(qApp.quit)
 
-    about_action = QAction('&About', self)
-    about_action.setStatusTip('About')
-    about_action.triggered.connect(self.about)
-    about_action.setIcon(QIcon('pics/about.png'))
- 
     self.menu = self.menuBar()
-    file_menu = self.menu.addMenu('&File')
-    file_menu.addAction(quit_action)
+    m = self.menu.addMenu('&File')
+
+    a = QAction('&New project', self)
+    a.setShortcut('Ctrl+N')
+    a.setStatusTip('Create new project')
+    a.triggered.connect(self.create_project)
+    m.addAction(a)
+
+    a = QAction('&Open project', self)
+    a.setShortcut('Ctrl+O')
+    a.setStatusTip('Open project')
+    a.triggered.connect(self.open_project)
+    m.addAction(a)
+
+    a = QAction("&Quit", self)
+    a.setShortcut("Ctrl+Q")
+    a.setStatusTip('Leave The App')
+    a.setIcon(QIcon('pics/quit.png'))
+    a.triggered.connect(qApp.quit)
+    m.addAction(a)
+
+    about_action = QAction('&About ' + APPNAME, self)
+    about_action.setStatusTip('About ' + APPNAME)
+    about_action.triggered.connect(self.about)
+    about_action.setShortcut('F1')
+ 
     edit_menu = self.menu.addMenu('&Edit')
-    project_menu = self.menu.addMenu('&Project')
+
+    m = self.menu.addMenu('&Project')
+    m.setEnabled(False)
+    a = QAction("&Close", self)
+    a.setStatusTip('Close project')
+    a.triggered.connect(self.close_project)
+    m.addAction(a)
+    self.project_menu = m
+
     settings_menu = self.menu.addMenu('&Settings')
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
+
+  def create_project(self):
+    project = self.project_manager.new_project()
+    if project:
+      self.load_project(project)
+  
+  def load_project(self, project):
+    self.clean()
+    self.project = project
+    self.setWindowTitle(APPNAME + ' - ' + project.name)
+    self.enable(True)
+    self.project_menu.setEnabled(True)
+    QSettings().setValue('path_of_last_project', project.path)
+
+    pipeline = []
+    for plugin_name in self.project.pipeline:
+      for plugin in self.plugins:
+        if plugin == plugin_name:
+           pipeline.append((plugin, self.plugins[plugin].name))
+           break
+    self.pipeline_model.set_plugins(pipeline)
+
+  def open_project(self, path=''):
+    project = self.project_manager.open_project(path)
+    if project:
+      self.load_project(project)
+
+  def close_project(self):
+    self.clean()
+    self.project = None
+    self.setWindowTitle(APPNAME)
+    self.project_menu.setEnabled(False)
+    self.enable(False)
   
   def set_plugin(self, plugin_id):
-    plugin = self.plugins[plugin_id]
+    plugin = self.plugins[str(plugin_id)]
     lt = QVBoxLayout()
     lt.addWidget(QLabel('<center>' + plugin.name + '</center>'))
     lt.addWidget(plugin.widget)
     lt.setStretch(0, 0)
     lt.setStretch(1, 1)
  
+    self.clean_plugin()
+    self.pl_frame.setLayout(lt)
+
+    plugin.run()
+  
+  def clean_plugin(self):
     if self.pl_frame.layout():
       clear_layout(self.pl_frame.layout())
       QWidget().setLayout(self.pl_frame.layout())
-    self.pl_frame.setLayout(lt)
 
-  def load_plugin(self, name, path):
-    m = imp.load_source(name, path)
-    p = m.MyPlugin()
-    p.run()
+  def clean(self):
+    model = self.sidebar.pl_list.model()
+    if model:
+      model.clear()
+    self.clean_plugin()
 
-    self.plugins[self.plugin_count] = p   
-    self.plugin_count += 1
+  def open_pipeconf(self):
+    self.pipeconf.exec_()
+    pipeline = self.pipeline_model.get_plugin_names()
+    self.project.set_pipeline(pipeline)
+    self.project.save()
 
+  def open_datadialog(self):
+    self.datadialog.show()
 
   def about(self):
-    pass
+    author = 'Cornelis Dirk Haupt'
+    date = '2016'
+
+    QMessageBox.about(self, 'About ' + APPNAME, 
+        """
+        <b>%s</b>
+        <p>A simple program that is a work in progress.</p>
+        <p></p>
+        <p><table border="0" width="150">
+        <tr>
+        <td>Author:</td>
+        <td>%s</td>
+        </tr>
+        <tr>
+        <td>Version:</td>
+        <td>%s</td>
+        </tr>
+        <tr>
+        <td>Date:</td>
+        <td>%s</td>
+        </tr>            
+        </table></p>
+        """ % (APPNAME, author, VERSION, date))
 
 
 if __name__ == '__main__':
+  multiprocessing.freeze_support()
+
   app = QApplication(sys.argv)
-  app.aboutToQuit.connect(app.deleteLater)
-  app.setApplicationName('SPCanalyse')
-  app.setOrganizationName('SPCanalyse Corporation')
-  app.setOrganizationDomain('spcanalyse.com')
+  app.setApplicationName(APPNAME)
+  app.setOrganizationName('The SPC Corporation')
+  app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()
-  w.resize(700,500)
+  w.resize(1060,660)
   w.setWindowIcon(QIcon('pics/logo.png'))
-
   w.show()
+
   app.exec_()
+  app.deleteLater()
   sys.exit()

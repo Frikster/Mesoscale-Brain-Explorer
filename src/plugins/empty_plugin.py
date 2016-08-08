@@ -17,7 +17,7 @@ class Widget(QWidget):
 
 class MyPlugin:
   def __init__(self):
-    self.name = 'Plugin'
+    self.name = 'Empty Plugin'
     self.widget = Widget()
 
   def run(self):

@@ -10,8 +10,6 @@ import numpy as np
 
 w = gl.GLViewWidget()
 w.opts['distance'] = 20
-w.show()
-w.setWindowTitle('pyqtgraph example: GLScatterPlotItem')
 
 g = gl.GLGridItem()
 w.addItem(g)
@@ -99,12 +97,14 @@ def update():
   
 t = QtCore.QTimer()
 t.timeout.connect(update)
-t.start(50)
 
 class MyPlugin:
   name = 'Scatterplot'
   widget = w
 
   def run(self):
-    pass
+    t.start(50)
+
+  def stop(self):
+    t.stop()
 
