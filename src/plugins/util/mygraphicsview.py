@@ -36,4 +36,6 @@ class MyGraphicsView(pg.GraphicsView):
     self.yScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>Y</span>"
       "<i>Height</i>", units='mm')
     l.addItem(self.yScale, 0, 0)
+
+    self.centralWidget.setLayout(l)
  

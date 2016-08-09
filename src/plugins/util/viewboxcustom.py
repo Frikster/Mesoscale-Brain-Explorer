@@ -405,14 +405,15 @@ class MultiRoiViewBox(pg.ViewBox):
                 hpsOffset = [self.mapSceneToView(hp)+offset for hp in hps] 
                 self.addPolyLineROI(hpsOffset)
      
-    def saveROI(self):
+    def saveROI(self, fileName=''):
         """ Save the highlighted ROI to file """    
         if self.currentROIindex!=None:
             roi = self.rois[self.currentROIindex]
-            fileName = QtGui.QFileDialog.getSaveFileName(None,self.tr("Save ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
-            # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
-            if isinstance(fileName,types.TupleType): fileName = fileName[0]
-            if hasattr(QtCore,'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)            
+            if not fileName:
+              fileName = QtGui.QFileDialog.getSaveFileName(None,self.tr("Save ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
+              # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
+              if isinstance(fileName,types.TupleType): fileName = fileName[0]
+              if hasattr(QtCore,'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)            
             if not fileName=='':
                 if type(roi)==RectROIcustom:
                     roiState = roi.saveState()
@@ -471,7 +472,7 @@ class MultiRoiViewBox(pg.ViewBox):
       self.img.setRect(QtCore.QRectF(x1, y1, x2, y2))
        
     def showImage(self, arr):
-        if arr==None: 
+        if arr is None: 
             self.img = None
             return
         if self.img==None:
