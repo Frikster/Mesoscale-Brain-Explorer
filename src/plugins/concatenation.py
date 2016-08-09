@@ -27,7 +27,7 @@ class Widget(QWidget):
         print("concatenated file saved to "+os.path.expanduser('~/Downloads/')+"concatenated")
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Concatenation'
     self.widget = QWidget()
   

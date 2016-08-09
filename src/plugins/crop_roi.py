@@ -57,7 +57,7 @@ class Widget(QWidget):
         #print("ROI saved to " + os.path.expanduser('/Downloads/')+"ROI")
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Crop ROIs'
     self.widget = QWidget()
   

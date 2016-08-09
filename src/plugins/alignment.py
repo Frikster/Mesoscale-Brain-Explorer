@@ -50,7 +50,7 @@ class Widget(QWidget):
           print("Alignment saved to "+os.path.expanduser('~/Downloads/') + "aligned_" + str(ind))
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Align images'
     self.widget = QWidget()
   

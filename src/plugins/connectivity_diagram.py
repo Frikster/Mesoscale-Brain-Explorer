@@ -36,7 +36,7 @@ class TableView(QTableView):
      self.setModel(TableModel())
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Connectivity Diagram'
     self.widget = TableView()
 

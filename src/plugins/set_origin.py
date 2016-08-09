@@ -76,7 +76,7 @@ class Widget(QWidget):
     self.view.vb.update_rect(x, y, w, h)
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Set origin'
     self.widget = Widget()
 

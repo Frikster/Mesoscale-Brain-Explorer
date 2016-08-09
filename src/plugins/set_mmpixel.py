@@ -21,7 +21,7 @@ class Widget(QWidget):
     self.update_rect()
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Set mm per pixel'
     self.widget = QWidget()
   

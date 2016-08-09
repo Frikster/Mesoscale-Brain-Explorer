@@ -16,7 +16,7 @@ class Widget(QWidget):
     self.setLayout(lt)
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Empty Plugin'
     self.widget = Widget()
 

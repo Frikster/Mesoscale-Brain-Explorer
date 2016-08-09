@@ -30,7 +30,7 @@ from PyQt4.QtCore import *
 #yy = round([yy yy2]);
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Auto ROI placer'
     self.widget = QWidget()
   

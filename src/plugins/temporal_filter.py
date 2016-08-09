@@ -30,7 +30,7 @@ class Widget(QWidget):
         print process.memory_info().rss
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'Temporal filter'
     self.widget = Widget()
 

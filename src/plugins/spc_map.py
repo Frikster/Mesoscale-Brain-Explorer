@@ -33,7 +33,7 @@ class Widget(QWidget):
         self.view.vb.showImage(self.arr)
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'SPC map'
     self.widget = Widget()
 

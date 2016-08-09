@@ -18,7 +18,7 @@ def gsr(self):
   #print("gsr saved to "+os.path.expanduser('/Downloads/')+"gsr")
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'GSR'
     self.widget = QWidget()
   

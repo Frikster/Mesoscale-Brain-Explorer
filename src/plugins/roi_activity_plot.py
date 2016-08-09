@@ -107,7 +107,7 @@ class Widget(QWidget):
     # p2.plot(np.random.normal(size=120) + 10, pen=(0, 0, 255), name="Green curve")
 
 class MyPlugin:
-  def __init__(self):
+  def __init__(self, project):
     self.name = 'ROI activity plot'
     self.widget = QWidget()
   

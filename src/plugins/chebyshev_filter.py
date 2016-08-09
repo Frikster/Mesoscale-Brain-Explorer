@@ -170,7 +170,7 @@ class Widget(QWidget):
         return frames
 
 class MyPlugin:
-    def __init__(self):
+    def __init__(self, project):
         self.name = 'Chebyshev filter'
         self.widget = Widget()
 

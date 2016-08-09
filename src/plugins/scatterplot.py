@@ -99,8 +99,9 @@ t = QtCore.QTimer()
 t.timeout.connect(update)
 
 class MyPlugin:
-  name = 'Scatterplot'
-  widget = w
+  def __init__(self, project):
+    self.name = 'Scatterplot'
+    self.widget = w
 
   def run(self):
     t.start(50)

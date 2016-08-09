@@ -2,6 +2,7 @@
 
 import os
 import sys
+import inspect
 import importlib
 import collections
 import traceback
@@ -119,11 +120,7 @@ class MainWindow(QMainWindow):
       m = importlib.import_module(module)
       if not hasattr(m, 'MyPlugin'):
         return None
-      try:
-        p = m.MyPlugin(self.project)
-      except TypeError:
-        print(traceback.format_exc())
-        p = m.MyPlugin()
+      p = m.MyPlugin(self.project)
       #p.run()
     except:
       print('Failed to import \'{}\'.'.format(module))
