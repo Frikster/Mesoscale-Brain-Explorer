@@ -236,18 +236,22 @@ class MainWindow(QMainWindow):
     self.project_menu.setEnabled(False)
     self.enable(False)
   
-  def set_plugin(self, plugin_id):
-    plugin = self.plugins[str(plugin_id)]
+  def set_plugin(self, plugin_name):
+    p = self.load_plugin('plugins.' + str(plugin_name))
+    if not p:
+      return
+    self.plugins[plugin_name] = p
+
     lt = QVBoxLayout()
-    lt.addWidget(QLabel('<center>' + plugin.name + '</center>'))
-    lt.addWidget(plugin.widget)
+    lt.addWidget(QLabel('<center>' + p.name + '</center>'))
+    lt.addWidget(p.widget)
     lt.setStretch(0, 0)
     lt.setStretch(1, 1)
  
     self.clean_plugin()
     self.pl_frame.setLayout(lt)
 
-    plugin.run()
+    p.run()
   
   def clean_plugin(self):
     if self.pl_frame.layout():
