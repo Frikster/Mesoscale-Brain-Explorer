@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
     super(MainWindow, self).__init__(parent)
     self.setWindowTitle(APPNAME)
 
+    self.project = None
     self.project_manager = ProjectManager(self)
     self.plugins = self.load_plugins()
     self.setup_ui()
@@ -117,13 +118,22 @@ class MainWindow(QMainWindow):
       m = importlib.import_module(module)
       if not hasattr(m, 'MyPlugin'):
         return None
-      p = m.MyPlugin()
+      try:
+        p = m.MyPlugin(self.project)
+      except TypeError:
+        p = m.MyPlugin()
       #p.run()
     except:
       print('Failed to import \'{}\'.'.format(module))
       raise
     else:
       return p
+
+  def reload_pipeline_plugins(self):
+    for plugin_name in self.pipeline_model.get_plugin_names():
+      p = self.load_plugin('plugins.' + plugin_name)
+      if p:
+        self.plugins[plugin_name] = p
 
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)
@@ -213,6 +223,7 @@ class MainWindow(QMainWindow):
            pipeline.append((plugin, self.plugins[plugin].name))
            break
     self.pipeline_model.set_plugins(pipeline)
+    self.reload_pipeline_plugins()
 
   def open_project(self, path=''):
     project = self.project_manager.open_project(path)
