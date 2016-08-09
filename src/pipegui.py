@@ -4,6 +4,7 @@ import os
 import sys
 import importlib
 import collections
+import traceback
 import multiprocessing
 
 from PyQt4.QtGui import *
@@ -121,6 +122,7 @@ class MainWindow(QMainWindow):
       try:
         p = m.MyPlugin(self.project)
       except TypeError:
+        print(traceback.format_exc())
         p = m.MyPlugin()
       #p.run()
     except:
