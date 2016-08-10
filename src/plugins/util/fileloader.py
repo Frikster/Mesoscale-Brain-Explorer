@@ -13,3 +13,16 @@ def load_file(filename):
   else:
     frames = None
   return frames
+
+def load_reference_frame(filename, offset=400):
+  frames = load_file(filename)
+  if frames is None:
+    return None
+  frame = frames[min(offset, len(frames))]
+  frame = frame.swapaxes(0,1)
+  if frame.ndim==2:
+    frame = frame[:,::-1]
+  elif frame.ndim==3:
+    frame = frame[:,::-1,:]
+  return frame
+

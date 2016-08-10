@@ -8,7 +8,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 from util.mygraphicsview import MyGraphicsView
-from util.fileloader import load_file
+from util import fileloader
 
 sys.path.append('..')
 import qtutil
@@ -35,8 +35,8 @@ class Widget(QWidget):
   def setup_ui(self):
     hbox = QHBoxLayout()
   
-    self.graphics_view = MyGraphicsView()
-    hbox.addWidget(self.graphics_view)
+    self.view = MyGraphicsView(self.project)
+    hbox.addWidget(self.view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
@@ -77,18 +77,11 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    frames = load_file(self.video_path)
-    if frames is None:
-      qtutil.critical('Video file could not be loaded.')
-      return
-    frame = frames[min(400, len(frames))]
-    frame = frame.swapaxes(0,1)
-    if   frame.ndim==2: frame = frame[:,::-1]
-    elif frame.ndim==3: frame = frame[:,::-1,:]
-    self.graphics_view.vb.showImage(frame)
+    frame = fileloader.load_reference_frame(self.video_path)
+    self.view.show(frame)
 
   def create_roi(self):
-    self.graphics_view.vb.addPolyRoiRequest()
+    self.view.vb.addPolyRoiRequest()
     
   def save_roi(self):
     name = str(self.edit.text())
@@ -98,7 +91,7 @@ class Widget(QWidget):
       qtutil.critical('ROI name taken.')
     else:
       path = os.path.join(self.project.path, name + '.roi')
-      self.graphics_view.vb.saveROI(path)
+      self.view.vb.saveROI(path)
       #TODO check if saved
       self.project.files.append({
         'path': path,

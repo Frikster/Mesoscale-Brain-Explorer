@@ -13,9 +13,17 @@ import pyqtgraph as pg
 from viewboxcustom import MultiRoiViewBox
 
 class MyGraphicsView(pg.GraphicsView):
-  def __init__(self, parent=None):
+  def __init__(self, project, parent=None):
     super(MyGraphicsView, self).__init__(parent)
 
+    self.project = project
+    self.shape = 0, 0
+
+    self.setup_ui()
+
+    self.update()
+
+  def setup_ui(self):
     self.setMinimumSize(200, 200)
     l = QGraphicsGridLayout()
 
@@ -39,3 +47,22 @@ class MyGraphicsView(pg.GraphicsView):
 
     self.centralWidget.setLayout(l)
  
+  def show(self, frame):
+    self.shape = frame.shape
+    self.vb.showImage(frame)
+    self.update()
+
+  def _update_rect(self):
+    w, h = self.shape
+    ox, oy = self.project['origin']
+    mmpixel = self.project['mmpixel']
+
+    x = -ox * mmpixel
+    y = -oy * mmpixel
+    w = w * mmpixel
+    h = h * mmpixel
+ 
+    self.vb.update_rect(x, y, w, h)
+
+  def update(self):
+    self._update_rect()

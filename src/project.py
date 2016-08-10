@@ -138,17 +138,25 @@ class ProjectManager:
 class Project:
   def __init__(self, path):
     self.path = path
-    attrs = json.load(open(os.path.join(path, 'spcproject.json')))
-    self.name = attrs['name']
-    self.files = attrs['files']
-    self.pipeline = attrs['pipeline']
+    self.attrs = json.load(open(os.path.join(path, 'spcproject.json')))
+    self.name = self.attrs['name']
+    self.files = self.attrs['files']
+    self.pipeline = self.attrs['pipeline']
+
+  def __contains__(self, key):
+    return key in self.attrs
+
+  def __getitem__(self, key):
+    return self.attrs[key]
+
+  def __setitem__(self, key, value):
+    self.attrs[key] = value
     
   def save(self):
-    attrs = {}
-    attrs['name'] = self.name
-    attrs['pipeline'] = self.pipeline
-    attrs['files'] = self.files
-    json.dump(attrs, open(os.path.join(self.path, 'spcproject.json'), 'w'),
+    self.attrs['name'] = self.name
+    self.attrs['pipeline'] = self.pipeline
+    self.attrs['files'] = self.files
+    json.dump(self.attrs, open(os.path.join(self.path, 'spcproject.json'), 'w'),
       indent=2)
     
   def set_pipeline(self, data):
