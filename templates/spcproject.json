@@ -1,5 +1,10 @@
 {
   "name": "",
   "pipeline": [],
-  "files": []
+  "files": [],
+  "mmpixel": 0.04,
+  "origin": [
+    0.0,
+    0.0
+  ]
 }
