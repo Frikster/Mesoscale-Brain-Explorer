@@ -10,6 +10,9 @@ from PyQt4.QtCore import *
 
 import qtutil
 
+
+
+
 class NewProjectDialog(QDialog):
   def __init__(self, parent=None):
     super(NewProjectDialog, self).__init__(parent)
