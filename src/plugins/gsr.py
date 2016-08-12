@@ -5,6 +5,7 @@ from PyQt4.QtCore import *
 
 from util.mygraphicsview import MyGraphicsView
 from util import filter_jeff as fj
+from util import fileloader
 
 # on button click!
 
@@ -18,6 +19,22 @@ class Widget(QWidget):
     self.project = project
     self.setup_ui()
 
+    self.listview.setModel(QStandardItemModel())
+    self.listview.selectionModel().selectionChanged[QItemSelection,
+      QItemSelection].connect(self.selected_video_changed)
+    for f in project.files:
+      if f['type'] != 'video':
+        continue
+      self.listview.model().appendRow(QStandardItem(f['path']))
+    self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+
+  def selected_video_changed(self, selection):
+    if not selection.indexes():
+      return
+    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    frame = fileloader.load_reference_frame(self.video_path)
+    self.view.show(frame)
+
   def setup_ui(self):
     hbox = QHBoxLayout()
     self.view = MyGraphicsView(self.project)
@@ -25,6 +42,11 @@ class Widget(QWidget):
     hbox.addWidget(self.view)
 
     vbox = QVBoxLayout()
+    vbox.addWidget(QLabel('Choose video:'))
+    self.listview = QListView()
+    self.listview.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.listview)
+
     hhbox = QHBoxLayout()
     butt_gsr = QPushButton('Global Signal Regression')
     hhbox.addWidget(butt_gsr)
@@ -36,16 +58,17 @@ class Widget(QWidget):
     self.setLayout(hbox)
 
   def gsr(self):
+    videos = [f for f in self.project.files if f['type'] == 'video']
+    # todo: make videos selectable.
+    fileName = videos[0]['path']
 
-
-
-    fileName = str(self.sidePanel.imageFileList.currentItem().text())
-    width = int(self.sidePanel.vidWidthValue.text())
-    height = int(self.sidePanel.vidHeightValue.text())
-    dtype_string = str(self.sidePanel.dtypeValue.text())
-    frames = fj.load_frames(fileName, width, height, dtype_string)
-
+    frames = fileloader.load_file(fileName)
+    width = frames.shape[1]
+    height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
+
+
+
     #np.save(os.path.expanduser('/Downloads/')+"gsr", frames)
     #frames.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"gsr.raw")
     #print("gsr saved to "+os.path.expanduser('/Downloads/')+"gsr")

@@ -218,7 +218,7 @@ def save_to_file(dir, filename, frames, dtype):
         frames.astype(dtype).tofile(file)
 
 
-def gsr(frames,width,height):
+def gsr(frames, width, height):
 
     frames[isnan(frames)] = 0
 
