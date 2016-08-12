@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
-import os
-import sys
+import os, sys
+import numpy as np
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+
+from util import filter_jeff as fj
+from util import fileloader
 
 class Widget(QWidget):
     def crop_ROI(self):
@@ -23,12 +26,11 @@ class Widget(QWidget):
         height = int(self.sidePanel.vidHeightValue.text())
         dtype_string = str(self.sidePanel.dtypeValue.text())
         # Return if there is nod image or rois in view
-        if self.view.vb.img==None or len(self.view.vb.rois)==0:
+        if self.view.vb.img == None or len(self.view.vb.rois) == 0:
             print("there is nod image or rois in view ")
             return
 
         # swap axis for aligned_frames
-        # Todo: rethink design. Is aligned_frames needed?
         frames = fj.get_frames(fileName, width, height, dtype_string)
         frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
         # Collect ROI's and combine
@@ -43,7 +45,8 @@ class Widget(QWidget):
         # Make all rows with all zeros na
         combined_mask[(combined_mask == 0)] = None
         self.mask = combined_mask
-        #TODO!!!#combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
+        #TODO!!!
+        # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
         #print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
 
         # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.

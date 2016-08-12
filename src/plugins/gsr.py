@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import os
+import numpy as np
+
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -67,7 +70,16 @@ class Widget(QWidget):
     height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
 
-
+    #todo: solve issue where rerunning this will overwrite any previous 'gsr.npy'
+    path = os.path.join(self.project.path, 'gsr' + '.npy')
+    np.save(path, frames)
+    self.project.files.append({
+      'path': path,
+      'type': 'video',
+      'source_video': self.video_path,
+      'manipulations': ['gsr']
+    })
+    self.project.save()
 
     #np.save(os.path.expanduser('/Downloads/')+"gsr", frames)
     #frames.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"gsr.raw")
