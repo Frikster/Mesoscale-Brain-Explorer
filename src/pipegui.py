@@ -243,10 +243,7 @@ class MainWindow(QMainWindow):
     self.plugins[plugin_name] = p
 
     lt = QVBoxLayout()
-    lt.addWidget(QLabel('<center>' + p.name + '</center>'))
     lt.addWidget(p.widget)
-    lt.setStretch(0, 0)
-    lt.setStretch(1, 1)
  
     self.clean_plugin()
     self.pl_frame.setLayout(lt)

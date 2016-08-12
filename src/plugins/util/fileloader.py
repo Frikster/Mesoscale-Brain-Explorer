@@ -18,7 +18,7 @@ def load_reference_frame(filename, offset=400):
   frames = load_file(filename)
   if frames is None:
     return None
-  frame = frames[min(offset, len(frames))]
+  frame = frames[min(offset, len(frames)-1)]
   frame = frame.swapaxes(0,1)
   if frame.ndim==2:
     frame = frame[:,::-1]

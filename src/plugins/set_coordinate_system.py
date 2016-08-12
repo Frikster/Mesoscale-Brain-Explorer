@@ -20,11 +20,6 @@ class Widget(QWidget):
 
     self.project = project
 
-    if not 'mmpixel' in self.project:
-      self.project['mmpixel'] = 0.0
-    if not 'origin' in self.project:
-      self.project['origin'] = 0, 0
-
     self.setup_ui()
 
   def setup_ui(self):
