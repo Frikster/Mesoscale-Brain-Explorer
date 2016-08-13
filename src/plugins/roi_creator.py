@@ -42,6 +42,8 @@ class Widget(QWidget):
       self.roi_list.model().appendRow(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
+    self.rois_in_view = []
+
   def setup_ui(self):
     hbox = QHBoxLayout()
   
@@ -49,11 +51,6 @@ class Widget(QWidget):
     hbox.addWidget(self.view)
 
     vbox = QVBoxLayout()
-    vbox.addWidget(QLabel('Choose video:'))
-    self.listview = QListView()
-    self.listview.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.listview)
-
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
@@ -102,14 +99,16 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    self.view.vb.loadROI([self.roi_path])
+    roi = self.view.vb.getROI(self.roi_path)
 
-    #self.view.vb.rois[i]
-    #todo: The selected ROI becomes
+
+    # roi= self.view.vb.rois[i]
+    # todo: The selected ROI becomes
 
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
+    self.rois_in_view = self.view.vb.rois[:]
     
   def save_roi(self):
     name = str(self.edit.text())
