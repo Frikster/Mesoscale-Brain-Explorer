@@ -119,7 +119,7 @@ class Widget(QWidget):
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
-    self.rois_in_view = self.view.vb.rois[:]
+    #self.rois_in_view = self.view.vb.rois[:]
 
   def save_roi(self):
     name = str(self.edit.text())
