@@ -426,10 +426,9 @@ class MultiRoiViewBox(pg.ViewBox):
                     roiState['handlePositions'] = hps
                 pickle.dump( roiState, open( fileName, "wb" ) )
                           
-    def loadROI(self, fileNames = None):
+    def loadROI(self):
         """ Load a previously saved ROI from file """
-        if fileNames == None:
-            fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
+        fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
         # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
         if isinstance(fileNames,types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
