@@ -37,14 +37,19 @@ class Widget(QWidget):
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     self.roi_list.setModel(QStandardItemModel())
-    self.roi_list.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_roi_changed)
+    self.roi_list.selectionModel().selectionChanged[QItemSelection, QItemSelection].connect(self.selected_roi_changed)
+    self.roi_list.model().itemChanged.connect(self.testFunc)
     for f in project.files:
       if f['type'] != 'roi':
         continue
       self.roi_list.model().appendRow(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
+  def testFunc(self):
+    index_changed = self.roi_list.currentIndex().row()
+
+    print('hello')
+    print('stop')
 
   def setup_ui(self):
     hbox = QHBoxLayout()
