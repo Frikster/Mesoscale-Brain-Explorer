@@ -3,6 +3,7 @@
 
 import os
 import sys
+import numpy as np
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -43,8 +44,17 @@ class Widget(QWidget):
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
+
+    vbox.addWidget(QLabel('Choose video:'))
+    self.listview = QListView()
+    self.listview.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.listview)
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
+    vbox.addWidget(pb)
+
+    pb = QPushButton('Crop poly ROI')
+    pb.clicked.connect(self.crop_ROI)
     vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
@@ -92,7 +102,7 @@ class Widget(QWidget):
     else:
       path = os.path.join(self.project.path, name + '.roi')
       self.view.vb.saveROI(path)
-      #TODO check if saved
+      #TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
       self.project.files.append({
         'path': path,
         'type': 'roi',
@@ -100,6 +110,53 @@ class Widget(QWidget):
         'name': name
       })
       self.project.save()
+
+  def crop_ROI(self):
+    videos = [f for f in self.project.files if f['type'] == 'video']
+    # todo: make videos selectable.
+    fileName = videos[0]['path']
+
+    frames = fileloader.load_file(fileName)
+    width = frames.shape[1]
+    height = frames.shape[2]
+
+    # Return if there is no image or rois in view
+    if self.view.vb.img == None or len(self.view.vb.rois) == 0:
+      print("there is no image or rois in view ")
+      return
+
+    # swap axis for aligned_frames
+    frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+    # Collect ROI's and combine
+    numROIs = len(self.view.vb.rois)
+    arrRegion_masks = []
+    for i in xrange(numROIs):
+      roi = self.view.vb.rois[i]
+      arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
+      arrRegion_masks.append(arrRegion_mask)
+
+    combined_mask = np.sum(arrRegion_masks, axis=0)
+    # Make all rows with all zeros na
+    combined_mask[(combined_mask == 0)] = None
+    self.mask = combined_mask
+    # TODO: save mask as well
+    # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
+    # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
+
+    # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
+    # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
+    # Dont forget to set Endian value and set to 64 bit
+    roi_frames = (frames * combined_mask[np.newaxis, :, :])
+
+    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
+    path = os.path.join(self.project.path, 'roi' + '.npy')
+    np.save(path, roi_frames)
+    self.project.files.append({
+      'path': path,
+      'type': 'video',
+      'source_video': self.video_path,
+      'manipulations': ['gsr']
+    })
 
 class MyPlugin:
   def __init__(self, project=None):
