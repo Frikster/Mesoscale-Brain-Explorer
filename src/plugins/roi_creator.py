@@ -37,19 +37,22 @@ class Widget(QWidget):
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     self.roi_list.setModel(QStandardItemModel())
-    self.roi_list.selectionModel().selectionChanged[QItemSelection, QItemSelection].connect(self.selected_roi_changed)
-    self.roi_list.model().itemChanged.connect(self.testFunc)
+    self.roi_list.selectionModel().selectionChanged[
+      QItemSelection, QItemSelection].connect(self.selected_roi_changed)
+    self.roi_list.model().itemChanged[QStandardItem].connect(self.roi_item_edited)
     for f in project.files:
       if f['type'] != 'roi':
         continue
       self.roi_list.model().appendRow(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
-  def testFunc(self):
-    index_changed = self.roi_list.currentIndex().row()
-
-    print('hello')
-    print('stop')
+  def roi_item_edited(self, item):
+    new_name = item.text()
+    prev_name = item.data(Qt.UserRole)
+    # disconnect and reconnect signal
+    self.roi_list.itemChanged.disconnect()
+    item.setData(new_name, Qt.UserRole)
+    self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
     hbox = QHBoxLayout()
@@ -149,7 +152,7 @@ class Widget(QWidget):
         'name': name
       })
       self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
-      ###self.roi_list
+      ### self.roi_list
       self.project.save()
 
   def crop_ROI(self):
