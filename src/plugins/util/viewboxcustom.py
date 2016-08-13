@@ -426,9 +426,10 @@ class MultiRoiViewBox(pg.ViewBox):
                     roiState['handlePositions'] = hps
                 pickle.dump( roiState, open( fileName, "wb" ) )
                           
-    def loadROI(self):
+    def loadROI(self, fileNames = None):
         """ Load a previously saved ROI from file """
-        fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
+        if fileNames == None:
+            fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
         # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
         if isinstance(fileNames,types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
@@ -437,7 +438,7 @@ class MultiRoiViewBox(pg.ViewBox):
                 if fileName!='':
                     roiState = pickle.load( open(fileName, "rb") )
                     if roiState['type']=='RectROIcustom':
-                        self.addROI(roiState['pos'],roiState['size'],roiState['angle'])    
+                        self.addROI(roiState['pos'],roiState['size'],roiState['angle'])
                     elif roiState['type']=='PolyLineROIcustom':
                         self.addPolyLineROI(roiState['handlePositions'])
 
