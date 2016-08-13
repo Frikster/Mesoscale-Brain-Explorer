@@ -442,9 +442,6 @@ class MultiRoiViewBox(pg.ViewBox):
                     elif roiState['type']=='PolyLineROIcustom':
                         self.addPolyLineROI(roiState['handlePositions'])
 
-    def getROI(self, fileName):
-        return pickle.load(open(fileName, "rb"))
-
     def removeROI(self):
         """ Delete the highlighted ROI """
         if self.currentROIindex!=None:

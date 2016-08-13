@@ -23,6 +23,8 @@ class Widget(QWidget):
     self.project = project
     self.setup_ui()
 
+    self.rois_in_view = {}
+
     #todo: Explain QStandardItemModel and selectionChanged to me please
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
@@ -42,7 +44,6 @@ class Widget(QWidget):
       self.roi_list.model().appendRow(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
-    self.rois_in_view = []
 
   def setup_ui(self):
     hbox = QHBoxLayout()
@@ -99,17 +100,27 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    roi = self.view.vb.getROI(self.roi_path)
+    if self.roi_path in self.rois_in_view.keys():
+      roi = self.rois_in_view[self.roi_path]
+      self.view.vb.selectROI(roi)
+    else:
+      self.view.vb.loadROI([self.roi_path])
+    self.update_rois_in_view()
 
 
-    # roi= self.view.vb.rois[i]
-    # todo: The selected ROI becomes
-
+  def update_rois_in_view(self):
+    rois = self.view.vb.rois
+    for roi in rois:
+      if roi not in self.rois_in_view.items():
+        self.view.vb.selectROI(roi)
+        self.view.vb.removeROI()
+        #key = (key for key, value in self.rois_in_view.items() if value == roi).next()
+        #del self.rois_in_view[key]
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
     self.rois_in_view = self.view.vb.rois[:]
-    
+
   def save_roi(self):
     name = str(self.edit.text())
     if not name:
@@ -126,9 +137,8 @@ class Widget(QWidget):
         'source_video': self.video_path,
         'name': name
       })
-
+      self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
       ###self.roi_list
-
       self.project.save()
 
   def crop_ROI(self):
@@ -137,9 +147,6 @@ class Widget(QWidget):
     fileName = videos[0]['path']
 
     frames = fileloader.load_file(fileName)
-    width = frames.shape[1]
-    height = frames.shape[2]
-
     # Return if there is no image or rois in view
     if self.view.vb.img == None or len(self.view.vb.rois) == 0:
       print("there is no image or rois in view ")
