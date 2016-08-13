@@ -21,9 +21,9 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
-
     self.setup_ui()
 
+    #todo: Explain QStandardItemModel and selectionChanged to me please
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_video_changed)
@@ -32,6 +32,15 @@ class Widget(QWidget):
         continue
       self.listview.model().appendRow(QStandardItem(f['path']))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+
+    self.roi_list.setModel(QStandardItemModel())
+    self.roi_list.selectionModel().selectionChanged[QItemSelection,
+      QItemSelection].connect(self.selected_roi_changed)
+    for f in project.files:
+      if f['type'] != 'roi':
+        continue
+      self.roi_list.model().appendRow(QStandardItem(f['path']))
+    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
   def setup_ui(self):
     hbox = QHBoxLayout()
@@ -49,10 +58,10 @@ class Widget(QWidget):
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
+
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
     vbox.addWidget(pb)
-
     pb = QPushButton('Crop poly ROI')
     pb.clicked.connect(self.crop_ROI)
     vbox.addWidget(pb)
@@ -70,7 +79,6 @@ class Widget(QWidget):
     vbox2.addWidget(pb)
     w = QWidget()
     w.setLayout(vbox2)
-    #w.setEnabled(False)
     vbox.addWidget(w)
 
     vbox.addWidget(qtutil.separator())
@@ -89,6 +97,16 @@ class Widget(QWidget):
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
+
+  def selected_roi_changed(self, selection):
+    if not selection.indexes():
+      return
+    self.roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.view.vb.loadROI([self.roi_path])
+
+    #self.view.vb.rois[i]
+    #todo: The selected ROI becomes
+
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
@@ -109,6 +127,9 @@ class Widget(QWidget):
         'source_video': self.video_path,
         'name': name
       })
+
+      ###self.roi_list
+
       self.project.save()
 
   def crop_ROI(self):

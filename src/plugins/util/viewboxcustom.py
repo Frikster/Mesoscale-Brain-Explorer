@@ -47,7 +47,7 @@ class ImageAnalysisViewBox(pg.ViewBox):
         return self.menu 
  
 class ViewMode():
-    def __init__(self,id,cmap):
+    def __init__(self, id, cmap):
         self.id   = id
         self.cmap = cmap
         self.getLookupTable()
@@ -92,7 +92,7 @@ class MultiRoiViewBox(pg.ViewBox):
         xScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>X</span> <i>Axis</i>", units="s")
         yScale.setLabel('Y Axis', units='V')
 
-    def getContextMenus(self,ev):
+    def getContextMenus(self, ev):
         return None
         
     def raiseContextMenu(self, ev):
@@ -281,19 +281,19 @@ class MultiRoiViewBox(pg.ViewBox):
         #self.addROIPolyAct.updateEvent(event)
         return self.menu  
         
-    def setCurrentROIindex(self,roi=None):
+    def setCurrentROIindex(self, roi=None):
         """ Use this function to change currentROIindex value to ensure a signal is emitted"""
         if roi==None: self.currentROIindex = None
         else:         self.currentROIindex = self.rois.index(roi)
         self.sigROIchanged.emit(roi)  
 
-    def roiChanged(self,roi):
+    def roiChanged(self, roi):
         self.sigROIchanged.emit(roi) 
 
     def getCurrentROIindex(self):
         return self.currentROIindex    
     
-    def selectROI(self,roi):
+    def selectROI(self, roi):
         """ Selection control of ROIs """
         # If no ROI is currently selected (currentROIindex is None), select roi
         if self.currentROIindex==None:
@@ -325,7 +325,7 @@ class MultiRoiViewBox(pg.ViewBox):
         if xysize==0: xysize=100       
         ypos -= xysize
         # Create ROI
-        xypos = (xpos,ypos)
+        xypos = (xpos, ypos)
         self.addROI(pos=xypos)
         
     def addROI(self, pos=None, size=None, angle=0.0):
@@ -426,9 +426,10 @@ class MultiRoiViewBox(pg.ViewBox):
                     roiState['handlePositions'] = hps
                 pickle.dump( roiState, open( fileName, "wb" ) )
                           
-    def loadROI(self):
+    def loadROI(self, fileNames = None):
         """ Load a previously saved ROI from file """
-        fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
+        if fileNames == None:
+            fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
         # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
         if isinstance(fileNames,types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
@@ -440,7 +441,9 @@ class MultiRoiViewBox(pg.ViewBox):
                         self.addROI(roiState['pos'],roiState['size'],roiState['angle'])    
                     elif roiState['type']=='PolyLineROIcustom':
                         self.addPolyLineROI(roiState['handlePositions'])
-            
+
+
+
     def removeROI(self):
         """ Delete the highlighted ROI """
         if self.currentROIindex!=None:
