@@ -14,6 +14,35 @@ from util import fileloader
 sys.path.append('..')
 import qtutil
 
+class RoiItemModel(QAbstractListModel):
+  textChanged = pyqtSignal(str, str)
+
+  def __init__(self, parent=None):
+    super(RoiItemModel, self).__init__(parent)
+    self.rois = []
+
+  def appendRoi(self, name):
+    self.rois.append(name)
+
+  def rowCount(self, parent):
+    return len(self.rois)
+
+  def data(self, index, role):
+    if role == Qt.DisplayRole:
+      return self.rois[index.row()]
+    return QVariant()
+
+  def setData(self, index, value, role):
+    if role in [Qt.DisplayRole, Qt.EditRole]:
+      self.textChanged.emit(self.rois[index.row()], value.toString())
+      self.rois[index.row()] = str(value.toString())
+      return True
+    return super(RoiItemModel, self).setData(index, value, role)
+
+  def flags(self, index):
+    return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+    
+
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
@@ -35,14 +64,15 @@ class Widget(QWidget):
       self.listview.model().appendRow(QStandardItem(f['path']))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
-    self.roi_list.setModel(QStandardItemModel())
+    model = RoiItemModel() 
+    model.textChanged.connect(self.roi_item_changed)
+    self.roi_list.setModel(model)
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
-    for f in project.files:
-      if f['type'] != 'roi':
-        continue
-      self.roi_list.model().appendRow(QStandardItem(f['path']))
-    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
+    rois = [f['name'] for f in project.files if f['type'] == 'roi']
+    for roi in rois: 
+      model.appendRoi(roi)
+    self.roi_list.setCurrentIndex(model.index(0, 0))
 
 
   def setup_ui(self):
@@ -88,6 +118,10 @@ class Widget(QWidget):
     hbox.setStretch(0, 1)
     hbox.setStretch(1, 0)
     self.setLayout(hbox)
+
+  def roi_item_changed(self, prev_name, new_name):
+    print(prev_name, new_name)
+    
 
   def selected_video_changed(self, selection):
     if not selection.indexes():
