@@ -35,7 +35,9 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    frame = fileloader.load_reference_frame(self.video_path)
+    f = [f for f in self.project.files if f['path'] == self.video_path]
+    assert(len(f) == 1)
+    frame = fileloader.load_reference_frame(f[0])
     self.view.show(frame)
 
   def setup_ui(self):
@@ -65,7 +67,7 @@ class Widget(QWidget):
     # todo: make videos selectable.
     fileName = videos[0]['path']
 
-    frames = fileloader.load_file(fileName)
+    frames = fileloader.load_file(videos[0])
     width = frames.shape[1]
     height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
