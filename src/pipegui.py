@@ -268,6 +268,7 @@ class MainWindow(QMainWindow):
     self.project.save()
 
   def open_datadialog(self):
+    self.datadialog.update(self.project)
     self.datadialog.show()
 
   def about(self):

@@ -2,9 +2,19 @@
 
 import os
 import sys
+import pandas as pd
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+
+from qtutil import PandasModel
+
+class TableView(QTableView):
+  def __init__(self, parent=None):
+    super(TableView, self).__init__(parent)
+
+    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+    self.verticalHeader().hide()
 
 class DataDialog(QDialog):
   def __init__(self, parent=None):
@@ -14,18 +24,15 @@ class DataDialog(QDialog):
 
   def setup_ui(self):
     self.setWindowTitle('Data')
-    self.setContentsMargins(4, 6, 5, 0)
 
     vbox = QVBoxLayout()
-
-    self.data_list = QListView()
-    self.data_list.setStyleSheet('QListView::item { height: 26px; }')
-    self.data_list.setIconSize(QSize(18, 18))
-
-    vbox.addWidget(self.data_list)
+    self.view = TableView()
+    vbox.addWidget(self.view)
    
-    #vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
     self.setLayout(vbox)
+    self.resize(600, 400)
 
-
+  def update(self, project):
+    df = pd.DataFrame(project.files)
+    model = PandasModel(df)
+    self.view.setModel(model)

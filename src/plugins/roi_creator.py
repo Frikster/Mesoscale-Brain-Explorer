@@ -70,7 +70,7 @@ class Widget(QWidget):
     self.roi_list.setModel(model)
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
-    rois = [f['name'] for f in project.files if f['type'] == 'roi']
+    rois = [f['path'] for f in project.files if f['type'] == 'roi']
     for roi in rois: 
       model.appendRoi(roi)
     self.roi_list.setCurrentIndex(model.index(0, 0))

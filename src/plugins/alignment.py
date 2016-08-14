@@ -3,7 +3,6 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
