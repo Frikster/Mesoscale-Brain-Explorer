@@ -17,6 +17,10 @@ from util import fileloader
 class NotConvertedError(Exception):
   pass
 
+class FileAlreadyInProjectError(Exception):
+  def __init__(self, filename):
+    self.filename = filename
+
 class RawConverterDialog(QDialog):
   def __init__(self, project, filename, parent=None):
     super(RawConverterDialog, self).__init__(parent)
@@ -157,6 +161,9 @@ class Widget(QWidget):
 
     filename = new_filename
 
+    if filename in [f['path'] for f in self.project.files]:
+      raise FileAlreadyInProjectError(filename)      
+
     self.project.files.append({
       'path': filename,
       'type': 'video'
@@ -172,6 +179,8 @@ class Widget(QWidget):
         filename = self.import_file(filename)
       except NotConvertedError:
         qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
+      except FileAlreadyInProjectError as e:
+        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
       except:
         qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
           traceback.format_exc())
