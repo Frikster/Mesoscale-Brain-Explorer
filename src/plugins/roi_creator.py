@@ -69,6 +69,7 @@ class Widget(QWidget):
     model = RoiItemModel() 
     model.textChanged.connect(self.roi_item_changed)
     self.roi_list.setModel(model)
+    self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
     rois = [f['path'] for f in project.files if f['type'] == 'roi']
@@ -108,7 +109,7 @@ class Widget(QWidget):
     vbox2 = QVBoxLayout()
     pb = QPushButton('Save')
     pb.clicked.connect(self.save_roi)
-    pb.clicked.connect(self.refresh_roi_list)
+    #pb.clicked.connect(self.refresh_roi_list)
     vbox2.addWidget(pb)
     w = QWidget()
     w.setLayout(vbox2)
@@ -163,10 +164,10 @@ class Widget(QWidget):
       self.roi_list.model().appendRoi(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
-  def refresh_roi_list(self):
-      rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
-      for roi in rois:
-        self.roi_list.model().appendRoi(roi)
+  # def refresh_roi_list(self):
+  #     rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
+  #     for roi in rois:
+  #       self.roi_list.model().appendRoi(roi)
 
   def save_roi(self):
     name = str(uuid.uuid4())
@@ -188,9 +189,9 @@ class Widget(QWidget):
       ### self.roi_list
       self.project.save()
 
-      #rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
-      #for roi in rois:
-      #  self.roi_list.model().appendRoi(roi)
+      rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
+      for roi in rois:
+       self.roi_list.model().appendRoi(roi)
       #self.widget = Widget(self.project)
 
   def crop_ROI(self):
