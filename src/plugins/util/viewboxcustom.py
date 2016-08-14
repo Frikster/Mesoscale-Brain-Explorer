@@ -436,7 +436,7 @@ class MultiRoiViewBox(pg.ViewBox):
         if len(fileNames)>0:
             for fileName in fileNames:
                 if fileName!='':
-                    roiState = pickle.load( open(fileName, "rb") )
+                    roiState = pickle.load(open(fileName, "rb") )
                     if roiState['type']=='RectROIcustom':
                         self.addROI(roiState['pos'],roiState['size'],roiState['angle'])
                     elif roiState['type']=='PolyLineROIcustom':
