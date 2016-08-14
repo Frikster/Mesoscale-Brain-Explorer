@@ -5,13 +5,7 @@ import numpy as np
 class UnknownFileFormatError(Exception):
   pass
 
-def load_raw(fileinfo):
-  filename = fileinfo['path']
-  dat_type = fileinfo['dtype']
-  width = fileinfo['width']
-  height = fileinfo['height']
-  channel_no = fileinfo['channel']
-  
+def load_raw(filename, dat_type, width, height, channel_no):
   dat_type = np.dtype(dat_type)
 
   with open(filename, "rb") as file:
@@ -32,22 +26,20 @@ def load_raw(fileinfo):
   plt.imshow(frames[self.ref_frame_sb.value()])
   return frames
 
-def load_npy(fileinfo):
-  frames = np.load(fileinfo['path'])
+def load_npy(filename):
+  frames = np.load(filename)
   frames[np.isnan(frames)] = 0
   return frames
 
-def load_file(fileinfo):
-  if fileinfo['path'].endswith('.npy'):
-    frames = load_npy(fileinfo)
-  elif fileinfo['path'].endswith('.raw'):
-    frames = load_raw(fileinfo)
+def load_file(filename):
+  if filename.endswith('.npy'):
+    frames = load_npy(filename)
   else:
     raise UnknownFileFormatError()
   return frames
 
-def load_reference_frame_npy(fileinfo, offset):
-  frames_mmap = np.load(fileinfo['path'], mmap_mode='c')
+def load_reference_frame_npy(filename, offset):
+  frames_mmap = np.load(filename, mmap_mode='c')
   if frames_mmap is None:
     return None
   frame = np.array(frames_mmap[offset])
@@ -59,9 +51,9 @@ def load_reference_frame_npy(fileinfo, offset):
     frame = frame[:, ::-1, :]
   return frame
 
-def load_reference_frame(fileinfo, offset=400):
-  if fileinfo['path'].endswith('.npy'):
-    frame = load_reference_frame_npy(fileinfo, offset)
+def load_reference_frame(filename, offset=400):
+  if filename.endswith('.npy'):
+    frame = load_reference_frame_npy(filename, offset)
   else:
     raise UnknownFileFormatError()
   return frame

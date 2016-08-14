@@ -58,7 +58,7 @@ class Widget(QWidget):
     if not videos:
       self.setEnabled(False)
       return
-    frame = fileloader.load_reference_frame(videos[0])
+    frame = fileloader.load_reference_frame(videos[0]['path'])
     self.view.show(frame)
     self.set_origin_label()
     self.setEnabled(True)
