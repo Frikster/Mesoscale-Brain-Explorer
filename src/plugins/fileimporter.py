@@ -12,9 +12,19 @@ from PyQt4.QtCore import *
 sys.path.append('..')
 import qtutil
 
-class RawImporterDialog(QDialog):
-  def __init__(self, filename, parent=None):
-    super(RawImporterDialog, self).__init__(parent)
+from util import fileloader
+
+class NotConvertedError(Exception):
+  pass
+
+class FileAlreadyInProjectError(Exception):
+  def __init__(self, filename):
+    self.filename = filename
+
+class RawConverterDialog(QDialog):
+  def __init__(self, project, filename, parent=None):
+    super(RawConverterDialog, self).__init__(parent)
+    self.project = project
     self.filename = filename
     self.setup_ui()
   
@@ -58,12 +68,39 @@ class RawImporterDialog(QDialog):
     vbox.addLayout(grid)
     vbox.addStretch()
 
-    pb = QPushButton('&Done')
-    pb.clicked.connect(self.done)
+    self.status = QLabel()
+    self.set_status('-')
+    vbox.addWidget(self.status)
+    pb = QPushButton('&Convert')
+    pb.clicked.connect(self.convert_clicked)
     vbox.addWidget(pb)
 
     self.setLayout(vbox)
     self.resize(400, 220)
+
+  def set_status(self, msg):
+    self.status.setText('Convert status: ' + msg)
+    QApplication.processEvents()
+
+  def convert_clicked(self):
+    dtype = str(self.cb_dtype.currentText())
+    width = int(self.sb_width.value())
+    height = int(self.sb_height.value())
+    channel = int(self.sb_channel.value())
+    self.set_status('Loading raw...')
+    try:
+      frames = fileloader.load_raw(self.filename, dtype, width, height, channel)
+    except:
+      qtutil.critical('Loading raw file failed:\n' + traceback.format_exc())
+      self.set_status('-')
+    else:
+      self.set_status('Writing to npy...')
+      path = os.path.splitext(os.path.basename(self.filename))[0] + '.npy'
+      path = os.path.join(self.project.path, path)
+      np.save(path, frames)
+      self.set_status('Done')
+      self.ret_filename = path
+      self.close()
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -97,38 +134,53 @@ class Widget(QWidget):
     vbox.addStretch()
     self.setLayout(vbox)
 
-  def import_simple(self, filename):
+  def convert_raw(self, filename):
+    dialog = RawConverterDialog(self.project, filename, self)
+    dialog.ret_filename = None
+    dialog.exec_()
+    return dialog.ret_filename      
+
+  def convert_tif(self, filename):
+    assert(False)
+
+  def to_npy(self, filename):
+    if filename.endswith('.raw'):
+      filename = self.convert_raw(filename)
+    elif filename.endswith('.tif'):
+      filename = self.convert_tif(filename)
+    else:
+      raise fileloader.UnknownFileFormatError()
+    return filename
+
+  def import_file(self, filename):
+    if not filename.endswith('.npy'):
+      new_filename = self.to_npy(filename)
+        
+    if not new_filename:
+      raise NotConvertedError()
+
+    filename = new_filename
+
+    if filename in [f['path'] for f in self.project.files]:
+      raise FileAlreadyInProjectError(filename)      
+
     self.project.files.append({
       'path': filename,
       'type': 'video'
     })
     self.project.save()
-
-  def import_raw(self, filename):
-    dialog = RawImporterDialog(filename, self)
-    dialog.exec_()
-    self.project.files.append({
-      'path': filename,
-      'type': 'video',
-      'width': int(dialog.sb_width.value()),
-      'height': int(dialog.sb_height.value()),
-      'dtype': str(dialog.cb_dtype.currentText()),
-      'channel': int(dialog.sb_channel.value())
-    })
-    self.project.save()
-
-  def import_file(self, filename):
-    if filename.endswith('.raw'):
-      self.import_raw(filename)
-    else:
-      self.import_simple(filename)
+    return filename
 
   def import_files(self, filenames):
     for filename in filenames:
       if filename in [f['path'] for f in self.project.files]:
         continue
       try:
-        self.import_file(filename)
+        filename = self.import_file(filename)
+      except NotConvertedError:
+        qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
+      except FileAlreadyInProjectError as e:
+        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
       except:
         qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
           traceback.format_exc())
