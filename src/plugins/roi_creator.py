@@ -24,6 +24,8 @@ class RoiItemModel(QAbstractListModel):
 
   def appendRoi(self, name):
     self.rois.append(name)
+    row = len(self.rois) - 1
+    self.dataChanged.emit(self.index(row), self.index(row))
 
   def rowCount(self, parent):
     return len(self.rois)
