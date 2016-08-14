@@ -23,7 +23,6 @@ def load_raw(filename, dat_type, width, height, channel_no):
   print("frames.shape POST:"+str(frames.shape))
 
   frames = np.asarray(frames, dtype=dat_type)
-  plt.imshow(frames[self.ref_frame_sb.value()])
   return frames
 
 def load_npy(filename):
