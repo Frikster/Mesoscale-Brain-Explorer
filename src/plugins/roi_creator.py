@@ -140,7 +140,7 @@ class Widget(QWidget):
       roi = self.rois_in_view[roi_path]
       self.view.vb.selectROI(roi)
     else:
-      self.view.vb.loadROI([self.project.path+'/'+roi_path+'.roi'])
+      self.view.vb.loadROI([roi_path])
     self.update_rois_in_view()
 
   def update_rois_in_view(self):
