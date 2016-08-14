@@ -13,6 +13,7 @@ from util import fileloader
 
 sys.path.append('..')
 import qtutil
+import uuid
 
 class RoiItemModel(QAbstractListModel):
   textChanged = pyqtSignal(str, str)
@@ -74,6 +75,13 @@ class Widget(QWidget):
       model.appendRoi(roi)
     self.roi_list.setCurrentIndex(model.index(0, 0))
 
+  def roi_item_edited(self, item):
+    new_name = item.text()
+    prev_name = item.data(Qt.UserRole)
+    # disconnect and reconnect signal
+    self.roi_list.itemChanged.disconnect()
+    item.setData(new_name, Qt.UserRole)
+    self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
     hbox = QHBoxLayout()
@@ -98,10 +106,10 @@ class Widget(QWidget):
 
     vbox2 = QVBoxLayout()
     hbox2 = QHBoxLayout()
-    hbox2.addWidget(QLabel('ROI name:'))
-    self.edit = QLineEdit()
-    hbox2.addWidget(self.edit)     
-    vbox2.addLayout(hbox2)
+    #hbox2.addWidget(QLabel('ROI name:'))
+    #self.edit = QLineEdit()
+    #hbox2.addWidget(self.edit)
+    #vbox2.addLayout(hbox2)
     pb = QPushButton('Save')
     pb.clicked.connect(self.save_roi)
     vbox2.addWidget(pb)
@@ -133,12 +141,12 @@ class Widget(QWidget):
   def selected_roi_changed(self, selection):
     if not selection.indexes():
       return
-    self.roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    if self.roi_path in self.rois_in_view.keys():
-      roi = self.rois_in_view[self.roi_path]
+    roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    if roi_path in self.rois_in_view.keys():
+      roi = self.rois_in_view[roi_path]
       self.view.vb.selectROI(roi)
     else:
-      self.view.vb.loadROI([self.roi_path])
+      self.view.vb.loadROI([roi_path])
     self.update_rois_in_view()
 
 
@@ -153,10 +161,15 @@ class Widget(QWidget):
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
+    for f in self.project.files:
+      if f['type'] != 'roi':
+        continue
+      self.roi_list.model().appendRow(QStandardItem(f['path']))
+    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
     #self.rois_in_view = self.view.vb.rois[:]
 
   def save_roi(self):
-    name = str(self.edit.text())
+    name = str(uuid.uuid4())
     if not name:
       qtutil.critical('Choose a name.')
     elif name in [f['name'] for f in self.project.files if 'name' in f]:
@@ -172,7 +185,7 @@ class Widget(QWidget):
         'name': name
       })
       self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
-      ###self.roi_list
+      ### self.roi_list
       self.project.save()
 
   def crop_ROI(self):
