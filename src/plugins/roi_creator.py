@@ -106,6 +106,7 @@ class Widget(QWidget):
     vbox2 = QVBoxLayout()
     pb = QPushButton('Save')
     pb.clicked.connect(self.save_roi)
+    pb.clicked.connect(self.refresh_roi_list)
     vbox2.addWidget(pb)
     w = QWidget()
     w.setLayout(vbox2)
@@ -142,7 +143,7 @@ class Widget(QWidget):
       roi = self.rois_in_view[roi_path]
       self.view.vb.selectROI(roi)
     else:
-      self.view.vb.loadROI([self.project.path+'/'+roi_path+'.roi'])
+      self.view.vb.loadROI([roi_path])
     self.update_rois_in_view()
 
   def update_rois_in_view(self):
@@ -159,8 +160,13 @@ class Widget(QWidget):
     for f in self.project.files:
       if f['type'] != 'roi':
         continue
-      self.roi_list.model().appendRow(QStandardItem(f['path']))
+      self.roi_list.model().appendRoi(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
+
+  def refresh_roi_list(self):
+      rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
+      for roi in rois:
+        self.roi_list.model().appendRoi(roi)
 
   def save_roi(self):
     name = str(uuid.uuid4())
@@ -171,7 +177,7 @@ class Widget(QWidget):
     else:
       path = os.path.join(self.project.path, name + '.roi')
       self.view.vb.saveROI(path)
-      #TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+      # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
       self.project.files.append({
         'path': path,
         'type': 'roi',
@@ -181,6 +187,11 @@ class Widget(QWidget):
       self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
       ### self.roi_list
       self.project.save()
+
+      #rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
+      #for roi in rois:
+      #  self.roi_list.model().appendRoi(roi)
+      #self.widget = Widget(self.project)
 
   def crop_ROI(self):
     videos = [f for f in self.project.files if f['type'] == 'video']
