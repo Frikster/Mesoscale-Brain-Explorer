@@ -9,6 +9,61 @@ import matplotlib.pyplot as plt
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+sys.path.append('..')
+import qtutil
+
+class RawImporterDialog(QDialog):
+  def __init__(self, filename, parent=None):
+    super(RawImporterDialog, self).__init__(parent)
+    self.filename = filename
+    self.setup_ui()
+  
+  def setup_ui(self):
+    self.setWindowTitle('Import Raw File')
+
+    vbox = QVBoxLayout()
+    vbox.addWidget(QLabel('<center><b>Importing \'{}\'</b></center>'.format(
+      os.path.basename(self.filename))))
+    vbox.addSpacing(10)
+
+    grid = QGridLayout()
+
+    grid.addWidget(QLabel('Width:'), 0, 0)
+    self.sb_width = QSpinBox()
+    self.sb_width.setMinimum(1)
+    self.sb_width.setMaximum(1024)
+    self.sb_width.setValue(256)
+    grid.addWidget(self.sb_width, 0, 1)
+
+    grid.addWidget(QLabel('Height:'), 1, 0)
+    self.sb_height = QSpinBox()
+    self.sb_height.setMinimum(1)
+    self.sb_height.setMaximum(1024)
+    self.sb_height.setValue(256)
+    grid.addWidget(self.sb_height, 1, 1)
+
+    grid.addWidget(QLabel('Channel:'), 2, 0)
+    self.sb_channel = QSpinBox()
+    self.sb_channel.setMinimum(1)
+    self.sb_channel.setMaximum(3)
+    self.sb_channel.setValue(3)
+    grid.addWidget(self.sb_channel, 2, 1)
+
+    grid.addWidget(QLabel('dtype:'), 3, 0)
+    self.cb_dtype = QComboBox()
+    for t in 'uint8', 'float32', 'float64':
+      self.cb_dtype.addItem(t)
+    grid.addWidget(self.cb_dtype, 3, 1)
+
+    vbox.addLayout(grid)
+    vbox.addStretch()
+
+    pb = QPushButton('&Done')
+    pb.clicked.connect(self.done)
+    vbox.addWidget(pb)
+
+    self.setLayout(vbox)
+    self.resize(400, 220)
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -25,167 +80,70 @@ class Widget(QWidget):
       if f['type'] == 'video':
         self.listview.model().appendRow(QStandardItem(f['path']))
 
-    #self.reference_frames_dict = {}
-
   def setup_ui(self):
     vbox = QVBoxLayout()
-
-    pb = QPushButton('New Video')
-    pb.clicked.connect(self.new_video)
-    vbox.addWidget(pb)
 
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     self.listview.setSelectionMode(QAbstractItemView.NoSelection)
     vbox.addWidget(self.listview)
 
-    #right = QFrame()
-    #right.setFrameShadow(QFrame.Raised)
-    #right.setFrameShape(QFrame.Panel)
-    #right.setContentsMargins(10, 0, 1, 0)
-    #right.setMinimumWidth(200)
+    hbox = QVBoxLayout()
+    pb = QPushButton('New Video')
+    pb.clicked.connect(self.new_video)
+    hbox.addWidget(pb)
 
-    #lt_right = QVBoxLayout()
-    #lt_right.setContentsMargins(8, 8, 8, 8)
-
-    #lt_right.addWidget(QLabel('Data type to be loaded'))
-    #self.data_type_cb = QComboBox()
-    #self.data_type_cb.addItem("uint8")
-    #self.data_type_cb.addItem("float32")
-    #self.data_type_cb.addItem("float64")
-    #lt_right.addWidget(self.data_type_cb)
-
-    #lt_right.addWidget(QLabel('Width'))
-    #self.width_sb = QSpinBox()
-    #self.width_sb.setMinimum(1)
-    #self.width_sb.setMaximum(1024)
-    #self.width_sb.setValue(256)
-    #lt_right.addWidget(self.width_sb)
-    #lt_right.addWidget(QLabel('Height'))
-    #self.height_sb = QSpinBox()
-    #self.height_sb.setMinimum(1)
-    #self.height_sb.setMaximum(1024)
-    #self.height_sb.setValue(256)
-    #lt_right.addWidget(self.height_sb)
-
-    #self.channel_no_sb = QSpinBox()
-    #self.channel_no_sb.setMinimum(1)
-    #self.channel_no_sb.setValue(3)
-    #lt_right.addWidget(self.channel_no_sb)
-
-    #lt_right.addWidget(QLabel('Frame to display'))
-    #self.ref_frame_sb = QSpinBox()
-    ##todo: Make the max the last frame in the file
-    #self.ref_frame_sb.setMaximum(1000)
-    #self.ref_frame_sb.setMinimum(0)
-    #self.ref_frame_sb.setValue(400)
-    #lt_right.addWidget(self.ref_frame_sb)
-
-    #butt_file_load = QPushButton('&Load File')
-    #butt_file_load.clicked.connect(self.import_file)
-    #lt_right.addWidget(butt_file_load)
-
-    #lt_right.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-    #pb_done = QPushButton('&Done')
-    #lt_right.addWidget(pb_done)
-
-    #right.setLayout(lt_right)
-
-    ## self.pixmap = QPixmap('../data/flower2.jpg')
-    ## self.pic = QLabel()
-    ## self.pic.setStyleSheet('background-color: black')
-    ## self.pic.setPixmap(self.pixmap)
-    ## left.addWidget(self.pic)
-
-    #hbox.addLayout(left)
-    #hbox.addWidget(right)
-
-    #hbox.setStretch(0, 1)
-    #hbox.setStretch(1, 0)
-
+    vbox.addLayout(hbox)
+    vbox.addStretch()
     self.setLayout(vbox)
 
-  def import_file(self):
-    """ Load an file to be analysed """
-    print("working")
-    print('Argument List:', str(sys.argv))
+  def import_simple(self, filename):
+    self.project.files.append({
+      'path': filename,
+      'type': 'video'
+    })
+    self.project.save()
 
-    width = self.width_sb.value()
-    height = self.height_sb.value()
-    data_type_str = str(self.data_type_cb.currentText())
-    ref_frame = self.ref_frame_sb.value()
-    channel_no = self.channel_no_sb.value()
+  def import_raw(self, filename):
+    dialog = RawImporterDialog(filename, self)
+    dialog.exec_()
+    self.project.files.append({
+      'path': filename,
+      'type': 'video',
+      'width': int(dialog.sb_width.value()),
+      'height': int(dialog.sb_height.value()),
+      'dtype': str(dialog.cb_dtype.currentText()),
+      'channel': int(dialog.sb_channel.value())
+    })
+    self.project.save()
 
-    file_names = sys.argv[1:]
+  def import_file(self, filename):
+    if filename.endswith('.raw'):
+      self.import_raw(filename)
+    else:
+      self.import_simple(filename)
 
-    if len(file_names) > 0:
-      for fileName in file_names:
-        if fileName != '':
-          frames = self.load_raw(str(fileName), width, height, data_type_str, channel_no)
-          self.reference_frames_dict[str(fileName)] = frames[ref_frame]
-
-    print("LOOP FINISHED")
-    print(str(self.reference_frames_dict))
-
-    # Show image in Main window
-    #self.vb.enableAutoRange()
-    #if self.sidePanel.imageFileList.currentRow() == -1: self.sidePanel.imageFileList.setCurrentRow(0)
-    #self.showImage(str(self.sidePanel.imageFileList.currentItem().text()))
-    #self.vb.disableAutoRange()
-
-  def load_raw(self, filename, width, height, dat_type, channel_no):
-    dat_type = np.dtype(dat_type)
-
-    with open(filename, "rb") as file:
-      frames = np.fromfile(file, dtype=dat_type)
-
-    total_number_of_frames = int(np.size(frames) / (width * height * channel_no))
-    print("n_frames: " + str(total_number_of_frames))
-    frames = np.reshape(frames, (total_number_of_frames, width, height, channel_no))
-
-    #frames = np.reshape(frames, (total_number_of_frames, width, height))
-    print("frames.shape PRE:"+str(frames.shape))
-    # retrieve only one channel:
-    # todo: make user definable
-    frames = frames[:, :, :, 1]
-    print("frames.shape POST:"+str(frames.shape))
-
-    frames = np.asarray(frames, dtype=dat_type)
-    plt.imshow(frames[self.ref_frame_sb.value()])
-    return frames
+  def import_files(self, filenames):
+    for filename in filenames:
+      if filename in [f['path'] for f in self.project.files]:
+        continue
+      try:
+        self.import_file(filename)
+      except:
+        qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
+          traceback.format_exc())
+      else:
+        self.listview.model().appendRow(QStandardItem(filename))
 
   def new_video(self):
     filenames = QFileDialog.getOpenFileNames(
       self, 'Load images', QSettings().value('last_load_data_path').toString(),
-      'Numpy files (*.npy)')
+      'Video files (*.npy *.tif *.raw)')
     filenames = map(str, filenames)
     if not filenames:
       return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
-
-    for filename in filenames:
-      if filename in [f['path'] for f in self.project.files]:
-        continue
-      self.project.files.append({
-        'path': filename,
-        'type': 'video'
-      })
-      self.project.save()
-      self.listview.model().appendRow(QStandardItem(filename))
-
-    # try:
-    #   total_number_of_frames = int(np.size(frames) / (width * height * channel_no))
-    #   print("n_frames: " + str(total_number_of_frames))
-    #   frames = np.reshape(frames, (total_number_of_frames, width, height, channel_no))
-    #   frames = frames[:, :, :, 1]
-    # except:
-    #   print("Reshape failed. Attempting single channel")
-    #   total_number_of_frames = int(np.size(frames) / (width * height))
-    #   print("n_frames: " + str(total_number_of_frames))
-    #   frames = np.reshape(frames, (total_number_of_frames, width, height))
-    # frames = np.asarray(frames, dtype=dat_type)
-    # return frames
-
+    self.import_files(filenames)
 
 class MyPlugin:
   def __init__(self, project):
@@ -194,7 +152,6 @@ class MyPlugin:
 
   def run(self):
     pass
-
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)

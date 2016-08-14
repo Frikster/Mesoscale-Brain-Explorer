@@ -69,7 +69,7 @@ class Widget(QWidget):
     self.roi_list.setModel(model)
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
-    rois = [f['name'] for f in project.files if f['type'] == 'roi']
+    rois = [f['path'] for f in project.files if f['type'] == 'roi']
     for roi in rois: 
       model.appendRoi(roi)
     self.roi_list.setCurrentIndex(model.index(0, 0))
@@ -129,7 +129,9 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    frame = fileloader.load_reference_frame(self.video_path)
+    f = [f for f in self.project.files if f['path'] == self.video_path]
+    assert(len(f) == 1)
+    frame = fileloader.load_reference_frame(f[0])
     self.view.show(frame)
 
   def selected_roi_changed(self, selection):
@@ -185,7 +187,7 @@ class Widget(QWidget):
     # todo: make videos selectable.
     fileName = videos[0]['path']
 
-    frames = fileloader.load_file(fileName)
+    frames = fileloader.load_file(videos[0])
     # Return if there is no image or rois in view
     if self.view.vb.img == None or len(self.view.vb.rois) == 0:
       print("there is no image or rois in view ")
