@@ -55,7 +55,6 @@ class Widget(QWidget):
 
     self.rois_in_view = {}
 
-    #todo: Explain QStandardItemModel and selectionChanged to me please
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_video_changed)
@@ -105,11 +104,6 @@ class Widget(QWidget):
     vbox.addWidget(qtutil.separator())
 
     vbox2 = QVBoxLayout()
-    hbox2 = QHBoxLayout()
-    #hbox2.addWidget(QLabel('ROI name:'))
-    #self.edit = QLineEdit()
-    #hbox2.addWidget(self.edit)
-    #vbox2.addLayout(hbox2)
     pb = QPushButton('Save')
     pb.clicked.connect(self.save_roi)
     vbox2.addWidget(pb)
@@ -146,9 +140,8 @@ class Widget(QWidget):
       roi = self.rois_in_view[roi_path]
       self.view.vb.selectROI(roi)
     else:
-      self.view.vb.loadROI([roi_path])
+      self.view.vb.loadROI([self.project.path+'/'+roi_path+'.roi'])
     self.update_rois_in_view()
-
 
   def update_rois_in_view(self):
     rois = self.view.vb.rois
@@ -166,7 +159,6 @@ class Widget(QWidget):
         continue
       self.roi_list.model().appendRow(QStandardItem(f['path']))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
-    #self.rois_in_view = self.view.vb.rois[:]
 
   def save_roi(self):
     name = str(uuid.uuid4())
