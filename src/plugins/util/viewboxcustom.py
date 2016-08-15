@@ -61,6 +61,7 @@ class MultiRoiViewBox(pg.ViewBox):
     sigROIchanged = QtCore.Signal(object)
     clicked = QtCore.pyqtSignal(float, float)
     hovering = QtCore.pyqtSignal(float, float)
+    roi_placed = QtCore.pyqtSignal(PolyLineROIcustom)
 
     def __init__(self, parent=None, border=None, lockAspect=False,
                  enableMouse=True, invertY=False, enableMenu=True, name=None):
@@ -108,6 +109,7 @@ class MultiRoiViewBox(pg.ViewBox):
     def mouseClickEvent(self, ev):
         if self.drawROImode:
             ev.accept()
+            print('mouseClickEvent->drawPolygonRoi')
             self.drawPolygonRoi(ev)            
         elif ev.button() == QtCore.Qt.RightButton and self.menuEnabled():
             ev.accept()
@@ -137,6 +139,7 @@ class MultiRoiViewBox(pg.ViewBox):
 
     def addPolyRoiRequest(self):
         """Function to add a Polygon ROI"""
+        print('addPolyRoiRequest')
         self.drawROImode = True
         for roi in self.rois:        
            roi.setActive(False)           
@@ -146,14 +149,15 @@ class MultiRoiViewBox(pg.ViewBox):
         self.drawingROI  = None   # No roi being drawn, so set to None
         for r in self.rois:
             r.setActive(True)
+        print('endPolyRoiRequest')
             
     def addPolyLineROI(self, handlePositions):
-        roi = PolyLineROIcustom(handlePositions=handlePositions,removable=True)
-        roi.setName('ROI-%i'% self.getROIid())
+        roi = PolyLineROIcustom(handlePositions=handlePositions, removable=True)
+        #roi.setName('ROI-%i'% self.getROIid())
         self.addItem(roi)                      # Add roi to viewbox
         self.rois.append(roi)                  # Add to list of rois
         self.selectROI(roi)
-        self.sortROIs()  
+        #self.sortROIs()
         self.setCurrentROIindex(roi)  
         roi.translatable = True
         #roi.setAcceptedMouseButtons(QtCore.Qt.LeftButton or QtCore.Qt.RightButton)        
@@ -175,9 +179,9 @@ class MultiRoiViewBox(pg.ViewBox):
         pos = self.mapSceneToView(ev.scenePos())
         
         if ev.button() == QtCore.Qt.LeftButton:
-            if roi is None:            
+            if roi is None:
                 roi = PolyLineROIcustom(removable = False)
-                roi.setName('ROI-%i'% self.getROIid()) # Do this before self.selectROIs(roi)
+                #roi.setName('ROI-%i'% self.getROIid()) # Do this before self.selectROIs(roi)
                 self.drawingROI = roi                  
                 roi.addFreeHandle(pos)
                 roi.addFreeHandle(pos)
@@ -223,7 +227,7 @@ class MultiRoiViewBox(pg.ViewBox):
             h.scene().sigMouseMoved.disconnect()  
             roi.removeHandle(h)
             # Add segment to close ROI
-            roi.addSegment(roi.handles[-1]['item'],roi.handles[0]['item'])
+            roi.addSegment(roi.handles[-1]['item'], roi.handles[0]['item'])
             # Setup signals
             roi.sigClicked.connect(self.selectROI)
             roi.sigRegionChanged.connect(self.roiChanged)
@@ -238,9 +242,10 @@ class MultiRoiViewBox(pg.ViewBox):
             for h in roi.handles:
                 h['item'].setSelectable(True)
             # Exit ROI drawing mode
-            self.endPolyRoiRequest()                
+            self.endPolyRoiRequest()
+            self.roi_placed.emit(roi)
                 
-    def getMenu(self,event):
+    def getMenu(self, event):
         if self.menu is None:
             self.menu          = QtGui.QMenu()
             # Submenu to add ROIs
@@ -343,7 +348,7 @@ class MultiRoiViewBox(pg.ViewBox):
             size = [xysize, xysize]
         roi = RectROIcustom(pos, size, angle, removable=True, pen=(255, 0, 0))
         # Setup signals
-        roi.setName('ROI-%i' % self.getROIid())
+        #roi.setName('ROI-%i' % self.getROIid())
         roi.sigClicked.connect(self.selectROI)
         roi.sigRegionChanged.connect(self.roiChanged)
         roi.sigRemoveRequested.connect(self.removeROI)
@@ -363,19 +368,22 @@ class MultiRoiViewBox(pg.ViewBox):
             self.rois.sort()  
         else:
             roiCurrent = self.rois[self.currentROIindex]
-            self.rois.sort()  
+            #self.rois.sort()
             self.currentROIindex = self.rois.index(roiCurrent)
     
     def getROIid(self):
         """ Get available and unique number for ROI name """
-        nums = [ int(roi.name.split('-')[-1]) for roi in self.rois if roi.name!=None ]
+        if not self.rois:
+            return 1
+        parseable_rois = [roi for roi in self.rois if '-' in roi.name]
+        nums = [(roi.name.split('-')[-1]) for roi in parseable_rois if roi.name != None ]
         nid  = 1
-        if len(nums)>0: 
+        if len(nums)>0:
             while(True):
                 if nid not in nums: break
                 nid+=1
         return nid
-        
+
     def copyROI(self,offset=0.0):
         """ Copy current ROI. Offset from original for visibility """
         if self.currentROIindex!=None:
@@ -424,6 +432,7 @@ class MultiRoiViewBox(pg.ViewBox):
                     hps   = [[hp.x(),hp.y()] for hp in hps]
                     roiState['type']='PolyLineROIcustom'    
                     roiState['handlePositions'] = hps
+                    roiState['name'] = roi.name
                 pickle.dump( roiState, open( fileName, "wb" ) )
                           
     def loadROI(self, fileNames = None):
@@ -435,11 +444,11 @@ class MultiRoiViewBox(pg.ViewBox):
         if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
         if len(fileNames)>0:
             for fileName in fileNames:
-                if fileName!='':
-                    roiState = pickle.load(open(fileName, "rb") )
-                    if roiState['type']=='RectROIcustom':
-                        self.addROI(roiState['pos'],roiState['size'],roiState['angle'])
-                    elif roiState['type']=='PolyLineROIcustom':
+                if fileName != '':
+                    roiState = pickle.load(open(fileName, "rb"))
+                    if roiState['type'] == 'RectROIcustom':
+                        self.addROI(roiState['pos'], roiState['size'], roiState['angle'])
+                    elif roiState['type'] == 'PolyLineROIcustom':
                         self.addPolyLineROI(roiState['handlePositions'])
 
     def removeROI(self):
@@ -450,7 +459,7 @@ class MultiRoiViewBox(pg.ViewBox):
             self.removeItem(roi)  
             self.setCurrentROIindex(None) 
 
-    def toggleViewMode(self,isChecked):
+    def toggleViewMode(self, isChecked):
         """ Toggles between NORMAL (Black/White) and DEXA mode (colour) """
         if isChecked: viewMode = self.DEXA
         else:         viewMode = self.NORMAL

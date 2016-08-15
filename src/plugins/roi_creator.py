@@ -7,6 +7,7 @@ import numpy as np
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4 import QtCore
 
 from util.mygraphicsview import MyGraphicsView
 from util import fileloader
@@ -24,6 +25,8 @@ class RoiItemModel(QAbstractListModel):
 
   def appendRoi(self, name):
     self.rois.append(name)
+    row = len(self.rois) - 1
+    self.dataChanged.emit(self.index(row), self.index(row))
 
   def rowCount(self, parent):
     return len(self.rois)
@@ -53,7 +56,7 @@ class Widget(QWidget):
     self.project = project
     self.setup_ui()
 
-    self.rois_in_view = {}
+    #self.rois_in_view = {}
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
@@ -68,12 +71,16 @@ class Widget(QWidget):
     model.textChanged.connect(self.roi_item_changed)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    # A flag to see whether selected_roi_changed is being entered for the first time
+    self.selected_roi_changed_flag = 0
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
-    rois = [f['path'] for f in project.files if f['type'] == 'roi']
-    for roi in rois: 
-      model.appendRoi(roi)
+    roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
+    for roi_name in roi_names:
+      model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
+
+    self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -105,10 +112,6 @@ class Widget(QWidget):
     vbox.addWidget(qtutil.separator())
 
     vbox2 = QVBoxLayout()
-    pb = QPushButton('Save')
-    pb.clicked.connect(self.save_roi)
-    #pb.clicked.connect(self.refresh_roi_list)
-    vbox2.addWidget(pb)
     w = QWidget()
     w.setLayout(vbox2)
     vbox.addWidget(w)
@@ -135,40 +138,47 @@ class Widget(QWidget):
     self.view.show(frame)
 
   def selected_roi_changed(self, selection):
-    if not selection.indexes():
+    if self.selected_roi_changed_flag == 0:
+      self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
       return
-    roi_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    if roi_path in self.rois_in_view.keys():
-      roi = self.rois_in_view[roi_path]
-      self.view.vb.selectROI(roi)
-    else:
-      self.view.vb.loadROI([roi_path])
-    self.update_rois_in_view()
+    if not selection.indexes() or self.view.vb.drawROImode:
+      return
 
-  def update_rois_in_view(self):
-    rois = self.view.vb.rois
-    for roi in rois:
-      if roi not in self.rois_in_view.items():
+    # Remove all ROI's
+    for roi in self.view.vb.rois:
+      if not roi.isSelected:
         self.view.vb.selectROI(roi)
-        self.view.vb.removeROI()
-        #key = (key for key, value in self.rois_in_view.items() if value == roi).next()
-        #del self.rois_in_view[key]
+      self.view.vb.removeROI()
 
-  def create_roi(self):
-    self.view.vb.addPolyRoiRequest()
-    for f in self.project.files:
-      if f['type'] != 'roi':
-        continue
-      self.roi_list.model().appendRoi(QStandardItem(f['path']))
-    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
+    rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    # todo: This part unfinished
+    rois_selected = [rois_selected]
+    rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+    rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+    for roi_to_add in rois_to_add:
+      self.view.vb.loadROI([self.project.path+'/'+roi_to_add+'.roi'])
 
-  # def refresh_roi_list(self):
-  #     rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
-  #     for roi in rois:
-  #       self.roi_list.model().appendRoi(roi)
 
-  def save_roi(self):
+      # rois = self.view.vb.rois
+      # for roi in rois:
+      #   if roi not in self.rois_in_view.items():
+      #     self.view.vb.selectROI(roi)
+      #     self.view.vb.removeROI()
+##
+    # if roi_path in self.rois_in_view.keys():
+    #   roi = self.rois_in_view[roi_path]
+    #   self.view.vb.selectROI(roi)
+    # else:
+    #   self.view.vb.loadROI([roi_path])
+    # self.update_rois_in_view()
+
+  #@QtCore.pyqtSlot(view.PolyLineROIcustom)
+  def update_roi_names(self, roi):
+    if self.view.vb.drawROImode:
+      return
+
     name = str(uuid.uuid4())
+    roi.setName(name)
     if not name:
       qtutil.critical('Choose a name.')
     elif name in [f['name'] for f in self.project.files if 'name' in f]:
@@ -183,14 +193,24 @@ class Widget(QWidget):
         'source_video': self.video_path,
         'name': name
       })
-      self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
-      ### self.roi_list
+      # if self.view.vb.currentROIindex != None:
+      #  self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
+      ## self.roi_list
       self.project.save()
 
-      rois = [f['path'] for f in self.project.files if f['type'] == 'roi']
-      for roi in rois:
-       self.roi_list.model().appendRoi(roi)
-      #self.widget = Widget(self.project)
+      roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+      for roi_name in roi_names:
+        if roi_name not in self.roi_list.model().rois:
+          self.roi_list.model().appendRoi(roi_name)
+
+  def create_roi(self):
+    self.view.vb.addPolyRoiRequest()
+    # self.update_rois()
+    # for f in self.project.files:
+    #   if f['type'] != 'roi':
+    #     continue
+    #   self.roi_list.model().appendRoi(QStandardItem(f['path']))
+    # self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
   def crop_ROI(self):
     videos = [f for f in self.project.files if f['type'] == 'video']
