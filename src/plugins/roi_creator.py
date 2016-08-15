@@ -44,7 +44,12 @@ class RoiItemModel(QAbstractListModel):
 
   def flags(self, index):
     return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
-    
+
+  def removeRow(self, roi_to_remove):
+    for roi in self.rois:
+      if roi == roi_to_remove:
+        del roi
+        break
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -105,6 +110,9 @@ class Widget(QWidget):
     pb = QPushButton('Crop poly ROI')
     pb.clicked.connect(self.crop_ROI)
     vbox.addWidget(pb)
+    pb = QPushButton('Delete selected ROIs')
+    pb.clicked.connect(self.delete_roi)
+    vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
 
@@ -150,7 +158,6 @@ class Widget(QWidget):
     #rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-    # todo: This part unfinished
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
@@ -206,8 +213,34 @@ class Widget(QWidget):
     self.view.vb.addPolyRoiRequest()
 
   def delete_roi(self):
-    #todo: Implement
-    return
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+                     for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+    if rois_selected == None:
+      return
+    rois_dict = [self.project.files[x] for x in range(len(self.project.files))
+                 if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
+    self.project.files = [self.project.files[x] for x in range(len(self.project.files))
+                          if self.project.files[x] not in rois_dict]
+    self.project.save()
+    self.view.vb.setCurrentROIindex(None)
+
+    for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
+      self.roi_list.model().removeRow(roi_to_remove)
+
+    # for roi_name in roi_names:
+    #   if roi_name not in self.roi_list.model().rois:
+    #     self.roi_list.model().appendRoi(roi_name)
+
+    #self.roi_list
+
+    #for roi in rois_selected:
+    #  if not roi.isSelected:
+    #    self.view.vb.selectROI(roi)
+    #  self.view.vb.removeROI()
+
+    # self.view.vb.removeROI()
+    # self.view.vb
+    # self.project [f['name'] for f in self.project.files if f['type'] == 'roi']
 
   def crop_ROI(self):
     frames = fileloader.load_file(self.video_path)
