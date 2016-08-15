@@ -12,7 +12,7 @@ from PyQt4.QtCore import *
 sys.path.append('..')
 import qtutil
 
-from util import fileloader
+from util import fileloader, fileconverter
 
 class NotConvertedError(Exception):
   pass
@@ -141,7 +141,16 @@ class Widget(QWidget):
     return dialog.ret_filename      
 
   def convert_tif(self, filename):
-    assert(False)
+    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+    path = os.path.join(self.project.path, path)
+    progress = QProgressDialog('Converting tif to npy...', 'Abort', 0, 100, self)
+    progress.setAutoClose(True)
+    progress.setMinimumDuration(0)
+    progress.setValue(0)
+    QApplication.processEvents()
+    fileconverter.tif2npy(filename, path, progress.setValue)
+    ret_filename = path
+    return ret_filename      
 
   def to_npy(self, filename):
     if filename.endswith('.raw'):
