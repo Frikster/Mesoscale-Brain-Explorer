@@ -81,7 +81,6 @@ class Widget(QWidget):
     for roi_name in roi_names:
       model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-
     self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def roi_item_edited(self, item):
@@ -226,21 +225,6 @@ class Widget(QWidget):
 
     for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
       self.roi_list.model().removeRow(roi_to_remove)
-
-    # for roi_name in roi_names:
-    #   if roi_name not in self.roi_list.model().rois:
-    #     self.roi_list.model().appendRoi(roi_name)
-
-    #self.roi_list
-
-    #for roi in rois_selected:
-    #  if not roi.isSelected:
-    #    self.view.vb.selectROI(roi)
-    #  self.view.vb.removeROI()
-
-    # self.view.vb.removeROI()
-    # self.view.vb
-    # self.project [f['name'] for f in self.project.files if f['type'] == 'roi']
 
   def crop_ROI(self):
     frames = fileloader.load_file(self.video_path)
