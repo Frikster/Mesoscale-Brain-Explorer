@@ -3,18 +3,11 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from qtutil import PandasModel
 import pandas as pd
 import time
 
 import util.displacement_jeff as djeff
-
-class TableModel(PandasModel):
-  def __init__(self, df, parent=None):
-    super(TableModel, self).__init__(df, parent)
-  
-  def get_path(self, index):
-    return self._data['path'][index.row()]
+from util.qt import PandasModel, FileTableModel
 
 class TableView(QTableView):
   def __init__(self, parent=None):
@@ -51,7 +44,7 @@ class Widget(QWidget):
 
   def update_tables(self):
     videos = [f for f in self.project.files if f['type'] == 'video']
-    self.table1.setModel(TableModel(pd.DataFrame(videos)))
+    self.table1.setModel(FileTableModel(videos))
 
     videos = [f for f in self.project.files if 'align' in f['manipulations']]
     self.table2.setModel(PandasModel(pd.DataFrame(videos)))
