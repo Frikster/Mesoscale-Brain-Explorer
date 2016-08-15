@@ -301,7 +301,7 @@ class MultiRoiViewBox(pg.ViewBox):
     def selectROI(self, roi):
         """ Selection control of ROIs """
         # If no ROI is currently selected (currentROIindex is None), select roi
-        if self.currentROIindex==None:
+        if self.currentROIindex == None:
             roi.setSelected(True)
             self.setCurrentROIindex(roi)
         # If an ROI is already selected...
