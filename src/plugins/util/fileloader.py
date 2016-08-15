@@ -5,26 +5,6 @@ import numpy as np
 class UnknownFileFormatError(Exception):
   pass
 
-def load_raw(filename, dat_type, width, height, channel_no):
-  dat_type = np.dtype(dat_type)
-
-  with open(filename, "rb") as file:
-    frames = np.fromfile(file, dtype=dat_type)
-
-  total_number_of_frames = int(np.size(frames) / (width * height * channel_no))
-  print("n_frames: " + str(total_number_of_frames))
-  frames = np.reshape(frames, (total_number_of_frames, width, height, channel_no))
-
-  #frames = np.reshape(frames, (total_number_of_frames, width, height))
-  print("frames.shape PRE:"+str(frames.shape))
-  # retrieve only one channel:
-  # todo: make user definable
-  frames = frames[:, :, :, 1]
-  print("frames.shape POST:"+str(frames.shape))
-
-  frames = np.asarray(frames, dtype=dat_type)
-  return frames
-
 def load_npy(filename):
   frames = np.load(filename)
   frames[np.isnan(frames)] = 0

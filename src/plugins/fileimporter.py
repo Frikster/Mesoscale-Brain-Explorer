@@ -68,9 +68,6 @@ class RawConverterDialog(QDialog):
     vbox.addLayout(grid)
     vbox.addStretch()
 
-    self.status = QLabel()
-    self.set_status('-')
-    vbox.addWidget(self.status)
     pb = QPushButton('&Convert')
     pb.clicked.connect(self.convert_clicked)
     vbox.addWidget(pb)
@@ -78,27 +75,30 @@ class RawConverterDialog(QDialog):
     self.setLayout(vbox)
     self.resize(400, 220)
 
-  def set_status(self, msg):
-    self.status.setText('Convert status: ' + msg)
-    QApplication.processEvents()
-
   def convert_clicked(self):
     dtype = str(self.cb_dtype.currentText())
     width = int(self.sb_width.value())
     height = int(self.sb_height.value())
-    channel = int(self.sb_channel.value())
-    self.set_status('Loading raw...')
+    channels = int(self.sb_channel.value())
+    path = os.path.splitext(os.path.basename(self.filename))[0] + '.npy'
+    path = os.path.join(self.project.path, path)
+
+    progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
+    progress.setAutoClose(True)
+    progress.setMinimumDuration(0)
+    progress.setValue(0)
+
+    def callback(value):
+      progress.setValue(int(value * 100))
+      QApplication.processEvents()
+
     try:
-      frames = fileloader.load_raw(self.filename, dtype, width, height, channel)
+      fileconverter.raw2npy(self.filename, path, dtype, width, height,
+        channels, callback)
     except:
-      qtutil.critical('Loading raw file failed:\n' + traceback.format_exc())
-      self.set_status('-')
+      qtutil.critical('Converting raw to npy failed.')
+      progress.close()
     else:
-      self.set_status('Writing to npy...')
-      path = os.path.splitext(os.path.basename(self.filename))[0] + '.npy'
-      path = os.path.join(self.project.path, path)
-      np.save(path, frames)
-      self.set_status('Done')
       self.ret_filename = path
       self.close()
 
@@ -143,13 +143,23 @@ class Widget(QWidget):
   def convert_tif(self, filename):
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
+
     progress = QProgressDialog('Converting tif to npy...', 'Abort', 0, 100, self)
     progress.setAutoClose(True)
     progress.setMinimumDuration(0)
     progress.setValue(0)
-    QApplication.processEvents()
-    fileconverter.tif2npy(filename, path, progress.setValue)
-    ret_filename = path
+
+    def callback(value):
+      progress.setValue(int(value * 100))
+      QApplication.processEvents()
+
+    try:
+      fileconverter.tif2npy(filename, path, callback)
+    except:
+      qtutil.critical('Converting raw to npy failed.')
+      progress.close()
+    else:
+      ret_filename = path
     return ret_filename      
 
   def to_npy(self, filename):
