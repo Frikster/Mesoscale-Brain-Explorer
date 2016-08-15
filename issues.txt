@@ -1,0 +1,24 @@
+Known problems
+==============
+
+General
+-------
+* Removing all plugins from project causes error
+* Move commonly used widgets and models to util.qt
+* Tweak progress dialogs to behave nicely
+* Changing or moving the project file, the project directory
+  and its contents might cause error
+
+Data management
+---------------
+* Allow to remove or detach files from project
+* Manage 'manipulations' correctly
+
+alignment + concat
+------------------
+* Add error checks especially considering
+  conflicting array shapes
+
+Memory-efficient processing
+---------------------------
+* Change all plugins to process efficiently
