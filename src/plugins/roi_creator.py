@@ -123,19 +123,17 @@ class Widget(QWidget):
     hbox.setStretch(1, 0)
     self.setLayout(hbox)
 
-  def roi_item_changed(self, prev_name, new_name):
-    for roi in self.view.vb.rois:
-      if roi.name == prev_name:
-        roi.name = new_name
-        self.update_roi_names(roi, name=new_name)
-    print(prev_name, new_name)
-    
+  def remove_all_rois(self):
+    rois = self.view.vb.rois[:]
+    for roi in rois:
+      if not roi.isSelected:
+        self.view.vb.selectROI(roi)
+      self.view.vb.removeROI()
 
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
@@ -146,12 +144,7 @@ class Widget(QWidget):
     if not selection.indexes() or self.view.vb.drawROImode:
       return
 
-    # Remove all ROI's
-    rois = self.view.vb.rois[:]
-    for roi in rois:
-      if not roi.isSelected:
-        self.view.vb.selectROI(roi)
-      self.view.vb.removeROI()
+    self.remove_all_rois()
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
     #rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
@@ -163,12 +156,30 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path+'/'+roi_to_add+'.roi'])
 
-  def update_roi_names(self, roi, name=''):
+  def roi_item_changed(self, prev_name, new_name):
+    #todo: Why not pass the paramaters as strings? Is it important to have them in this format?
+    prev_name = str(prev_name)
+    new_name = str(new_name)
+    if str(new_name) == '':
+      qtutil.critical('Choose a name.')
+    elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
+      qtutil.critical('ROI name taken.')
+    self.remove_all_rois()
+    self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
+    roi = self.view.vb.rois[0]
+    roi.setName(str(new_name))
+    for i in range(len(self.project.files)):
+      if self.project.files[i]['path'].endswith(str(prev_name)+'.roi'):
+        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
+        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
+        self.project.files[i]['name'] = str(new_name)
+    self.project.save()
+
+  def update_roi_names(self, roi):
     if self.view.vb.drawROImode:
       return
 
-    if name == '':
-      name = str(uuid.uuid4())
+    name = str(uuid.uuid4())
     if not name:
       qtutil.critical('Choose a name.')
     elif name in [f['name'] for f in self.project.files if 'name' in f]:
@@ -194,11 +205,12 @@ class Widget(QWidget):
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
 
+  def delete_roi(self):
+    #todo: Implement
+    return
+
   def crop_ROI(self):
-    videos = [f for f in self.project.files if f['type'] == 'video']
-    # todo: make videos selectable.
-    fileName = videos[0]['path']
-    frames = fileloader.load_file(videos[0]['path'])
+    frames = fileloader.load_file(self.video_path)
     # Return if there is no image or rois in view
     if self.view.vb.img == None or len(self.view.vb.rois) == 0:
       print("there is no image or rois in view ")
@@ -234,7 +246,7 @@ class Widget(QWidget):
       'path': path,
       'type': 'video',
       'source_video': self.video_path,
-      'manipulations': ['gsr']
+      'manipulations': ['crop']
     })
 
 class MyPlugin:
