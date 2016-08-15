@@ -52,14 +52,8 @@ class Widget(QWidget):
       'manipulations': 'concat',
       'source': filenames
     })
+    self.project.save()
     self.update_tables()
-
-  def do_concat(self):
-
-    concat_frames = np.concatenate(vids.values())
-    np.save(os.path.expanduser('~/Downloads/')+"concatenated", concat_frames)
-    #concat_frames.astype(dtype_string).tofile(os.path.expanduser('~/Downloads/')+"concatenated.raw")
-    print("concatenated file saved to "+os.path.expanduser('~/Downloads/')+"concatenated")
 
 class MyPlugin:
   def __init__(self, project):
