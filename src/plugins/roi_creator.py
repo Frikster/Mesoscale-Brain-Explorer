@@ -127,6 +127,10 @@ class Widget(QWidget):
     self.setLayout(hbox)
 
   def roi_item_changed(self, prev_name, new_name):
+    for roi in self.view.vb.rois:
+      if roi.name == prev_name:
+        roi.name = new_name
+        self.update_roi_names(roi, name=new_name)
     print(prev_name, new_name)
     
 
@@ -134,6 +138,7 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
@@ -145,14 +150,18 @@ class Widget(QWidget):
       return
 
     # Remove all ROI's
-    for roi in self.view.vb.rois:
+    rois = self.view.vb.rois[:]
+    for roi in rois:
       if not roi.isSelected:
         self.view.vb.selectROI(roi)
       self.view.vb.removeROI()
 
-    rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    # todo: re-explain how you can figure out to go from commented line to uncommented line
+    #rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+                     for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+    #rois_selected = self.roi_list.selectionModel().selectedIndexes()
     # todo: This part unfinished
-    rois_selected = [rois_selected]
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
@@ -173,17 +182,18 @@ class Widget(QWidget):
     # self.update_rois_in_view()
 
   #@QtCore.pyqtSlot(view.PolyLineROIcustom)
-  def update_roi_names(self, roi):
+  def update_roi_names(self, roi, name=''):
     if self.view.vb.drawROImode:
       return
 
-    name = str(uuid.uuid4())
-    roi.setName(name)
+    if name == '':
+      name = str(uuid.uuid4())
     if not name:
       qtutil.critical('Choose a name.')
     elif name in [f['name'] for f in self.project.files if 'name' in f]:
       qtutil.critical('ROI name taken.')
     else:
+      roi.setName(name)
       path = os.path.join(self.project.path, name + '.roi')
       self.view.vb.saveROI(path)
       # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
