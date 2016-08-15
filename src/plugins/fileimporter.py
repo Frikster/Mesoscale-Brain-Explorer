@@ -185,7 +185,8 @@ class Widget(QWidget):
 
     self.project.files.append({
       'path': filename,
-      'type': 'video'
+      'type': 'video',
+      'manipulations': []
     })
     self.project.save()
     return filename

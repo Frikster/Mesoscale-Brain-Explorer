@@ -3,57 +3,92 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+from qtutil import PandasModel
+import pandas as pd
+import time
+
+import util.displacement_jeff as djeff
+
+class TableModel(PandasModel):
+  def __init__(self, df, parent=None):
+    super(TableModel, self).__init__(df, parent)
+  
+  def get_path(self, index):
+    return self._data['path'][index.row()]
+
+class TableView(QTableView):
+  def __init__(self, parent=None):
+    super(TableView, self).__init__(parent)
+
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
+    if not project:
+      return
+
     self.project = project
+    self.setup_ui()
+  
+    self.update_tables()
 
-  def do_alignment(self):
-    reference_for_align = str(self.sidePanel.imageFileList.currentItem().text())
-    if reference_for_align == '':
-        return
-    width = int(self.sidePanel.vidWidthValue.text())
-    height = int(self.sidePanel.vidHeightValue.text())
-    dtype_string = str(self.sidePanel.dtypeValue.text())
-    frame_ref = int(self.sidePanel.frameRefNameValue.text())
+    for table in self.table1, self.table2:
+      table.verticalHeader().hide()
+      table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+      table.setSelectionBehavior(QAbstractItemView.SelectRows)
+    self.table1.setSelectionMode(QAbstractItemView.MultiSelection)
+  
+  def setup_ui(self):
+    vbox = QVBoxLayout()
+    self.table1 = TableView()
+    vbox.addWidget(self.table1)
+    pb = QPushButton('&Align')
+    pb.clicked.connect(self.align_clicked)
+    vbox.addWidget(pb)
+    self.table2 = TableView()
+    vbox.addWidget(self.table2)
+    self.setLayout(vbox)
 
-    # Get Filenames
-    fileNames = range(0, self.sidePanel.imageFileList.__len__())
-    for i in range(0, self.sidePanel.imageFileList.__len__()):
-        fileNames[i] = str(self.sidePanel.imageFileList.item(i).text())
+  def update_tables(self):
+    videos = [f for f in self.project.files if f['type'] == 'video']
+    self.table1.setModel(TableModel(pd.DataFrame(videos)))
 
-    # Fix for PySide. PySide doesn't support QStringList types. PyQt4 getOpenFileNames returns a QStringList, whereas PySide
-    # returns a type (the first entry being the list of filenames).
-    if isinstance(fileNames, types.TupleType): fileNames = fileNames[0]
-    if hasattr(QtCore, 'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
+    videos = [f for f in self.project.files if 'align' in f['manipulations']]
+    self.table2.setModel(PandasModel(pd.DataFrame(videos)))
 
-    # Get a dictionary of all videos
-    newVids = {}
-    if len(fileNames)>0:
-        for fileName in fileNames:
-            if fileName!='':
-                frames = fj.load_frames(str(fileName), width, height, dtype_string)
-                newVids[str(fileName)] = frames
+  def align_clicked(self):
+    selection = self.table1.selectionModel().selectedRows()
+    filenames = [self.table1.model().get_path(index) for index in selection]
+    if not filenames:
+      return
 
-    # Do alignments
-    print("Doing alignments...")
-    if (self.lp == None):
-        self.lp = dj.get_distance_var(fileNames, frame_ref, newVids)
-    print('Working on this file: ' + reference_for_align)
+    progress = QProgressDialog('Aligning file...', 'Abort', 0, 100, self)
+    progress.setAutoClose(True)
+    progress.setMinimumDuration(0)
 
-    # frames = dj.get_frames(reference_for_align, width, height) # This might work better if you have weird error: frames = dj.get_green_frames(str(self.lof[raw_file_to_align_ind]),width,height)
-    for ind in range(len(self.lp)):
-        frames = newVids[fileNames[ind]]
-        frames = dj.shift_frames(frames, self.lp[ind])
-        np.save(os.path.expanduser('~/Downloads/') + "aligned_" + str(ind), frames)
-        #frames.astype(dtype_string).tofile(os.path.expanduser('~/Downloads/') + "aligned_" + str(ind) + ".raw")
-        print("Alignment saved to "+os.path.expanduser('~/Downloads/') + "aligned_" + str(ind))
+    def callback(x):
+      progress.setValue(x * 100)
+      QApplication.processEvents()
+      #time.sleep(0.01)
+
+    filenames = djeff.align_videos(filenames, callback)
+
+    for filename in filenames:
+      if filename in [f['path'] for f in self.project.files]:
+        continue
+      f = {
+        'path': filename,
+        'type': 'video',
+        'manipulations': 'align'
+      }
+      self.project.files.append(f)
+    self.project.save()
+    self.update_tables()
 
 class MyPlugin:
   def __init__(self, project):
     self.name = 'Align images'
-    self.widget = QWidget(project)
+    self.widget = Widget(project)
   
   def run(self):
     pass
