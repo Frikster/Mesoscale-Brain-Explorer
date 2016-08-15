@@ -7,7 +7,6 @@ import numpy as np
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from PyQt4 import QtCore
 
 from util.mygraphicsview import MyGraphicsView
 from util import fileloader
@@ -55,8 +54,6 @@ class Widget(QWidget):
       return
     self.project = project
     self.setup_ui()
-
-    #self.rois_in_view = {}
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
@@ -160,28 +157,12 @@ class Widget(QWidget):
     #rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-    #rois_selected = self.roi_list.selectionModel().selectedIndexes()
     # todo: This part unfinished
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path+'/'+roi_to_add+'.roi'])
 
-
-      # rois = self.view.vb.rois
-      # for roi in rois:
-      #   if roi not in self.rois_in_view.items():
-      #     self.view.vb.selectROI(roi)
-      #     self.view.vb.removeROI()
-##
-    # if roi_path in self.rois_in_view.keys():
-    #   roi = self.rois_in_view[roi_path]
-    #   self.view.vb.selectROI(roi)
-    # else:
-    #   self.view.vb.loadROI([roi_path])
-    # self.update_rois_in_view()
-
-  #@QtCore.pyqtSlot(view.PolyLineROIcustom)
   def update_roi_names(self, roi, name=''):
     if self.view.vb.drawROImode:
       return
@@ -203,9 +184,6 @@ class Widget(QWidget):
         'source_video': self.video_path,
         'name': name
       })
-      # if self.view.vb.currentROIindex != None:
-      #  self.rois_in_view[self.video_path] = self.view.vb.rois[self.view.vb.currentROIindex]
-      ## self.roi_list
       self.project.save()
 
       roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
@@ -215,18 +193,11 @@ class Widget(QWidget):
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()
-    # self.update_rois()
-    # for f in self.project.files:
-    #   if f['type'] != 'roi':
-    #     continue
-    #   self.roi_list.model().appendRoi(QStandardItem(f['path']))
-    # self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
   def crop_ROI(self):
     videos = [f for f in self.project.files if f['type'] == 'video']
     # todo: make videos selectable.
     fileName = videos[0]['path']
-
     frames = fileloader.load_file(videos[0]['path'])
     # Return if there is no image or rois in view
     if self.view.vb.img == None or len(self.view.vb.rois) == 0:
