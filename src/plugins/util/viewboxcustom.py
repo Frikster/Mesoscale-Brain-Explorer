@@ -109,7 +109,7 @@ class MultiRoiViewBox(pg.ViewBox):
     def mouseClickEvent(self, ev):
         if self.drawROImode:
             ev.accept()
-            print('mouseClickEvent->drawPolygonRoi')
+            #print('mouseClickEvent->drawPolygonRoi')
             self.drawPolygonRoi(ev)            
         elif ev.button() == QtCore.Qt.RightButton and self.menuEnabled():
             ev.accept()
@@ -139,7 +139,7 @@ class MultiRoiViewBox(pg.ViewBox):
 
     def addPolyRoiRequest(self):
         """Function to add a Polygon ROI"""
-        print('addPolyRoiRequest')
+        #print('addPolyRoiRequest')
         self.drawROImode = True
         for roi in self.rois:        
            roi.setActive(False)           
@@ -149,7 +149,7 @@ class MultiRoiViewBox(pg.ViewBox):
         self.drawingROI  = None   # No roi being drawn, so set to None
         for r in self.rois:
             r.setActive(True)
-        print('endPolyRoiRequest')
+        #print('endPolyRoiRequest')
             
     def addPolyLineROI(self, handlePositions):
         roi = PolyLineROIcustom(handlePositions=handlePositions, removable=True)
