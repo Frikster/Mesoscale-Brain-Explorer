@@ -35,6 +35,13 @@ def calc_spc(video_path, x, y, progress):
 
   # transorm self.image into rgb
   spc_map_color = plt.cm.jet(spc_map) * 255
+
+  spc_map_color = spc_map_color.swapaxes(0, 1)
+  if spc_map_color.ndim == 2:
+    spc_map_color = spc_map_color[:, ::-1]
+  elif spc_map_color.ndim == 3:
+    spc_map_color = spc_map_color[:, ::-1, :]
+
   return spc_map_color
 
 class InfoWidget(QFrame):
