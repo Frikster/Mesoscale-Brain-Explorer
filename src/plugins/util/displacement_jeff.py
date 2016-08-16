@@ -136,8 +136,8 @@ def align_videos(filenames, progress_callback):
   for i, pos in enumerate(positions):
     frames = fileloader.load_file(filenames[i])
     frames = shift_frames(frames, pos, progress_callback)
-    path = os.path.join(os.path.dirname(filename), 'aligned_' +\
-      os.path.basename(filename))
+    path = os.path.join(os.path.dirname(filenames[i]), 'aligned_' +\
+      os.path.basename(filenames[i]))
     np.save(path, frames)
     ret_filenames.append(path)
   progress_callback(1)
