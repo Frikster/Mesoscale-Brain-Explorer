@@ -33,7 +33,9 @@ def calc_spc(video_path, x, y, progress):
   spc_map[y+1, x-1] = 1
   spc_map[y-1, x+1] = 1
 
-  # transorm self.image into rgb
+  return spc_map
+
+def colorize_spc(spc_map):
   spc_map_color = plt.cm.jet(spc_map) * 255
 
   spc_map_color = spc_map_color.swapaxes(0, 1)
@@ -74,7 +76,7 @@ class SPCMapDialog(QDialog):
     self.setup_ui()
     self.setWindowTitle('SPC')
 
-    self.view.show(spcmap)
+    self.view.show(colorize_spc(spcmap))
     self.view.vb.clicked.connect(self.vbc_clicked)
     self.view.vb.hovering.connect(self.vbc_hovering)
 
@@ -89,7 +91,7 @@ class SPCMapDialog(QDialog):
   def vbc_clicked(self, x, y):
     progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
     self.spc = calc_spc(self.video_path, x, y, progress)
-    self.view.show(self.spc)
+    self.view.show(colorize_spc(self.spc))
 
   def vbc_hovering(self, x, y):
     mmpixel = self.project['mmpixel']
@@ -98,9 +100,7 @@ class SPCMapDialog(QDialog):
     spc = self.spc.swapaxes(0, 1)
     spc = spc[:, ::-1]
     try:
-      value = spc[int(x), int(y)]
-      value = ' | '.join([str(round(x, 2)) for x in value])
-      value = '(' + value + ')'
+      value = str(spc[int(x), int(y)])
     except:
       value = '-'
     self.the_label.setText('Correlation value at crosshair: {}'.format(value))
