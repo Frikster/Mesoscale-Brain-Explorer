@@ -27,4 +27,8 @@ class FileTable(QTableView):
     selection = self.selectionModel().selectedRows()
     filenames = [self.model().get_path(index) for index in selection]
     return filenames
-    
+
+class MyListView(QListView):
+  def __init__(self, parent=None):
+    super(MyListView, self).__init__(parent)
+    self.setStyleSheet('QListView::item { height: 26px; }')
