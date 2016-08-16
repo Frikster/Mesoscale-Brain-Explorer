@@ -34,7 +34,10 @@ class Widget(QWidget):
   def update_tables(self):
     videos = [f for f in self.project.files if f['type'] == 'video']
     self.table1.setModel(FileTableModel(videos))
-    videos = [f for f in self.project.files if 'concat' in f['manipulations']]
+    videos = [
+      f for f in self.project.files
+      if 'manipulations' in f and 'concat' in f['manipulations']
+    ]
     self.table2.setModel(FileTableModel(videos))
 
   def concat_clicked(self):
