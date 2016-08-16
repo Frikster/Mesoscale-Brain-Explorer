@@ -138,15 +138,16 @@ class Widget(QWidget):
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
 
-    pb = QPushButton('Create poly ROI')
-    pb.clicked.connect(self.create_roi)
-    vbox.addWidget(pb)
+    # todo: finish implementing commented out ui elements
+    # pb = QPushButton('Create poly ROI')
+    # pb.clicked.connect(self.create_roi)
+    # vbox.addWidget(pb)
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
     vbox.addWidget(pb)
-    pb = QPushButton('Delete selected ROIs')
-    pb.clicked.connect(self.delete_roi)
-    vbox.addWidget(pb)
+    # pb = QPushButton('Delete selected ROIs')
+    # pb.clicked.connect(self.delete_roi)
+    # vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
 
