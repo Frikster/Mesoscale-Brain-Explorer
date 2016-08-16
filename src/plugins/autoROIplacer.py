@@ -86,43 +86,6 @@ class RoiItemModel(QAbstractListModel):
         del roi
         break
 
-# class AutoMultiRoiViewBox(MultiRoiViewBox):
-#   def __init__(self, parent=MultiRoiViewBox, border=None, lockAspect=False,
-#                enableMouse=True, invertY=False, enableMenu=True, name=None):
-
-  # def DrawPolygonRoi(self, pos=QtCore.QPointF(0, 0), finished=False):
-  #     "Function to draw a polygon ROI"
-  #     roi = self.drawingROI
-  #
-  #     if not finished:
-  #         if roi is None:
-  #             roi = PolyLineROIcustom(removable=False)
-  #             roi.setName('ROI-%i' % self.getROIid())  # Do this before self.selectROIs(roi)
-  #             self.drawingROI = roi
-  #             self.addItem(roi)  # Add roi to viewbox
-  #             self.rois.append(roi)  # Add to list of rois
-  #             self.selectROI(roi)
-  #             self.sortROIs()
-  #             self.setCurrentROIindex(roi)
-  #             roi.translatable = False
-  #             roi.addFreeHandle(pos)
-  #             roi.addFreeHandle(pos)
-  #             h = roi.handles[-1]['item']
-  #             h.scene().sigMouseMoved.connect(h.movePoint)
-  #         else:
-  #             h = roi.handles[-1]['item']
-  #             h.scene().sigMouseMoved.disconnect()
-  #             roi.addFreeHandle(pos)
-  #             h = roi.handles[-1]['item']
-  #             h.scene().sigMouseMoved.connect(h.movePoint)
-  #             # Add a segment between the handles
-  #         roi.addSegment(roi.handles[-2]['item'], roi.handles[-1]['item'])
-  #         # Set segment and handles to non-selectable
-  #         seg = roi.segments[-1]
-  #         seg.setSelectable(False)
-  #         for h in seg.handles:
-  #             h['item'].setSelectable(False)
-
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
