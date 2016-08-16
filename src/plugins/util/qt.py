@@ -32,3 +32,10 @@ class MyListView(QListView):
   def __init__(self, parent=None):
     super(MyListView, self).__init__(parent)
     self.setStyleSheet('QListView::item { height: 26px; }')
+
+class MyProgressDialog(QProgressDialog):
+  def __init__(self, title, desc, parent=None):
+    super(MyProgressDialog, self).__init__(desc, QString(), 0, 100, parent)
+    self.setWindowTitle(title)
+    self.setAutoClose(True)
+    self.setMinimumDuration(0)

@@ -5,11 +5,37 @@ from PyQt4.QtCore import *
 
 from util import filter_jeff
 from util.mygraphicsview import MyGraphicsView
-from util.qt import MyListView
+from util.qt import MyListView, MyProgressDialog
 
 from util import fileloader
 
 import matplotlib.pyplot as plt
+import math
+
+def calc_spc(video_path, x, y, progress):
+  frame = fileloader.load_reference_frame(video_path)
+  width, height = frame.shape
+
+  x = int(x)
+  y = int(height - y)
+
+  frames = fileloader.load_file(video_path)
+
+  spc_map = filter_jeff.correlation_map(y, x, frames, progress)
+
+  # Make the location of the seed - self.image[y,x] - blatantly obvious
+  spc_map[y+1, x+1] = 1
+  spc_map[y+1, x] = 1
+  spc_map[y, x+1] = 1
+  spc_map[y-1, x-1] = 1
+  spc_map[y-1, x] = 1
+  spc_map[y, x-1] = 1
+  spc_map[y+1, x-1] = 1
+  spc_map[y-1, x+1] = 1
+
+  # transorm self.image into rgb
+  spc_map_color = plt.cm.jet(spc_map) * 255
+  return spc_map_color
 
 class InfoWidget(QFrame):
   def __init__(self, text, parent=None):
@@ -33,18 +59,47 @@ class InfoWidget(QFrame):
     self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
 class SPCMapDialog(QDialog):
-  def __init__(self, project, spcmap, parent=None):
+  def __init__(self, project, video_path, spcmap, parent=None):
     super(SPCMapDialog, self).__init__(parent)
     self.project = project
+    self.video_path = video_path
+    self.spc = spcmap
     self.setup_ui()
+    self.setWindowTitle('SPC')
 
     self.view.show(spcmap)
+    self.view.vb.clicked.connect(self.vbc_clicked)
+    self.view.vb.hovering.connect(self.vbc_hovering)
 
   def setup_ui(self):
     vbox = QVBoxLayout()
+    self.the_label = QLabel()
+    vbox.addWidget(self.the_label)
     self.view = MyGraphicsView(self.project)
     vbox.addWidget(self.view)
     self.setLayout(vbox)
+
+  def vbc_clicked(self, x, y):
+    progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
+    self.spc = calc_spc(self.video_path, x, y, progress)
+    self.view.show(self.spc)
+
+  def vbc_hovering(self, x, y):
+    mmpixel = self.project['mmpixel']
+    x = x / mmpixel
+    y = y / mmpixel
+    spc = self.spc.swapaxes(0, 1)
+    spc = spc[:, ::-1]
+    try:
+      value = spc[int(x), int(y)]
+      value = ' | '.join([str(round(x, 2)) for x in value])
+      value = '(' + value + ')'
+    except:
+      value = '-'
+    self.the_label.setText('Correlation value at crosshair: {}'.format(value))
+#    if not math.isnan(spc[int(x), int(y)]):
+#      self.the_label.setText('Correlation value at crosshair: '
+#                             + str(spc[int(x), int(y)]))
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -94,39 +149,12 @@ class Widget(QWidget):
   def vbc_clicked(self, x, y):
     if not self.video_path:
       return
-    frame = fileloader.load_reference_frame(self.video_path)
-    width, height = frame.shape
 
-    x = int(x)
-    y = int(height - y)
-
-    frames = fileloader.load_file(self.video_path)
-
-    progress = QProgressDialog('Generating correlation map...', 'Abort', 0, 100, self)
-    progress.setWindowTitle('SPC Map')
-    progress.setAutoClose(True)
-    progress.setMinimumDuration(0)
-    spc_map = filter_jeff.correlation_map(y, x, frames, progress)
-
-    # Make the location of the seed - self.image[y,x] - blatantly obvious
-    spc_map[y+1, x+1] = 1
-    spc_map[y+1, x] = 1
-    spc_map[y, x+1] = 1
-    spc_map[y-1, x-1] = 1
-    spc_map[y-1, x] = 1
-    spc_map[y, x-1] = 1
-    spc_map[y+1, x-1] = 1
-    spc_map[y-1, x+1] = 1
-
-    # transorm self.image into rgb
-    spc_map_color = plt.cm.jet(spc_map) * 255
-
-    dialog = SPCMapDialog(self.project, spc_map_color, self)
+    progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+    spc = calc_spc(self.video_path, x, y, progress)
+    dialog = SPCMapDialog(self.project, self.video_path, spc, self)
     dialog.show()
     self.open_dialogs.append(dialog)
-
-    self.showing_spc = True
-    self.showing_std = False
 
 class MyPlugin:
   def __init__(self, project):
