@@ -592,7 +592,7 @@ class MultiRoiViewBox(pg.ViewBox):
         self.addItem(self.hLine, ignoreBounds=True)
         proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         self.scene().sigMouseMoved.connect(self.mouseMoved)
-        #self.img.setImage(arr)
+        self.img.setImage(arr)
         self.updateView()
 
 

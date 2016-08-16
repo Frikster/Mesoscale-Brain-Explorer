@@ -18,7 +18,7 @@ class PlayerDialog(QDialog):
 
     self.fp = np.load(filename, mmap_mode='r')
     self.slider.setMaximum(len(self.fp)-1)
-    self.show_frame(500)
+    self.show_frame(0)
 
   def show_frame(self, frame_num):
     frame = self.fp[frame_num]
