@@ -4,9 +4,13 @@
 import os
 import sys
 import numpy as np
+import pyqtgraph as pg
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+
 
 from util.mygraphicsview import MyGraphicsView
 from util import fileloader
@@ -14,7 +18,8 @@ from util import fileloader
 sys.path.append('..')
 import qtutil
 import uuid
-
+from util import fileloader
+from util.viewboxcustom import MultiRoiViewBox
 
 #This the code for getting the ROI locations from bregma.
 
@@ -81,6 +86,43 @@ class RoiItemModel(QAbstractListModel):
         del roi
         break
 
+# class AutoMultiRoiViewBox(MultiRoiViewBox):
+#   def __init__(self, parent=MultiRoiViewBox, border=None, lockAspect=False,
+#                enableMouse=True, invertY=False, enableMenu=True, name=None):
+
+  # def DrawPolygonRoi(self, pos=QtCore.QPointF(0, 0), finished=False):
+  #     "Function to draw a polygon ROI"
+  #     roi = self.drawingROI
+  #
+  #     if not finished:
+  #         if roi is None:
+  #             roi = PolyLineROIcustom(removable=False)
+  #             roi.setName('ROI-%i' % self.getROIid())  # Do this before self.selectROIs(roi)
+  #             self.drawingROI = roi
+  #             self.addItem(roi)  # Add roi to viewbox
+  #             self.rois.append(roi)  # Add to list of rois
+  #             self.selectROI(roi)
+  #             self.sortROIs()
+  #             self.setCurrentROIindex(roi)
+  #             roi.translatable = False
+  #             roi.addFreeHandle(pos)
+  #             roi.addFreeHandle(pos)
+  #             h = roi.handles[-1]['item']
+  #             h.scene().sigMouseMoved.connect(h.movePoint)
+  #         else:
+  #             h = roi.handles[-1]['item']
+  #             h.scene().sigMouseMoved.disconnect()
+  #             roi.addFreeHandle(pos)
+  #             h = roi.handles[-1]['item']
+  #             h.scene().sigMouseMoved.connect(h.movePoint)
+  #             # Add a segment between the handles
+  #         roi.addSegment(roi.handles[-2]['item'], roi.handles[-1]['item'])
+  #         # Set segment and handles to non-selectable
+  #         seg = roi.segments[-1]
+  #         seg.setSelectable(False)
+  #         for h in seg.handles:
+  #             h['item'].setSelectable(False)
+
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
@@ -136,8 +178,8 @@ class Widget(QWidget):
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
     vbox.addWidget(pb)
-    pb = QPushButton('Crop poly ROI')
-    pb.clicked.connect(self.crop_ROI)
+    pb = QPushButton('auto ROI')
+    pb.clicked.connect(self.auto_ROI)
     vbox.addWidget(pb)
     pb = QPushButton('Delete selected ROIs')
     pb.clicked.connect(self.delete_roi)
@@ -256,45 +298,89 @@ class Widget(QWidget):
     for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
       self.roi_list.model().removeRow(roi_to_remove)
 
-  def crop_ROI(self):
-    frames = fileloader.load_file(self.video_path)
-    # Return if there is no image or rois in view
-    if self.view.vb.img == None or len(self.view.vb.rois) == 0:
-      print("there is no image or rois in view ")
-      return
+  clicked = QtCore.pyqtSignal(QtGui.QMouseEvent)
+  def auto_ROI(self):
+    #frame = fileloader.load_reference_frame(self.video_path).shape
+    # xr and yr are the view range centered on the origin
+    #xr, yr = self.view.vb.viewRange()
 
-    # swap axis for aligned_frames
-    frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-    # Collect ROI's and combine
-    numROIs = len(self.view.vb.rois)
-    arrRegion_masks = []
-    for i in xrange(numROIs):
-      roi = self.view.vb.rois[i]
-      arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
-      arrRegion_masks.append(arrRegion_mask)
+    # pos(ii).name = 'M2'; pos(ii).y = 2.5; pos(ii).x = 1; ii = ii + 1;
+    # (1/(mm/pixel) * 2.5) is the y position for M2 *from bregma*
+    # todo: make "3" user-defined ROI length
+    half_length = 3 * self.project['mmpixel']
+    # m2_x = (1*(1/self.mmpixel))+self.origin[0]
+    # m2_y = (2.5*(1/self.mmpixel))+self.origin[1]
+    # m1_x = (1.5*(1/self.mmpixel))+self.origin[0]
+    # m1_y = (1.75*(1/self.mmpixel))+self.origin[1]
+    # ac_x = (0*(1/self.mmpixel))+self.origin[0]
+    # ac_y = (0.5*(1/self.mmpixel))+self.origin[1]
+    # hl_x = (2*(1/self.mmpixel))+self.origin[0]
+    # hl_y = (0*(1/self.mmpixel))+self.origin[1]
+    # bc_x = (3.5*(1/self.mmpixel))+self.origin[0]
+    # bc_y = (-1*(1/self.mmpixel))+self.origin[1]
+    # rs_x = (0.5*(1/self.mmpixel))+self.origin[0]
+    # rs_y = (-2.5*(1/self.mmpixel))+self.origin[1]
+    # v1_x = (2.5*(1/self.mmpixel))+self.origin[0]
+    # v1_y = (-2.5*(1/self.mmpixel))+self.origin[1]
 
-    combined_mask = np.sum(arrRegion_masks, axis=0)
-    # Make all rows with all zeros na
-    combined_mask[(combined_mask == 0)] = None
-    self.mask = combined_mask
-    # TODO: save mask as well
-    # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
-    # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
+    m2_x = (1)
+    m2_y = (2.5)
+    m1_x = (1.5)
+    m1_y = (1.75)
+    ac_x = (0)
+    ac_y = (0.5)
+    hl_x = (2)
+    hl_y = (0)
+    bc_x = (3.5)
+    bc_y = (-1)
+    rs_x = (0.5)
+    rs_y = (-2.5)
+    v1_x = (2.5)
+    v1_y = (-2.5)
 
-    # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
-    # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
-    # Dont forget to set Endian value and set to 64 bit
-    roi_frames = (frames * combined_mask[np.newaxis, :, :])
+    locs = [(m2_x, m2_y), (m1_x, m1_y), (ac_x, ac_y), (hl_x, hl_y), (bc_x, bc_y), (rs_x, rs_y), (v1_x, v1_y)]
 
-    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    path = os.path.join(self.project.path, 'roi' + '.npy')
-    np.save(path, roi_frames)
-    self.project.files.append({
-      'path': path,
-      'type': 'video',
-      'source_video': self.video_path,
-      'manipulations': ['crop']
-    })
+    # Map val in a frame size frame_size to the view_range
+    # def map_to_view_range(val, frame_size, view_range):
+    #     return ((val / frame_size)*(view_range[1]-view_range[0]))+view_range[0]
+
+    for tup in locs:
+      # Convert these to values in the view range
+      # x1 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
+      # x2 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
+      # x3 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
+      # x4 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
+      # y1 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
+      # y2 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
+      # y3 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
+      # y4 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
+
+      x1 = (tup[0] - half_length)
+      x2 = (tup[0] - half_length)
+      x3 = (tup[0] + half_length)
+      x4 = (tup[0] + half_length)
+      y1 = (tup[1] - half_length)
+      y2 = (tup[1] + half_length)
+      y3 = (tup[1] + half_length)
+      y4 = (tup[1] - half_length)
+
+      self.view.vb.addPolyRoiRequest()
+      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x4, y4))
+      self.view.vb.addPolyLineROI(finished=True)
+
+    # # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
+    # path = os.path.join(self.project.path, 'roi' + '.npy')
+    # np.save(path, roi_frames)
+    # self.project.files.append({
+    #   'path': path,
+    #   'type': 'video',
+    #   'source_video': self.video_path,
+    #   'manipulations': ['crop']
+    # })
 
 class MyPlugin:
   def __init__(self, project):
