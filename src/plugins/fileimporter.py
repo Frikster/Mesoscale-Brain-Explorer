@@ -174,11 +174,10 @@ class Widget(QWidget):
   def import_file(self, filename):
     if not filename.endswith('.npy'):
       new_filename = self.to_npy(filename)
-        
-    if not new_filename:
-      raise NotConvertedError()
-
-    filename = new_filename
+      if not new_filename:
+        raise NotConvertedError()
+      else:
+        filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
       raise FileAlreadyInProjectError(filename)      
