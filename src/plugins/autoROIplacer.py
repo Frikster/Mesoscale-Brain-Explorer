@@ -145,9 +145,9 @@ class Widget(QWidget):
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
     vbox.addWidget(pb)
-    # pb = QPushButton('Delete selected ROIs')
-    # pb.clicked.connect(self.delete_roi)
-    # vbox.addWidget(pb)
+    pb = QPushButton('Delete selected ROIs')
+    pb.clicked.connect(self.delete_roi)
+    vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
 
