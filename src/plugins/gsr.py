@@ -61,11 +61,8 @@ class Widget(QWidget):
     self.setLayout(hbox)
 
   def gsr(self):
-    videos = [f for f in self.project.files if f['type'] == 'video']
-    # todo: make videos selectable.
-    fileName = videos[0]['path']
+    frames = fileloader.load_file(self.video_path)
 
-    frames = fileloader.load_file(videos[0]['path'])
     width = frames.shape[1]
     height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
