@@ -46,7 +46,10 @@ class Widget(QWidget):
     videos = [f for f in self.project.files if f['type'] == 'video']
     self.table1.setModel(FileTableModel(videos))
 
-    videos = [f for f in self.project.files if 'align' in f['manipulations']]
+    videos = [
+      f for f in self.project.files
+      if 'manipulations' in f and 'align' in f['manipulations']
+    ]
     self.table2.setModel(PandasModel(pd.DataFrame(videos)))
 
   def align_clicked(self):
