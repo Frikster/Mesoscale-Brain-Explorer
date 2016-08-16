@@ -307,7 +307,7 @@ if __name__ == '__main__':
 
   w = MainWindow()
   w.resize(1060,660)
-  w.setWindowIcon(QIcon('pics/logo.png'))
+  w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
   app.exec_()
