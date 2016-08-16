@@ -90,49 +90,6 @@ def get_frames(rgb_file, width, height, dat_type):
         frames[isnan(frames)] = 0
         return frames
 
-    print("unsupported file type")
-        ########
-        # Cat method
-        # img = Image.open(rgb_file)
-        # n_pixels = img.height
-        # n_frames = img.n_frames
-        #
-        # images_raw = np.zeros((n_frames, n_pixels, n_pixels), dtype=dat_type)
-        #
-        # print("n_frames: " + str(n_frames))
-        # for i in range(0, n_frames, 1):
-        #     img.seek(i)
-        #     #print "Loading frame: ", i
-        #     #images_raw [i] = np.flipud(np.fliplr(np.float16(img))) #FLIP IMAGES FOR Experiments Nov and Dec 2015
-        #     # todo: dtype needed?
-        #     images_raw[i] = np.array(img)
-        #     #images_raw[i] = np.array(img, dtype=dat_type)
-        #imarray = images_raw
-
-        ######
-        # # plt method
-        # I = plt.imread(rgb_file)
-        #
-        # #tifflib method
-        # # to open a tiff file for reading:
-        # tif = TIFF.open(rgb_file, mode='r')
-        # # to read an image in the currect TIFF directory and return it as numpy array:
-        # image = tif.read_image()
-        # # to read all images in a TIFF file:
-        # for image in tif.iter_images(): # do stuff with image
-        #     image = tif.read_image()
-        #
-        # # to open a tiff file for writing:
-        # tif = TIFF.open('filename.tif', mode='w')
-        # #to write a image to tiff file
-        # tif.write_image(image)
-        #
-        # #PIL method
-        # im = Image.open(rgb_file)
-        # imarray = np.array(im)
-        #return imarray
-
-
 def get_green_frames(g_file, width, height, dat_type):
     if(g_file.endswith(".tif")):
         imarray = tiff.imread(g_file)

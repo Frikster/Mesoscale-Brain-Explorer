@@ -3,6 +3,8 @@ Known problems
 
 General
 -------
+* filter_jeff.py and diplacement_jeff.py
+  are my worst nightmares
 * Removing all plugins from project causes error
 * Move commonly used widgets and models to util.qt
 * Tweak progress dialogs to behave nicely
