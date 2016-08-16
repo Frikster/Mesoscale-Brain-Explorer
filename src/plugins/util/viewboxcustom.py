@@ -254,14 +254,16 @@ class MultiRoiViewBox(pg.ViewBox):
                 roi = PolyLineROIcustom(removable=False)
                 #roi.setName('ROI-%i' % self.getROIid())  # Do this before self.selectROIs(roi)
                 self.drawingROI = roi
+                roi.addFreeHandle(pos)
+                roi.addFreeHandle(pos)
                 self.addItem(roi)  # Add roi to viewbox
                 self.rois.append(roi)  # Add to list of rois
                 self.selectROI(roi)
                 self.sortROIs()
                 self.setCurrentROIindex(roi)
                 roi.translatable = False
-                roi.addFreeHandle(pos)
-                roi.addFreeHandle(pos)
+                # roi.addFreeHandle(pos)
+                # roi.addFreeHandle(pos)
                 h = roi.handles[-1]['item']
                 h.scene().sigMouseMoved.connect(h.movePoint)
             else:

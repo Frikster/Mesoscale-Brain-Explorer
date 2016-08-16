@@ -365,12 +365,12 @@ class Widget(QWidget):
       y4 = (tup[1] - half_length)
 
       self.view.vb.addPolyRoiRequest()
-      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x1, y1))
-      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x2, y2))
-      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x3, y3))
-      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(QtCore.QPointF(x4, y4))
-      self.view.vb.addPolyLineROI(finished=True)
+      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(finished=True)
 
     # # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
     # path = os.path.join(self.project.path, 'roi' + '.npy')
