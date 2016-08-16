@@ -145,16 +145,16 @@ class Widget(QWidget):
     self.view.show(frame)
 
   def selected_roi_changed(self, selection):
-    if self.selected_roi_changed_flag == 0:
-      self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
-      return
+    # if self.selected_roi_changed_flag == 0:
+    #   self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
+    #   return
     if not selection.indexes() or self.view.vb.drawROImode:
       return
 
     self.remove_all_rois()
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
-    #rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]

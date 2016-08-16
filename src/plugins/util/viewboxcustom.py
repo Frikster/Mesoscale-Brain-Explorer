@@ -150,7 +150,7 @@ class MultiRoiViewBox(pg.ViewBox):
         for r in self.rois:
             r.setActive(True)
         #print('endPolyRoiRequest')
-            
+
     def addPolyLineROI(self, handlePositions):
         roi = PolyLineROIcustom(handlePositions=handlePositions, removable=True)
         #roi.setName('ROI-%i'% self.getROIid())
@@ -244,7 +244,105 @@ class MultiRoiViewBox(pg.ViewBox):
             # Exit ROI drawing mode
             self.endPolyRoiRequest()
             self.roi_placed.emit(roi)
-                
+
+    def autoDrawPolygonRoi(self, pos=QtCore.QPointF(0, 0), finished=False):
+        "Function to draw a polygon ROI"
+        roi = self.drawingROI
+
+        if not finished:
+            if roi is None:
+                roi = PolyLineROIcustom(removable=False)
+                #roi.setName('ROI-%i' % self.getROIid())  # Do this before self.selectROIs(roi)
+                self.drawingROI = roi
+                self.addItem(roi)  # Add roi to viewbox
+                self.rois.append(roi)  # Add to list of rois
+                self.selectROI(roi)
+                self.sortROIs()
+                self.setCurrentROIindex(roi)
+                roi.translatable = False
+                roi.addFreeHandle(pos)
+                roi.addFreeHandle(pos)
+                h = roi.handles[-1]['item']
+                h.scene().sigMouseMoved.connect(h.movePoint)
+            else:
+                h = roi.handles[-1]['item']
+                h.scene().sigMouseMoved.disconnect()
+                roi.addFreeHandle(pos)
+                h = roi.handles[-1]['item']
+                h.scene().sigMouseMoved.connect(h.movePoint)
+                # Add a segment between the handles
+            roi.addSegment(roi.handles[-2]['item'], roi.handles[-1]['item'])
+            # Set segment and handles to non-selectable
+            seg = roi.segments[-1]
+            seg.setSelectable(False)
+            for h in seg.handles:
+                h['item'].setSelectable(False)
+
+        elif finished:
+            # Remove last handle
+            h = roi.handles[-1]['item']
+            h.scene().sigMouseMoved.disconnect()
+            roi.removeHandle(h)
+            # Add segment to close ROI
+            roi.addSegment(roi.handles[-1]['item'], roi.handles[0]['item'])
+            # Setup signals
+            roi.sigClicked.connect(self.selectROI)
+            roi.sigRegionChanged.connect(self.roiChanged)
+            roi.sigRemoveRequested.connect(self.removeROI)
+            roi.sigCopyRequested.connect(self.copyROI)
+            roi.sigSaveRequested.connect(self.saveROI)
+            # Re-activate mouse clicks for all roi, segments and handles
+            roi.removable = True
+            roi.translatable = True
+            for seg in roi.segments:
+                seg.setSelectable(True)
+            for h in roi.handles:
+                h['item'].setSelectable(True)
+            # Exit ROI drawing mode
+            self.endPolyRoiRequest()
+
+    def getMenu(self, event):
+        if self.menu is None:
+            self.menu = QtGui.QMenu()
+            # Submenu to add ROIs
+            self.submenu = QtGui.QMenu("Add ROI", self.menu)
+            # self.addROIRectAct = QActionCustom("Rectangular",  self.submenu)
+            self.addROIRectAct = QtGui.QAction("Rectangular", self.submenu)
+            # self.addROIPolyAct = QActionCustom("Polygon",  self.submenu)
+            self.addROIPolyAct = QtGui.QAction("Polygon", self.submenu)
+            # self.addROIRectAct.clickEvent.connect(self.addRoiRequest)
+            self.addROIRectAct.triggered.connect(self.addROI)
+            # self.addROIPolyAct.clickEvent.connect(self.addPolyRoiRequest)
+            self.addROIPolyAct.triggered.connect(self.addPolyRoiRequest)
+            self.submenu.addAction(self.addROIRectAct)
+            self.submenu.addAction(self.addROIPolyAct)
+
+            # self.loadROIAct  = QActionCustom("Load ROI", self.menu)
+            self.loadROIAct = QtGui.QAction("Load ROI", self.menu)
+            self.dexaMode = QtGui.QAction("DEXA mode", self.menu)
+            self.viewAll = QtGui.QAction("View All", self.menu)
+            self.exportImage = QtGui.QAction("Export image", self.menu)
+
+            # self.loadROIAct.clickEvent.connect(self.loadROI)
+            self.loadROIAct.triggered[()].connect(self.loadROI)
+            self.dexaMode.toggled.connect(self.toggleViewMode)
+            self.viewAll.triggered[()].connect(self.autoRange)
+            self.exportImage.triggered[()].connect(self.export)
+
+            self.menu.addAction(self.viewAll)
+            self.menu.addAction(self.dexaMode)
+            self.menu.addAction(self.exportImage)
+            self.menu.addSeparator()
+            self.menu.addMenu(self.submenu)
+            self.menu.addAction(self.loadROIAct)
+            self.dexaMode.setCheckable(True)
+            # Update action event. This enables passing of the event to the fuction connected to the
+        # action i.e.  event will be passed to self.addRoiRequest when a Rectangular ROI is clicked
+        # self.addROIRectAct.updateEvent(event)
+        # self.addROIPolyAct.updateEvent(event)
+        return self.menu
+
+
     def getMenu(self, event):
         if self.menu is None:
             self.menu          = QtGui.QMenu()
