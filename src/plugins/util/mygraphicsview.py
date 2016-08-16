@@ -53,7 +53,7 @@ class MyGraphicsView(pg.GraphicsView):
     self.update()
 
   def _update_rect(self):
-    w, h = self.shape
+    w, h = self.shape[0], self.shape[1]
     ox, oy = self.project['origin']
     mmpixel = self.project['mmpixel']
 

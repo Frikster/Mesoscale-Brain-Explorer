@@ -11,20 +11,8 @@ from PIL import Image
 from numpy import *
 import tifffile as tiff
 
-
-#from libtiff import TIFF
-
-#M1312000377_1438367187.563086.raw
-#processed_data/Concatenated Stacks.raw
-#file_to_filter = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/Videos/M2015050115_1438365772.086721.raw"
-#file_to_filter2 = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/Videos/M2015050115_1438366080.539013.raw"
-#file_to_save = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/global_signal.rawf"
-#corrfile_to_save = "/media/ch0l1n3/DataFB/AutoHeadFix_Data/0802/EL_LRL/corr.rawf"
-#sd_file = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/mean_filter.rawf"
-
-#save_dir = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/"
-
-#starting_frame = 100
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 def load_raw(filename, width, height, dat_type):
     dat_type = np.dtype(dat_type)
@@ -341,31 +329,24 @@ def display_image(image, c_map, low_end_limit, high_end_limit, frames):
 
     plt.show()
 
-def get_correlation_map(seed_x, seed_y, frames):
-    print((seed_x,seed_y))
-    seed_pixel = np.asarray(frames[:, seed_x, seed_y])
+def correlation_map(seed_x, seed_y, frames, progress):
+  seed_pixel = np.asarray(frames[:, seed_x, seed_y])
 
-    #print(np.shape(seed_pixel))
-    width = frames.shape[1]
-    height = frames.shape[2]
-    # Reshape into time and space
-    frames[frames==0]=np.nan
-    frames = np.reshape(frames, (frames.shape[0], width*height))
+  width = frames.shape[1]
+  height = frames.shape[2]
 
-    print(np.shape(frames))
-    #correlation_map = []
-    print('Getting correlation...')
-    #correlation_map = Parallel(n_jobs=4, backend="threading")(delayed(corr)(pixel, seed_pixel) for pixel in frames.T)
-    #correlation_map = []
-    #for i in range(frames.shape[-1]):
-    #    correlation_map.append(pearsonr(frames[:, i], seed_pixel)[0])
-    # Todo: NaN's generated via this line. Why?
-    correlation_map = parmap.map(corr, frames.T, seed_pixel)
-    #correlation_map = parmap.map(corr, frames.T, seed_pixel)
-    #correlation_map = np.asarray(correlation_map, dtype=np.float32)
-    correlation_map = np.reshape(correlation_map, (width, height))
-    #print(np.shape(correlation_map))
+  # Reshape into time and space
+  #frames[frames==0]=np.nan
+  frames = np.reshape(frames, (frames.shape[0], width*height))
 
-    return correlation_map
+  total = float(width * height - 1)
+  cmap = []
+  for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+    progress.setValue(100 * i / total)
+    QApplication.processEvents()
+    cmap.append(value) 
+
+  cmap = np.reshape(cmap, (width, height))
+  return cmap
 
 
