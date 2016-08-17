@@ -46,15 +46,15 @@ class Widget(QWidget):
         vbox.addWidget(self.listview)
 
         vbox.addWidget(QLabel('Low Bandpass (Hz)'))
-        self.f_high = QDoubleSpinBox()
-        self.f_high.setMinimum(0.0)
-        self.f_high.setValue(0.3)
-        vbox.addWidget(self.f_high)
-        vbox.addWidget(QLabel('High Bandpass (Hz)'))
         self.f_low = QDoubleSpinBox()
         self.f_low.setMinimum(0.0)
-        self.f_low.setValue(3.0)
+        self.f_low.setValue(0.3)
         vbox.addWidget(self.f_low)
+        vbox.addWidget(QLabel('High Bandpass (Hz)'))
+        self.f_high = QDoubleSpinBox()
+        self.f_high.setMinimum(0.0)
+        self.f_high.setValue(3.0)
+        vbox.addWidget(self.f_high)
 
         vbox.addWidget(QLabel('Frame Rate (Hz)'))
         self.frame_rate = QSpinBox()
@@ -80,10 +80,11 @@ class Widget(QWidget):
         self.view.show(frame)
 
     def temporal_filter(self):
+        import matplotlib.pylab as plt
         frames = fileloader.load_file(self.video_path)
         frame_rate = self.frame_rate.value()
-        f_high = self.f_high.value()
-        f_low = self.f_low.value()
+        f_high = self.f_low.value()
+        f_low = self.f_high.value()
 
         avg_frames = np.mean(frames, axis=0)
         frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
