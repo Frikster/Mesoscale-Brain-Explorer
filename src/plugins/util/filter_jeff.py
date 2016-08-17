@@ -3,8 +3,6 @@ from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.stats.stats import pearsonr
 from scipy import ndimage
-#from joblib import Parallel, delayed
-#import multiprocessing
 import parmap
 import image_registration
 from PIL import Image
@@ -338,10 +336,6 @@ def correlation_map(seed_x, seed_y, frames, progress):
     # Reshape into time and space
     # frames[frames==0]=np.nan
     frames = np.reshape(frames, (frames.shape[0], width*height))
-
-    np.save("C:/Users/Cornelis Dirk Haupt/Downloads/spc", frames)
-    #frames = np.load("C:/Users/Cornelis Dirk Haupt/Downloads/bmd.npy")
-
 
     total = float(width * height - 1)
     cmap = []
