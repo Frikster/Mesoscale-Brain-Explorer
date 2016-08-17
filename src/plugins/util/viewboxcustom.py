@@ -431,8 +431,10 @@ class MultiRoiViewBox(pg.ViewBox):
         xypos = (xpos, ypos)
         self.addROI(pos=xypos)
         
-    def addROI(self, pos=None, size=None, angle=0.0):
-        """ Add an ROI to the ViewBox """    
+    def addROI(self, name, pos=None, size=None, angle=0.0):
+        """ Add an ROI to the ViewBox """
+        if name is None:
+            raise ValueError('ROIs must have names. A nameless ROI was loaded')
         xr, yr = self.viewRange()
         if pos is None:
             posx = xr[0]+0.05*(xr[1]-xr[0])
@@ -445,6 +447,7 @@ class MultiRoiViewBox(pg.ViewBox):
             if xysize == 0: xysize = 100
             size = [xysize, xysize]
         roi = RectROIcustom(pos, size, angle, removable=True, pen=(255, 0, 0))
+        roi.setName(name)
         # Setup signals
         #roi.setName('ROI-%i' % self.getROIid())
         roi.sigClicked.connect(self.selectROI)
@@ -538,14 +541,14 @@ class MultiRoiViewBox(pg.ViewBox):
         if fileNames == None:
             fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
         # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
-        if isinstance(fileNames,types.TupleType): fileNames = fileNames[0]
+        if isinstance(fileNames, types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
         if len(fileNames)>0:
             for fileName in fileNames:
                 if fileName != '':
                     roiState = pickle.load(open(fileName, "rb"))
                     if roiState['type'] == 'RectROIcustom':
-                        self.addROI(roiState['pos'], roiState['size'], roiState['angle'])
+                        self.addROI(roiState['pos'], roiState['size'], roiState['angle'], roiState['name'])
                     elif roiState['type'] == 'PolyLineROIcustom':
                         self.addPolyLineROI(roiState['handlePositions'])
 

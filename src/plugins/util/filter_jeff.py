@@ -339,18 +339,12 @@ def correlation_map(seed_x, seed_y, frames, progress):
     # frames[frames==0]=np.nan
     frames = np.reshape(frames, (frames.shape[0], width*height))
 
-    np.save("C:/Users/Cornelis Dirk Haupt/Downloads/spc", frames)
-    #frames = np.load("C:/Users/Cornelis Dirk Haupt/Downloads/bmd.npy")
-
-
     total = float(width * height - 1)
     cmap = []
     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
         progress.setValue(100 * i / total)
         QApplication.processEvents()
         cmap.append(value)
-
-
 
     cmap = np.reshape(cmap, (width, height))
     return cmap

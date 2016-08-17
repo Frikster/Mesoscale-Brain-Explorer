@@ -5,6 +5,7 @@ from pyqtgraph.Point import Point
 from custom_items import QMenuCustom
 import numpy as np
 import matplotlib.pylab as plt
+import uuid
 
 __all__ = ['ROI', 'Handle','PolylineSegment','RectROIcustom','PolyLineROIcustom']
 
@@ -186,13 +187,13 @@ class selectableROI(object):
     sigSaveRequested   = QtCore.Signal(object)  
 
     def __init__(self):
-        self.penActive   = fn.mkPen(  0, 255, 0)
+        self.penActive   = fn.mkPen( 0, 255, 0)
         self.penInactive = fn.mkPen(255,   0, 0) 
         self.penHover    = fn.mkPen(255, 255, 0)   
         self.penActive.setWidth(1)
         self.penInactive.setWidth(1) 
         self.penHover.setWidth(1)   
-        self.setName()
+        self.setName(str(uuid.uuid4()))
         self.isSelected = False
         self.menu = None
         self.setActive(True)
@@ -212,9 +213,12 @@ class selectableROI(object):
         otherid = int(other.name.split('-')[-1])
         return selfid < otherid
         
-    def setName(self,name=None):
-        self.name = name     
-        
+    def setName(self, name):
+        if name is not None:
+            self.name = name
+        else:
+            raise ValueError('No ROI name')
+
     def removeClicked(self):
         self.sigRemoveRequested.emit(self) 
         
