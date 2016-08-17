@@ -330,23 +330,29 @@ def display_image(image, c_map, low_end_limit, high_end_limit, frames):
     plt.show()
 
 def correlation_map(seed_x, seed_y, frames, progress):
-  seed_pixel = np.asarray(frames[:, seed_x, seed_y])
+    seed_pixel = np.asarray(frames[:, seed_x, seed_y])
 
-  width = frames.shape[1]
-  height = frames.shape[2]
+    width = frames.shape[1]
+    height = frames.shape[2]
 
-  # Reshape into time and space
-  #frames[frames==0]=np.nan
-  frames = np.reshape(frames, (frames.shape[0], width*height))
+    # Reshape into time and space
+    # frames[frames==0]=np.nan
+    frames = np.reshape(frames, (frames.shape[0], width*height))
 
-  total = float(width * height - 1)
-  cmap = []
-  for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
-    progress.setValue(100 * i / total)
-    QApplication.processEvents()
-    cmap.append(value) 
+    np.save("C:/Users/Cornelis Dirk Haupt/Downloads/spc", frames)
+    #frames = np.load("C:/Users/Cornelis Dirk Haupt/Downloads/bmd.npy")
 
-  cmap = np.reshape(cmap, (width, height))
-  return cmap
+
+    total = float(width * height - 1)
+    cmap = []
+    for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+        progress.setValue(100 * i / total)
+        QApplication.processEvents()
+        cmap.append(value)
+
+
+
+    cmap = np.reshape(cmap, (width, height))
+    return cmap
 
 
