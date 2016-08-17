@@ -14,6 +14,9 @@ import logging
 
 __all__= ['ImageAnalysisViewBox', 'ViewMode', 'MultiRoiViewBox']
 
+class UnsupportedRoiTypeError(Exception):
+  pass
+
 class ImageAnalysisViewBox(pg.ViewBox):
     """
     Custom ViewBox used to over-ride the context menu. I don't want the full context menu, 
@@ -68,6 +71,7 @@ class MultiRoiViewBox(pg.ViewBox):
         pg.ViewBox.__init__(self, parent, border, lockAspect,
                             enableMouse, invertY, enableMenu, name)
 
+        self.crosshair_visible = True
         self.rois = []
         self.currentROIindex = None
         self.img      = None
@@ -172,6 +176,7 @@ class MultiRoiViewBox(pg.ViewBox):
         roi.sigRemoveRequested.connect(self.removeROI)
         roi.sigCopyRequested.connect(self.copyROI)
         roi.sigSaveRequested.connect(self.saveROI)            
+        return roi
 
     def drawPolygonRoi(self, ev):
         "Function to draw a polygon ROI"
@@ -461,6 +466,7 @@ class MultiRoiViewBox(pg.ViewBox):
         self.selectROI(roi)
         self.sortROIs()  
         self.setCurrentROIindex(roi)
+        return roi
 
     def sortROIs(self):
         """ Sort self.rois by roi name and adjust self.currentROIindex as necessary """
@@ -535,6 +541,31 @@ class MultiRoiViewBox(pg.ViewBox):
                     roiState['handlePositions'] = hps
                     roiState['name'] = roi.name
                 pickle.dump( roiState, open( fileName, "wb" ) )
+
+    def addRoi(self, roipath, roiname, roimode='static'):
+      roistate = pickle.load(open(roipath, 'rb'))
+      if roistate['type'] == 'RectROIcustom':
+        roi = self.addROI(roistate['pos'], roistate['size'], roistate['angle'])
+      elif roistate['type'] == 'PolyLineROIcustom':
+        roi = self.addPolyLineROI(roistate['handlePositions'])
+      else:
+        raise UnsupportedRoiTypeError()
+      roi.setName(roiname)
+      self.selectROI(roi)
+
+    def getRoi(self, roiname):
+      rois = [roi for roi in self.rois if roi.name == roiname]
+      assert(len(rois) == 1)
+      return rois[0]
+  
+    def removeRoi(self, roiname):
+      rois = [roi for roi in self.rois if roi.name == roiname]
+      if not rois:
+        return  
+      assert(len(rois) == 1)
+      roi = rois[0]
+      self.rois.remove(roi)
+      self.removeItem(roi)
                           
     def loadROI(self, fileNames = None):
         """ Load a previously saved ROI from file """
@@ -554,8 +585,10 @@ class MultiRoiViewBox(pg.ViewBox):
 
     def removeROI(self):
         """ Delete the highlighted ROI """
+        print('removeROI')
         if self.currentROIindex!=None:
             roi = self.rois[self.currentROIindex]
+            print(roi)
             self.rois.pop(self.currentROIindex)
             self.removeItem(roi)  
             self.setCurrentROIindex(None) 
@@ -591,8 +624,9 @@ class MultiRoiViewBox(pg.ViewBox):
             self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
             self.addItem(self.img)
         # Add/readd crosshair
-        self.addItem(self.vLine, ignoreBounds=True)
-        self.addItem(self.hLine, ignoreBounds=True)
+        if self.crosshair_visible:
+          self.addItem(self.vLine, ignoreBounds=True)
+          self.addItem(self.hLine, ignoreBounds=True)
         proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         self.scene().sigMouseMoved.connect(self.mouseMoved)
         self.img.setImage(arr)

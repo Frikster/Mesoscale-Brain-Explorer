@@ -6,90 +6,143 @@ import sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from collections import OrderedDict
+from util.mygraphicsview import MyGraphicsView
+from util import fileloader
+import util.pyqtgraph as pg
 
-kelly_colors = OrderedDict(
-  vivid_yellow = (255, 179, 0),
-  strong_purple = (128, 62, 117),
-  vivid_red = (193, 0, 32),
-  vivid_green = (0, 125, 52),
-  strong_purplish_pink = (246, 118, 142),
-  strong_blue = (0, 83, 138),
-  strong_yellowish_pink = (255, 122, 92),
-  strong_violet = (83, 55, 122),
-  vivid_orange_yellow = (255, 142, 0),
-  strong_purplish_red = (179, 40, 81),
-  vivid_greenish_yellow = (244, 200, 0),
-  strong_reddish_brown = (127, 24, 13),
-  vivid_yellowish_green = (147, 170, 0),
-  deep_yellowish_brown = (89, 51, 21),
-  vivid_reddish_orange = (241, 58, 19),
-  dark_olive_green = (35, 44, 22)
-)
+import numpy as np
 
-def roi_activity_plots():
-  fileName = str(self.sidePanel.imageFileList.currentItem().text())
-  width = int(self.sidePanel.vidWidthValue.text())
-  height = int(self.sidePanel.vidHeightValue.text())
-  dtype_string = str(self.sidePanel.dtypeValue.text())
-  frames = fj.get_frames(fileName, width, height, dtype_string)
+class Color:
+  def __init__(self, name, rgb):
+    self.name = name
+    self.rgb = rgb
 
-  # return plots of average activity over time for ROI's
-  if self.view.vb.img == None: return
+kelly_colors = [
+  Color('vivid_yellow', (255, 179, 0)),
+  Color('strong_purple', (128, 62, 117)),
+  Color('vivid_red', (193, 0, 32)),
+  Color('vivid_green', (0, 125, 52)),
+  Color('strong_purplish_pink', (246, 118, 142)),
+  Color('strong_blue', (0, 83, 138)),
+  Color('strong_yellowish_pink', (255, 122, 92)),
+  Color('strong_violet', (83, 55, 122)),
+  Color('vivid_orange_yellow', (255, 142, 0)),
+  Color('strong_purplish_red', (179, 40, 81)),
+  Color('vivid_greenish_yellow', (244, 200, 0)),
+  Color('strong_reddish_brown', (127, 24, 13)),
+  Color('vivid_yellowish_green', (147, 170, 0)),
+  Color('deep_yellowish_brown', (89, 51, 21)),
+  Color('vivid_reddish_orange', (241, 58, 19)),
+  Color('dark_olive_green', (35, 44, 22))
+]
 
-  self.roi_activity_plots_win = pg.GraphicsWindow(title="Activity across frames")
-  self.roi_activity_plots_win.resize(1000, 600)
-  self.roi_activity_plots_win.setWindowTitle('Activity across frames')
-
-  # Enable antialiasing for prettier plots
-  pg.setConfigOptions(antialias=True)
-
-  # swap axis for aligned_frames
-  frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-
-  # Collect ROI's
-  numROIs = len(self.view.vb.rois)
-  arrRegion_masks = {}
-  for i in xrange(numROIs):
-    roi = self.view.vb.rois[i]
-    arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
-    arrRegion_masks[self.view.vb.rois[i].name] = arrRegion_mask
-
-  roi_plots = {}
-  for mask_key in arrRegion_masks.keys():
-    mask_size = np.count_nonzero(arrRegion_masks[mask_key])
-    roi_frames = (frames * arrRegion_masks[mask_key][np.newaxis, :, :])
-    roi_frames_flatten = np.ndarray.sum(np.ndarray.sum(roi_frames, axis = 1), axis = 1)
-    roi_plots[mask_key] = roi_frames_flatten/mask_size
-
-  self.view.vb.rois[i]
-  plot = self.roi_activity_plots_win.addPlot(title="Activity across frames")
+def plot_roi_activities(video_path, rois, image):
+  win = pg.GraphicsWindow(title="Activity across frames")
+  win.resize(1000, 600)
+  win.setWindowTitle('Activity across frames')
+  plot = win.addPlot(title="Activity across frames")
   plot.addLegend()
 
-  usable_kelly_colors = self.kelly_colors.keys()
-  usable_bad_kelly_colours = self.worse_kelly_colors.keys()
-  for plot_pts_key in roi_plots.keys():
-    if len(usable_kelly_colors) == 0 and len(usable_bad_kelly_colours) == 0:
-      raise LookupError("Ran out of colours!")
+  pg.setConfigOptions(antialias=True)
 
-    if len(usable_kelly_colors) > 0:
-       col_name = random.choice(usable_kelly_colors)
-       usable_kelly_colors.remove(col_name)
-       col = self.kelly_colors[col_name]
-    else:
-      col_name = random.choice(usable_bad_kelly_colours)
-      usable_bad_kelly_colours.remove(col_name)
-      col = self.worse_kelly_colors[col_name]
+  frames = fileloader.load_file(video_path)
+  #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
 
-    plot.plot(roi_plots[plot_pts_key], pen=col, name=plot_pts_key)
+  for i, roi in enumerate(rois):
+    mask = roi.getROIMask(frames, image, axes=(1, 2))
+    size = np.count_nonzero(mask)
+    roi_frames = frames * mask[np.newaxis, :, :]
+    roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+    p = roi_frames / size
+    color = kelly_colors[i].rgb
+    plot.plot(p, pen=color, name=roi.name)
+
+  return win
 
 class Widget(QWidget):
-  pass
+  def __init__(self, project, parent=None):
+    super(Widget, self).__init__(parent)
+
+    if not project:
+      return
+    self.project = project
+    self.setup_ui()
+
+    self.open_dialogs = []
+
+    self.video_list.setModel(QStandardItemModel())
+    self.video_list.selectionModel().selectionChanged[QItemSelection,
+      QItemSelection].connect(self.selected_video_changed)
+
+    self.roi_list.setModel(QStandardItemModel())
+    self.roi_list.selectionModel().selectionChanged[QItemSelection,
+      QItemSelection].connect(self.selected_roi_changed)
+
+    for f in project.files:
+      if f['type'] == 'video':
+        self.video_list.model().appendRow(QStandardItem(f['path']))
+      elif f['type'] == 'roi':
+        item = QStandardItem(f['name'])
+        item.setData(f['path'], Qt.UserRole)
+        self.roi_list.model().appendRow(item)
+
+    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
+
+  def setup_ui(self):
+    hbox = QHBoxLayout()
+  
+    self.view = MyGraphicsView(self.project)
+    self.view.vb.crosshair_visible = False
+    hbox.addWidget(self.view)
+
+    vbox = QVBoxLayout()
+    vbox.addWidget(QLabel('Select video:'))
+    self.video_list = QListView()
+    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.video_list)
+
+    vbox.addWidget(QLabel('Select ROI:'))
+    self.roi_list = QListView()
+    self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    vbox.addWidget(self.roi_list)
+
+    pb = QPushButton('Plot &activity')
+    pb.clicked.connect(self.plot_triggered)
+    vbox.addWidget(pb)
+
+    hbox.addLayout(vbox)
+    hbox.setStretch(0, 1)
+    hbox.setStretch(1, 0)
+    self.setLayout(hbox) 
+
+  def selected_video_changed(self, selected, deselected):
+    if not selected.indexes():
+      return
+    self.video_path = str(selected.indexes()[0].data(Qt.DisplayRole).toString())
+    frame = fileloader.load_reference_frame(self.video_path)
+    self.view.show(frame)
+
+  def selected_roi_changed(self, selected, deselected):
+    for index in deselected.indexes():
+      roiname = str(index.data(Qt.DisplayRole).toString())
+      self.view.vb.removeRoi(roiname)
+    for index in selected.indexes():
+      roiname = str(index.data(Qt.DisplayRole).toString())
+      roipath = str(index.data(Qt.UserRole).toString())
+      self.view.vb.addRoi(roipath, roiname)
+
+  def plot_triggered(self):
+    indexes = self.roi_list.selectionModel().selectedIndexes()
+    roinames = [index.data(Qt.DisplayRole) for index in indexes]
+    rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
+    win = plot_roi_activities(self.video_path, rois, self.view.vb.img)
+    self.open_dialogs.append(win)
 
 class MyPlugin:
   def __init__(self, project):
-    self.name = 'ROI activity plot'
-    self.widget = QWidget()
+    self.name = 'Plot ROI activity'
+    self.widget = Widget(project)
   
   def run(self):
     pass

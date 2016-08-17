@@ -3,8 +3,6 @@ from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.stats.stats import pearsonr
 from scipy import ndimage
-#from joblib import Parallel, delayed
-#import multiprocessing
 import parmap
 import image_registration
 from PIL import Image
