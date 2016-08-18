@@ -15,47 +15,53 @@ sys.path.append('..')
 import qtutil
 import uuid
 
+#todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
-  textChanged = pyqtSignal(str, str)
+    textChanged = pyqtSignal(str, str, QModelIndex)
 
-  def __init__(self, parent=None):
-    super(RoiItemModel, self).__init__(parent)
-    self.rois = []
+    def __init__(self, parent=None):
+        super(RoiItemModel, self).__init__(parent)
+        self.rois = []
 
-  def appendRoi(self, name):
-    self.rois.append(name)
-    row = len(self.rois) - 1
-    self.dataChanged.emit(self.index(row), self.index(row))
+    def appendRoi(self, name):
+        self.rois.append(name)
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
 
-  def rowCount(self, parent):
-    return len(self.rois)
+    def edit_roi_name(self, name, index):
+        self.rois.append(name)
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
 
-  def data(self, index, role):
-    if role == Qt.DisplayRole:
-      return self.rois[index.row()]
-    return QVariant()
+    def rowCount(self, parent):
+        return len(self.rois)
 
-  def setData(self, index, value, role):
-    if role == Qt.EditRole:
-      value = str(value.toString())
-      if value == self.rois[index.row()]:
-        pass
-      elif value in self.rois:
-        qtutil.critical('Roi name taken.')
-      else:
-        self.rois[index.row()] = value
-        self.textChanged.emit(self.rois[index.row()], value.toString())
-      return True
-    return super(RoiItemModel, self).setData(index, value, role)
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            return self.rois[index.row()]
+        return QVariant()
 
-  def flags(self, index):
-    return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+    def setData(self, index, value, role):
+      if role == Qt.EditRole:
+        value = str(value.toString())
+        if value in self.rois[index.row()]:
+          pass
+        elif value in self.rois:
+          qtutil.critical('Roi name taken.')
+        else:
+          self.rois[index.row()] = value
+          self.textChanged.emit(self.rois[index.row()], value.toString())
+        return True
+      return super(RoiItemModel, self).setData(index, value, role)
 
-  def removeRow(self, roi_to_remove):
-    for roi in self.rois:
-      if roi == roi_to_remove:
-        del roi
-        break
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+
+    def removeRow(self, roi_to_remove):
+        for roi in self.rois:
+            if roi == roi_to_remove:
+                del roi
+                break
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -87,7 +93,7 @@ class Widget(QWidget):
     for roi_name in roi_names:
       model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    self.view.vb.roi_placed.connect(self.update_roi_names)
+    self.view.vb.roi_placed.connect(self.update_project_roi)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -156,7 +162,6 @@ class Widget(QWidget):
     #   return
     if not selection.indexes() or self.view.vb.drawROImode:
       return
-
     self.remove_all_rois()
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
@@ -166,53 +171,48 @@ class Widget(QWidget):
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
-      self.view.vb.loadROI([self.project.path+'/'+roi_to_add+'.roi'])
+      self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def roi_item_changed(self, prev_name, new_name):
-    #todo: Why not pass the paramaters as strings? Is it important to have them in this format?
-    prev_name = str(prev_name)
-    new_name = str(new_name)
-    if str(new_name) == '':
-      qtutil.critical('Choose a name.')
-    elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
+  def roi_item_changed(self, prev_name, new_name, index):
+    # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
+    if prev_name == '':
+      raise ValueError("The ROI already has no name... you monster")
+    prev_name_str = str(prev_name)
+    new_name_str = str(new_name)
     self.remove_all_rois()
-    self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
+    self.view.vb.loadROI([self.project.path + '/' + str(prev_name_str) + '.roi'])
     roi = self.view.vb.rois[0]
-    roi.setName(str(new_name))
+    roi.setName(str(new_name_str))
     for i in range(len(self.project.files)):
-      if self.project.files[i]['path'].endswith(str(prev_name)+'.roi'):
-        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-        self.project.files[i]['name'] = str(new_name)
+      if self.project.files[i]['path'].endswith(str(prev_name_str) + '.roi'):
+        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name_str, new_name_str))
+        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name_str, new_name_str)
+        self.project.files[i]['name'] = new_name_str
     self.project.save()
 
-  def update_roi_names(self, roi):
+  def update_project_roi(self, roi):
+    name = roi.name
+    if not name:
+      raise ValueError('ROI has no name')
     if self.view.vb.drawROImode:
       return
 
-    name = str(uuid.uuid4())
-    if not name:
-      qtutil.critical('Choose a name.')
-    elif name in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-    else:
-      roi.setName(name)
-      path = os.path.join(self.project.path, name + '.roi')
-      self.view.vb.saveROI(path)
-      # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-      self.project.files.append({
-        'path': path,
-        'type': 'roi',
-        'source_video': self.video_path,
-        'name': name
-      })
-      self.project.save()
+    roi.setName(name)
+    path = os.path.join(self.project.path, name + '.roi')
+    self.view.vb.saveROI(path)
+    # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+    self.project.files.append({
+      'path': path,
+      'type': 'roi',
+      'source_video': self.video_path,
+      'name': name
+    })
+    self.project.save()
 
-      roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-      for roi_name in roi_names:
-        if roi_name not in self.roi_list.model().rois:
-          self.roi_list.model().appendRoi(roi_name)
+    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+    for roi_name in roi_names:
+      if roi_name not in self.roi_list.model().rois:
+        self.roi_list.model().appendRoi(roi_name)
 
   def create_roi(self):
     self.view.vb.addPolyRoiRequest()

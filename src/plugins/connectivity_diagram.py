@@ -17,51 +17,6 @@ import uuid
 import psutil
 import qtutil
 
-#todo: Explain this model to me in depth
-class RoiItemModel(QAbstractListModel):
-    textChanged = pyqtSignal(str, str, int)
-
-    def __init__(self, parent=None):
-        super(RoiItemModel, self).__init__(parent)
-        self.rois = []
-
-    def appendRoi(self, name):
-        self.rois.append(name)
-        row = len(self.rois) - 1
-        self.dataChanged.emit(self.index(row), self.index(row))
-
-    # def edit_roi_name(self, name, index):
-    #     self.rois.append(name)
-    #     row = len(self.rois) - 1
-    #     self.dataChanged.emit(self.index(row), self.index(row))
-
-    def rowCount(self, parent):
-        return len(self.rois)
-
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            return self.rois[index.row()]
-        return QVariant()
-
-    def setItemData(self, index, data):
-        self.rois[index] = data
-
-    def setData(self, index, value, role):
-        if role in [Qt.DisplayRole, Qt.EditRole]:
-            self.textChanged.emit(self.rois[index.row()], value.toString(), index.row())
-            self.rois[index.row()] = str(value.toString())
-            return True
-        return super(RoiItemModel, self).setData(index, value, role)
-
-    def flags(self, index):
-        return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
-
-    def removeRow(self, roi_to_remove):
-        for roi in self.rois:
-            if roi == roi_to_remove:
-                del roi
-                break
-
 class Widget(QWidget):
     def __init__(self, project=None, parent=None):
         super(Widget, self).__init__(parent)
@@ -81,19 +36,21 @@ class Widget(QWidget):
             self.listview.model().appendRow(QStandardItem(f['path']))
         self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
-        model = RoiItemModel()
-        model.textChanged.connect(self.roi_item_changed)
-        self.roi_list.setModel(model)
+        self.roi_list.setModel(QStandardItemModel())
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         # A flag to see whether selected_roi_changed is being entered for the first time
         self.selected_roi_changed_flag = 0
         self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_roi_changed)
-        roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
-        for roi_name in roi_names:
-            model.appendRoi(roi_name)
-        self.roi_list.setCurrentIndex(model.index(0, 0))
-        self.view.vb.roi_placed.connect(self.update_project_roi)
+        #roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
+        for f in project.files:
+            if f['type'] == 'roi':
+                item = QStandardItem(f['name'])
+                item.setData(f['path'], Qt.UserRole)
+                self.roi_list.model().appendRow(item)
+
+        #self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+        self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
     def setup_ui(self):
         hbox = QHBoxLayout()
@@ -107,14 +64,8 @@ class Widget(QWidget):
         self.listview.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.listview)
 
-        pb = QPushButton('Create poly ROI')
-        pb.clicked.connect(self.create_roi)
-        vbox.addWidget(pb)
         pb = QPushButton('Connectivity Diagram')
         pb.clicked.connect(self.connectivity_diagram)
-        vbox.addWidget(pb)
-        pb = QPushButton('Delete selected ROIs')
-        pb.clicked.connect(self.delete_roi)
         vbox.addWidget(pb)
 
         vbox.addWidget(qtutil.separator())
@@ -164,85 +115,6 @@ class Widget(QWidget):
         rois_to_add = [x for x in rois_selected if x not in rois_in_view]
         for roi_to_add in rois_to_add:
             self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-
-    def roi_item_changed(self, prev_name, new_name, index):
-        # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
-        if prev_name == '':
-            raise ValueError("The ROI already has no name... you monster")
-        prev_name = str(prev_name)
-        new_name = str(new_name)
-        if prev_name == new_name:
-            return
-        if new_name == '':
-            qtutil.critical('Choose a name for your ROI')
-            self.roi_list.model().setItemData(index, prev_name)
-            return
-        if new_name in [f['name'] for f in self.project.files if 'name' in f]:
-            qtutil.critical('ROI name taken.')
-            self.roi_list.model().setItemData(index, prev_name)
-            return
-        self.remove_all_rois()
-        self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
-        roi = self.view.vb.rois[0]
-        roi.setName(str(new_name))
-        for i in range(len(self.project.files)):
-            if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
-                os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-                self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-                self.project.files[i]['name'] = str(new_name)
-        self.project.save()
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-
-    def update_project_roi(self, roi):
-        name = roi.name
-        if not name:
-            raise ValueError('ROI has no name')
-        if self.view.vb.drawROImode:
-            return
-
-        roi.setName(name)
-        path = os.path.join(self.project.path, name + '.roi')
-        self.view.vb.saveROI(path)
-        # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-        self.project.files.append({
-            'path': path,
-            'type': 'roi',
-            'source_video': self.video_path,
-            'name': name
-        })
-        self.project.save()
-
-        roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-        for roi_name in roi_names:
-            if roi_name not in self.roi_list.model().rois:
-                self.roi_list.model().appendRoi(roi_name)
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-
-    def create_roi(self):
-        self.view.vb.addPolyRoiRequest()
-        # Following lines are for debugging. Can be removed when all is working
-        # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-
-    def delete_roi(self):
-        rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
-                         for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-        if rois_selected == None:
-            return
-        rois_dict = [self.project.files[x] for x in range(len(self.project.files))
-                     if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
-        self.project.files = [self.project.files[x] for x in range(len(self.project.files))
-                              if self.project.files[x] not in rois_dict]
-        self.project.save()
-        self.view.vb.setCurrentROIindex(None)
-
-        for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
-            self.roi_list.model().removeRow(roi_to_remove)
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def connectivity_diagram(self):
         frames = fileloader.load_file(self.video_path)
