@@ -142,6 +142,12 @@ class Widget(QWidget):
     # pb = QPushButton('Create poly ROI')
     # pb.clicked.connect(self.create_roi)
     # vbox.addWidget(pb)
+
+    vbox.addWidget(QLabel('ROI size NxN'))
+    self.roi_size = QSpinBox()
+    self.roi_size.setMinimum(1)
+    self.roi_size.setValue(100)
+    vbox.addWidget(self.roi_size)
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
     vbox.addWidget(pb)
@@ -270,8 +276,7 @@ class Widget(QWidget):
 
     # pos(ii).name = 'M2'; pos(ii).y = 2.5; pos(ii).x = 1; ii = ii + 1;
     # (1/(mm/pixel) * 2.5) is the y position for M2 *from bregma*
-    # todo: make "3" user-defined ROI length
-    half_length = 3 * self.project['mmpixel']
+    half_length = self.roi_size.value() * self.project['mmpixel']
     # m2_x = (1*(1/self.mmpixel))+self.origin[0]
     # m2_y = (2.5*(1/self.mmpixel))+self.origin[1]
     # m1_x = (1.5*(1/self.mmpixel))+self.origin[0]
@@ -337,7 +342,7 @@ class Widget(QWidget):
       self.view.vb.autoDrawPolygonRoi(finished=True)
 
     # # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    # path = os.path.join(self.project.path, 'roi' + '.npy')
+    # path = os.path.join(self.project.path,   + '.npy')
     # np.save(path, roi_frames)
     # self.project.files.append({
     #   'path': path,
@@ -345,6 +350,70 @@ class Widget(QWidget):
     #   'source_video': self.video_path,
     #   'manipulations': ['crop']
     # })
+
+class AutoROICoords(QWidget):
+  def __init__(self, parent=None):
+    super(QWidget, self).__init__(parent)
+    self.setup_ui()
+
+  def setup_ui(self):
+    hbox = QHBoxLayout()
+
+    vbox = QVBoxLayout()
+
+    # vbox.addWidget(QLabel('ROI size NxN'))
+    # self.roi_size = QSpinBox()
+    # self.roi_size.setMinimum(1)
+    # self.roi_size.setValue(100)
+    # vbox.addWidget(self.roi_size)
+    # pb = QPushButton('auto ROI')
+    # pb.clicked.connect(self.auto_ROI)
+    # vbox.addWidget(pb)
+    # pb = QPushButton('Delete selected ROIs')
+    # pb.clicked.connect(self.delete_roi)
+    # vbox.addWidget(pb)
+    #
+    # vbox.addWidget(qtutil.separator())
+    #
+    # vbox2 = QVBoxLayout()
+    # w = QWidget()
+    # w.setLayout(vbox2)
+    # vbox.addWidget(w)
+    #
+    # vbox.addWidget(qtutil.separator())
+    # vbox.addWidget(QLabel('ROIs'))
+    # self.roi_list = QListView()
+    # vbox.addWidget(self.roi_list)
+    #
+    # hbox.addLayout(vbox)
+    # hbox.setStretch(0, 1)
+    # hbox.setStretch(1, 0)
+    # self.setLayout(hbox)
+
+  # def update_project_roi(self, roi):
+  #   name = roi.name
+  #   if not name:
+  #     raise ValueError('ROI has no name')
+  #   if self.view.vb.drawROImode:
+  #     return
+  #
+  #   roi.setName(name)
+  #   path = os.path.join(self.project.path, name + '.roi')
+  #   self.view.vb.saveROI(path)
+  #   # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+  #   self.project.files.append({
+  #     'path': path,
+  #     'type': 'roi',
+  #     'source_video': self.video_path,
+  #     'name': name
+  #   })
+  #   self.project.save()
+  #
+  #   roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+  #   for roi_name in roi_names:
+  #     if roi_name not in self.roi_list.model().rois:
+  #       self.roi_list.model().appendRoi(roi_name)
+
 
 class MyPlugin:
   def __init__(self, project):

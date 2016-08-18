@@ -139,9 +139,10 @@ class Widget(QWidget):
             avg_of_rois[roi_name] = roi_frames_flatten/mask_size
 
         connectivity_matrix = {}
-        for i, roi2 in enumerate(self.view.vb.rois):
+        rois = self.view.vb.rois
+        for i, roi2 in enumerate(rois):
             col = []
-            for j, roi1 in enumerate(self.view.vb.rois):
+            for j, roi1 in enumerate(rois):
                 row_name = roi1.name
                 col_name = roi2.name
                 col.append(stats.pearsonr(
