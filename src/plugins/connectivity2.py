@@ -34,6 +34,7 @@ def calc_connectivity(video_path, image, rois):
 class ConnectivityModel(QAbstractTableModel):
   def __init__(self, video_path, image, rois, parent=None):
     super(ConnectivityModel, self).__init__(parent)
+    self.rois = rois
     self._data = calc_connectivity(video_path, image, rois)
 
   def rowCount(self, parent):
@@ -44,18 +45,29 @@ class ConnectivityModel(QAbstractTableModel):
 
   def data(self, index, role):
     if role == Qt.DisplayRole:
-      return str(self._data[index.row()][index.column()])
+      return str(round(self._data[index.row()][index.column()], 2))
     elif role == Qt.BackgroundRole:
       value = float(self._data[index.row()][index.column()])
       color = plt.cm.jet(value)
       color = [x * 255 for x in color]
       return QColor(*color)
+    elif role == Qt.TextAlignmentRole:
+      return Qt.AlignCenter
+    return QVariant()
+
+  def headerData(self, section, orientation, role):
+    if role == Qt.DisplayRole:
+      return self.rois[section].name
     return QVariant()
 
 class ConnectivityTable(QTableView):
   def __init__(self, parent=None):
     super(ConnectivityTable, self).__init__(parent)
+    self.setSelectionMode(QAbstractItemView.NoSelection)
     self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+    self.verticalHeader().setMaximumWidth(100)
+    self.verticalHeader().setResizeMode(QHeaderView.Stretch)
+    self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
   def __init__(self, video_path, image, rois, parent=None):
@@ -119,7 +131,7 @@ class Widget(QWidget):
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     vbox.addWidget(self.roi_list)
 
-    pb = QPushButton('Connectivity &diagram')
+    pb = QPushButton('Connectivity &Diagram')
     pb.clicked.connect(self.connectivity_triggered)
     vbox.addWidget(pb)
 
