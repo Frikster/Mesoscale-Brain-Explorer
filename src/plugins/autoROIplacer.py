@@ -146,7 +146,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('ROI size NxN'))
     self.roi_size = QSpinBox()
     self.roi_size.setMinimum(1)
-    self.roi_size.setValue(100)
+    self.roi_size.setValue(3)
     vbox.addWidget(self.roi_size)
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
