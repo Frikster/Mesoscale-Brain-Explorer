@@ -44,25 +44,15 @@ class RoiItemModel(QAbstractListModel):
     def setData(self, index, value, role):
       if role == Qt.EditRole:
         value = str(value.toString())
-        if value in self.rois:
-          qtutil.critical('Roi name taken')
+        if value in self.rois[index.row()]:
+          pass
+        elif value in self.rois:
+          qtutil.critical('Roi name taken.')
         else:
           self.rois[index.row()] = value
           self.textChanged.emit(self.rois[index.row()], value.toString())
         return True
       return super(RoiItemModel, self).setData(index, value, role)
-
-    # def setData(self, index, value, role):
-    #   if role == Qt.EditRole:
-    #     self.textChanged.emit(self.rois[index.row()], value.toString(), index)
-    #     self.rois[index.row()] = str(value.toString())
-    #     return True
-    #   print(index)
-    #   print(index.row())
-    #   print(self.rois[index.row()])
-    #   print(value)
-    #   print(role)
-    #   return super(RoiItemModel, self).setData(index, value, role)
 
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
@@ -189,16 +179,6 @@ class Widget(QWidget):
       raise ValueError("The ROI already has no name... you monster")
     prev_name_str = str(prev_name)
     new_name_str = str(new_name)
-    if prev_name_str == new_name_str:
-      return
-    if new_name_str == '':
-      qtutil.critical('Choose a name for your ROI')
-      self.roi_list.model().setData(index, prev_name, Qt.DisplayRole)
-      return
-    if new_name_str in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-      self.roi_list.model().setData(index, prev_name, Qt.DisplayRole)
-      return
     self.remove_all_rois()
     self.view.vb.loadROI([self.project.path + '/' + str(prev_name_str) + '.roi'])
     roi = self.view.vb.rois[0]
