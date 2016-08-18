@@ -17,7 +17,6 @@ import uuid
 import psutil
 import qtutil
 
-#todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
     textChanged = pyqtSignal(str, str, int)
 
@@ -30,10 +29,10 @@ class RoiItemModel(QAbstractListModel):
         row = len(self.rois) - 1
         self.dataChanged.emit(self.index(row), self.index(row))
 
-    # def edit_roi_name(self, name, index):
-    #     self.rois.append(name)
-    #     row = len(self.rois) - 1
-    #     self.dataChanged.emit(self.index(row), self.index(row))
+    def edit_roi_name(self, name, index):
+        self.rois.append(name)
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
 
     def rowCount(self, parent):
         return len(self.rois)
@@ -45,6 +44,8 @@ class RoiItemModel(QAbstractListModel):
 
     def setItemData(self, index, data):
         self.rois[index] = data
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
 
     def setData(self, index, value, role):
         if role in [Qt.DisplayRole, Qt.EditRole]:
@@ -164,8 +165,6 @@ class Widget(QWidget):
         rois_to_add = [x for x in rois_selected if x not in rois_in_view]
         for roi_to_add in rois_to_add:
             self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def roi_item_changed(self, prev_name, new_name, index):
         # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
@@ -193,8 +192,6 @@ class Widget(QWidget):
                 self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
                 self.project.files[i]['name'] = str(new_name)
         self.project.save()
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def update_project_roi(self, roi):
         name = roi.name
@@ -219,13 +216,9 @@ class Widget(QWidget):
         for roi_name in roi_names:
             if roi_name not in self.roi_list.model().rois:
                 self.roi_list.model().appendRoi(roi_name)
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def create_roi(self):
         self.view.vb.addPolyRoiRequest()
-        # Following lines are for debugging. Can be removed when all is working
-        # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def delete_roi(self):
         rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
@@ -241,8 +234,6 @@ class Widget(QWidget):
 
         for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
             self.roi_list.model().removeRow(roi_to_remove)
-        # Following lines are for debugging. Can be removed when all is working
-        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
     def connectivity_diagram(self):
         frames = fileloader.load_file(self.video_path)
