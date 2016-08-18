@@ -94,13 +94,14 @@ class SPCMapDialog(QDialog):
     self.view.show(colorize_spc(self.spc))
 
   def vbc_hovering(self, x, y):
+    x_origin, y_origin = self.project['origin']
     mmpixel = self.project['mmpixel']
     x = x / mmpixel
     y = y / mmpixel
     spc = self.spc.swapaxes(0, 1)
     spc = spc[:, ::-1]
     try:
-      value = str(spc[int(x), int(y)])
+      value = str(spc[int(x)+int(x_origin), int(y)+int(y_origin)])
     except:
       value = '-'
     self.the_label.setText('Correlation value at crosshair: {}'.format(value))
