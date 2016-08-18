@@ -17,7 +17,7 @@ import uuid
 
 #todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
-    textChanged = pyqtSignal(str, str, int)
+    textChanged = pyqtSignal(str, str, QModelIndex)
 
     def __init__(self, parent=None):
         super(RoiItemModel, self).__init__(parent)
@@ -41,17 +41,28 @@ class RoiItemModel(QAbstractListModel):
             return self.rois[index.row()]
         return QVariant()
 
-    def setItemData(self, index, data):
-        self.rois[index] = data
-        row = len(self.rois) - 1
-        self.dataChanged.emit(self.index(row), self.index(row))
-
     def setData(self, index, value, role):
-        if role in [Qt.DisplayRole, Qt.EditRole]:
-            self.textChanged.emit(self.rois[index.row()], value.toString(), index.row())
-            self.rois[index.row()] = str(value.toString())
-            return True
-        return super(RoiItemModel, self).setData(index, value, role)
+      if role == Qt.EditRole:
+        value = str(value.toString())
+        if value in self.rois:
+          qtutil.critical('Roi name taken')
+        else:
+          self.rois[index.row()] = value
+          self.textChanged.emit(self.rois[index.row()], value.toString())
+        return True
+      return super(RoiItemModel, self).setData(index, value, role)
+
+    # def setData(self, index, value, role):
+    #   if role == Qt.EditRole:
+    #     self.textChanged.emit(self.rois[index.row()], value.toString(), index)
+    #     self.rois[index.row()] = str(value.toString())
+    #     return True
+    #   print(index)
+    #   print(index.row())
+    #   print(self.rois[index.row()])
+    #   print(value)
+    #   print(role)
+    #   return super(RoiItemModel, self).setData(index, value, role)
 
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
@@ -176,27 +187,27 @@ class Widget(QWidget):
     # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
     if prev_name == '':
       raise ValueError("The ROI already has no name... you monster")
-    prev_name = str(prev_name)
-    new_name = str(new_name)
-    if prev_name == new_name:
+    prev_name_str = str(prev_name)
+    new_name_str = str(new_name)
+    if prev_name_str == new_name_str:
       return
-    if new_name == '':
+    if new_name_str == '':
       qtutil.critical('Choose a name for your ROI')
-      self.roi_list.model().setItemData(index, prev_name)
+      self.roi_list.model().setData(index, prev_name, Qt.DisplayRole)
       return
-    if new_name in [f['name'] for f in self.project.files if 'name' in f]:
+    if new_name_str in [f['name'] for f in self.project.files if 'name' in f]:
       qtutil.critical('ROI name taken.')
-      self.roi_list.model().setItemData(index, prev_name)
+      self.roi_list.model().setData(index, prev_name, Qt.DisplayRole)
       return
     self.remove_all_rois()
-    self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
+    self.view.vb.loadROI([self.project.path + '/' + str(prev_name_str) + '.roi'])
     roi = self.view.vb.rois[0]
-    roi.setName(str(new_name))
+    roi.setName(str(new_name_str))
     for i in range(len(self.project.files)):
-      if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
-        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-        self.project.files[i]['name'] = str(new_name)
+      if self.project.files[i]['path'].endswith(str(prev_name_str) + '.roi'):
+        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name_str, new_name_str))
+        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name_str, new_name_str)
+        self.project.files[i]['name'] = new_name_str
     self.project.save()
 
   def update_project_roi(self, roi):
