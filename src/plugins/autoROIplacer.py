@@ -90,6 +90,8 @@ class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
+    self.open_dialogs = []
+
     if not project:
       return
     self.project = project
@@ -309,6 +311,10 @@ class Widget(QWidget):
 
     locs = [(m2_x, m2_y), (m1_x, m1_y), (ac_x, ac_y), (hl_x, hl_y), (bc_x, bc_y), (rs_x, rs_y), (v1_x, v1_y)]
 
+    w = AutoROICoords(len(locs), 4)
+    w.show()
+    self.open_dialogs.append(w)
+
     # Map val in a frame size frame_size to the view_range
     # def map_to_view_range(val, frame_size, view_range):
     #     return ((val / frame_size)*(view_range[1]-view_range[0]))+view_range[0]
@@ -351,15 +357,84 @@ class Widget(QWidget):
     #   'manipulations': ['crop']
     # })
 
-class AutoROICoords(QWidget):
-  def __init__(self, parent=None):
-    super(QWidget, self).__init__(parent)
-    self.setup_ui()
+class AutoROICoords(QTableWidget):
+  def __init__(self, *args):
+    QTableWidget.__init__(self, *args)
+    self.resizeColumnsToContents()
+    self.resizeRowsToContents()
+    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+    self.verticalHeader().setResizeMode(QHeaderView.Stretch)
 
-  def setup_ui(self):
-    hbox = QHBoxLayout()
+    # Define commonly used coordinates
+    m2_x = (1)
+    m2_y = (2.5)
+    m1_x = (1.5)
+    m1_y = (1.75)
+    ac_x = (0)
+    ac_y = (0.5)
+    hl_x = (2)
+    hl_y = (0)
+    bc_x = (3.5)
+    bc_y = (-1)
+    rs_x = (0.5)
+    rs_y = (-2.5)
+    v1_x = (2.5)
+    v1_y = (-2.5)
 
-    vbox = QVBoxLayout()
+    self.anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
+                "AC": [3, (0.0, 0.5)], "HL": [3, (2.0, 0.0)],
+                "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
+    self.roi_names = self.anatomy_rois.keys()
+    self.roi_sizes = [self.anatomy_rois[x][0] for x in self.anatomy_rois.keys()]
+    self.roi_coord_x = [self.anatomy_rois[x][1][0] for x in self.anatomy_rois.keys()]
+    self.roi_coord_y = [self.anatomy_rois[x][1][1] for x in self.anatomy_rois.keys()]
+    self.data = {"1) ROI Name": self.roi_names, "2) Length": self.roi_sizes,
+                 "3) X Coordinate": self.roi_coord_x, "4) Y Coordinate": self.roi_coord_y}
+    self.setmydata()
+
+
+  def setmydata(self):
+    horHeaders = self.data.keys()
+    for n, key in enumerate(sorted(horHeaders)):
+      for m, item in enumerate(self.data[key]):
+        newitem = QTableWidgetItem(str(item))
+        self.setItem(m, n, newitem)
+    self.setHorizontalHeaderLabels(sorted(horHeaders))
+
+  def add_new_coord(self):
+    return
+
+  # def setup_ui(self):
+  #   self.hbox.addWidget(QLabel('ROI names'))
+  #   self.hbox.addWidget(QLabel('ROI sizes (NxN)'))
+  #   self.hbox.addWidget(QLabel('X'))
+  #   self.hbox.addWidget(QLabel('Y'))
+  #   self.vbox.addLayout(self.hbox)
+  #
+  #   roi_name = QTextEdit()
+  #   self.hbox.addWidget(QTextEdit())
+  #   self.roi_names.append(roi_name)
+  #   x = QDoubleSpinBox()
+  #   x.setMinimum(0.0)
+  #   x.setValue(1)
+  #   self.hbox.addWidget(x)
+  #   y = QDoubleSpinBox()
+  #   y.setMinimum(0.0)
+  #   y.setValue(1)
+  #   self.roi_coordinates.append((x, y))
+  #   self.hbox.addWidget(y)
+  #   self.vbox.addLayout(self.hbox)
+  #
+  #   #self.hbox.setStretch(0, 1)
+  #   #self.hbox.setStretch(1, 0)
+  #   self.setLayout(self.vbox)
+
+
+
+
+
+
+
 
     # vbox.addWidget(QLabel('ROI size NxN'))
     # self.roi_size = QSpinBox()
