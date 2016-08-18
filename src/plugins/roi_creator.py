@@ -36,9 +36,15 @@ class RoiItemModel(QAbstractListModel):
     return QVariant()
 
   def setData(self, index, value, role):
-    if role in [Qt.DisplayRole, Qt.EditRole]:
-      self.textChanged.emit(self.rois[index.row()], value.toString())
-      self.rois[index.row()] = str(value.toString())
+    if role == Qt.EditRole:
+      value = str(value.toString())
+      if value == self.rois[index.row()]:
+        pass
+      elif value in self.rois:
+        qtutil.critical('Roi name taken.')
+      else:
+        self.rois[index.row()] = value
+        self.textChanged.emit(self.rois[index.row()], value.toString())
       return True
     return super(RoiItemModel, self).setData(index, value, role)
 
