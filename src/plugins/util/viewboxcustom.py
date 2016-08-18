@@ -153,16 +153,14 @@ class MultiRoiViewBox(pg.ViewBox):
         self.drawingROI  = None   # No roi being drawn, so set to None
         for r in self.rois:
             r.setActive(True)
-        #print('endPolyRoiRequest')
 
-    def addPolyLineROI(self, handlePositions):
+    def addPolyLineROI(self, handlePositions, name=None):
         roi = PolyLineROIcustom(handlePositions=handlePositions, removable=True)
-        #roi.setName('ROI-%i'% self.getROIid())
+        roi.setName(name)
         self.addItem(roi)                      # Add roi to viewbox
         self.rois.append(roi)                  # Add to list of rois
         self.selectROI(roi)
-        #self.sortROIs()
-        self.setCurrentROIindex(roi)  
+        self.setCurrentROIindex(roi)
         roi.translatable = True
         #roi.setAcceptedMouseButtons(QtCore.Qt.LeftButton or QtCore.Qt.RightButton)        
         roi.setActive(True)      
@@ -530,14 +528,15 @@ class MultiRoiViewBox(pg.ViewBox):
               if isinstance(fileName,types.TupleType): fileName = fileName[0]
               if hasattr(QtCore,'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)            
             if not fileName=='':
-                if type(roi)==RectROIcustom:
+                if type(roi) == RectROIcustom:
                     roiState = roi.saveState()
-                    roiState['type']='RectROIcustom'
+                    roiState['type'] = 'RectROIcustom'
+                    roiState['name'] = roi.name
                 elif type(roi)==PolyLineROIcustom: 
                     roiState = {}
                     hps   = [self.mapSceneToView(i[-1]) for i in roi.getSceneHandlePositions(index=None)]                                                      
                     hps   = [[hp.x(),hp.y()] for hp in hps]
-                    roiState['type']='PolyLineROIcustom'    
+                    roiState['type'] = 'PolyLineROIcustom'
                     roiState['handlePositions'] = hps
                     roiState['name'] = roi.name
                 pickle.dump( roiState, open( fileName, "wb" ) )
@@ -547,7 +546,7 @@ class MultiRoiViewBox(pg.ViewBox):
       if roistate['type'] == 'RectROIcustom':
         roi = self.addROI(roistate['pos'], roistate['size'], roistate['angle'])
       elif roistate['type'] == 'PolyLineROIcustom':
-        roi = self.addPolyLineROI(roistate['handlePositions'])
+        roi = self.addPolyLineROI(roistate['handlePositions'], roistate['name'])
       else:
         raise UnsupportedRoiTypeError()
       roi.setName(roiname)
@@ -570,25 +569,27 @@ class MultiRoiViewBox(pg.ViewBox):
     def loadROI(self, fileNames = None):
         """ Load a previously saved ROI from file """
         if fileNames == None:
-            fileNames = QtGui.QFileDialog.getOpenFileNames(None,self.tr("Load ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
-        # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
+            fileNames = QtGui.QFileDialog.getOpenFileNames(None, self.tr("Load ROI"),
+                                                           QtCore.QDir.currentPath(),
+                                                           self.tr("ROI (*.roi)"))
+        # Fix for PyQt/PySide compatibility. PyQt returns a QString,
+        # whereas PySide returns a tuple (first entry is filename as string)
         if isinstance(fileNames, types.TupleType): fileNames = fileNames[0]
-        if hasattr(QtCore,'QStringList') and isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
-        if len(fileNames)>0:
+        if hasattr(QtCore, 'QStringList') and \
+                isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
+        if len(fileNames) > 0:
             for fileName in fileNames:
                 if fileName != '':
                     roiState = pickle.load(open(fileName, "rb"))
                     if roiState['type'] == 'RectROIcustom':
-                        self.addROI(roiState['pos'], roiState['size'], roiState['angle'], roiState['name'])
+                        self.addROI(roiState['name'], roiState['pos'], roiState['size'], roiState['angle'])
                     elif roiState['type'] == 'PolyLineROIcustom':
-                        self.addPolyLineROI(roiState['handlePositions'])
+                        self.addPolyLineROI(roiState['handlePositions'], roiState['name'])
 
     def removeROI(self):
         """ Delete the highlighted ROI """
-        print('removeROI')
         if self.currentROIindex!=None:
             roi = self.rois[self.currentROIindex]
-            print(roi)
             self.rois.pop(self.currentROIindex)
             self.removeItem(roi)  
             self.setCurrentROIindex(None) 

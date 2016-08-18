@@ -17,9 +17,9 @@ import uuid
 import psutil
 import qtutil
 
-
+#todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
-    textChanged = pyqtSignal(str, str)
+    textChanged = pyqtSignal(str, str, int)
 
     def __init__(self, parent=None):
         super(RoiItemModel, self).__init__(parent)
@@ -30,6 +30,11 @@ class RoiItemModel(QAbstractListModel):
         row = len(self.rois) - 1
         self.dataChanged.emit(self.index(row), self.index(row))
 
+    # def edit_roi_name(self, name, index):
+    #     self.rois.append(name)
+    #     row = len(self.rois) - 1
+    #     self.dataChanged.emit(self.index(row), self.index(row))
+
     def rowCount(self, parent):
         return len(self.rois)
 
@@ -38,9 +43,12 @@ class RoiItemModel(QAbstractListModel):
             return self.rois[index.row()]
         return QVariant()
 
+    def setItemData(self, index, data):
+        self.rois[index] = data
+
     def setData(self, index, value, role):
         if role in [Qt.DisplayRole, Qt.EditRole]:
-            self.textChanged.emit(self.rois[index.row()], value.toString())
+            self.textChanged.emit(self.rois[index.row()], value.toString(), index.row())
             self.rois[index.row()] = str(value.toString())
             return True
         return super(RoiItemModel, self).setData(index, value, role)
@@ -53,7 +61,6 @@ class RoiItemModel(QAbstractListModel):
             if roi == roi_to_remove:
                 del roi
                 break
-
 
 class Widget(QWidget):
     def __init__(self, project=None, parent=None):
@@ -88,14 +95,6 @@ class Widget(QWidget):
         self.roi_list.setCurrentIndex(model.index(0, 0))
         self.view.vb.roi_placed.connect(self.update_project_roi)
 
-    # def roi_item_edited(self, item):
-    #     new_name = item.text()
-    #     prev_name = item.data(Qt.UserRole)
-    #     # disconnect and reconnect signal
-    #     self.roi_list.itemChanged.disconnect()
-    #     item.setData(new_name, Qt.UserRole)
-    #     self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
-
     def setup_ui(self):
         hbox = QHBoxLayout()
 
@@ -111,18 +110,14 @@ class Widget(QWidget):
         pb = QPushButton('Create poly ROI')
         pb.clicked.connect(self.create_roi)
         vbox.addWidget(pb)
-        pb = QPushButton('Crop poly ROI')
-        pb.clicked.connect(self.crop_ROI)
+        pb = QPushButton('Connectivity Diagram')
+        pb.clicked.connect(self.connectivity_diagram)
         vbox.addWidget(pb)
         pb = QPushButton('Delete selected ROIs')
         pb.clicked.connect(self.delete_roi)
         vbox.addWidget(pb)
 
         vbox.addWidget(qtutil.separator())
-
-        pb = QPushButton('Connectivity Diagram')
-        pb.clicked.connect(self.connectivity_diagram)
-        vbox.addWidget(pb)
 
         vbox2 = QVBoxLayout()
         w = QWidget()
@@ -172,17 +167,21 @@ class Widget(QWidget):
         # Following lines are for debugging. Can be removed when all is working
         rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
-    def roi_item_changed(self, prev_name, new_name):
+    def roi_item_changed(self, prev_name, new_name, index):
         # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
+        if prev_name == '':
+            raise ValueError("The ROI already has no name... you monster")
         prev_name = str(prev_name)
         new_name = str(new_name)
         if prev_name == new_name:
             return
-        if str(new_name) == '':
-            qtutil.critical('Choose a name.')
+        if new_name == '':
+            qtutil.critical('Choose a name for your ROI')
+            self.roi_list.model().setItemData(index, prev_name)
             return
-        if str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
+        if new_name in [f['name'] for f in self.project.files if 'name' in f]:
             qtutil.critical('ROI name taken.')
+            self.roi_list.model().setItemData(index, prev_name)
             return
         self.remove_all_rois()
         self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
@@ -245,43 +244,6 @@ class Widget(QWidget):
         # Following lines are for debugging. Can be removed when all is working
         rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
 
-    def crop_ROI(self):
-        frames = fileloader.load_file(self.video_path)
-        # Return if there is no image or rois in view
-        if self.view.vb.img == None or len(self.view.vb.rois) == 0:
-            print("there is no image or rois in view ")
-            return
-
-        # swap axis for aligned_frames
-        frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-        # Collect ROI's and combine
-        numROIs = len(self.view.vb.rois)
-        arrRegion_masks = []
-        for i in xrange(numROIs):
-            roi = self.view.vb.rois[i]
-            arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
-            arrRegion_masks.append(arrRegion_mask)
-
-        combined_mask = np.sum(arrRegion_masks, axis=0)
-        # Make all rows with all zeros na
-        combined_mask[(combined_mask == 0)] = None
-        self.mask = combined_mask
-        # TODO: save mask as well
-        # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
-        # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
-
-        roi_frames = (frames * combined_mask[np.newaxis, :, :])
-
-        # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-        path = os.path.join(self.project.path, 'roi' + '.npy')
-        np.save(path, roi_frames)
-        self.project.files.append({
-            'path': path,
-            'type': 'video',
-            'source_video': self.video_path,
-            'manipulations': ['crop']
-        })
-
     def connectivity_diagram(self):
         frames = fileloader.load_file(self.video_path)
         # Return if there is no image or rois in view
@@ -293,7 +255,7 @@ class Widget(QWidget):
         frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
         # Collect ROI's and average each one
         avg_of_rois = {}
-        numROIs = len(self.view.vb.rois)
+
         roi_names = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
         for i, roi_name in enumerate(roi_names):
             roi = self.view.vb.rois[i]
@@ -316,7 +278,8 @@ class Widget(QWidget):
 
         #w = QMainWindow()
         #w.setCentralWidget(TableWidget(connectivity_matrix, self))
-        table = MyTable(data=connectivity_matrix)
+        numROIs = len(self.view.vb.rois)
+        table = MyTable(connectivity_matrix, numROIs, numROIs)
         #dialog = TableView(self.project, connectivity_matrix, self)
         table.show()
         self.open_dialogs.append(table)
@@ -332,13 +295,12 @@ class MyTable(QTableWidget):
         self.verticalHeader().setResizeMode(QHeaderView.Stretch)
 
     def setmydata(self):
-
         horHeaders = []
         for n, key in enumerate(sorted(self.data.keys())):
             horHeaders.append(key)
             for m, item in enumerate(self.data[key]):
                 r, g, b = [random.randint(0, 255) for _ in range(3)]
-                newitem = QTableWidgetItem(item)
+                newitem = QTableWidgetItem(str(item))
                 newitem.setBackgroundColor(QColor(r, g, b))
                 self.setItem(m, n, newitem)
         self.setHorizontalHeaderLabels(horHeaders)
@@ -367,7 +329,7 @@ class MyTable(QTableWidget):
 
 # #todo: how to tell who to superclass on?
 # class TableWidget(QTableWidget):
-#     #todo: why not specify parent in contructor paramater?
+#     #todo: why not specify parent in constructor parameter?
 #     def __init__(self, data, parent=None, *args):
 #      #todo: How do I tell which of these two lines to use?
 #      #super(TableWidget, self).__init__(parent)
