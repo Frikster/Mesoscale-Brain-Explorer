@@ -97,8 +97,9 @@ class Widget(QWidget):
     roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
     roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
     roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
-    self.data = {"1) ROI Name": roi_names, "2) Length": roi_sizes,
-                 "3) X Coordinate": roi_coord_x, "4) Y Coordinate": roi_coord_y}
+    self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
+    self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+                 self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
 
     self.open_dialogs = []
 
@@ -117,7 +118,7 @@ class Widget(QWidget):
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel()
-    model.textChanged.connect(self.roi_item_changed)
+    model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     # A flag to see whether selected_roi_changed is being entered for the first time
@@ -128,9 +129,7 @@ class Widget(QWidget):
     for roi_name in roi_names:
       model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    self.view.vb.roi_placed.connect(self.update_roi_names)
-
-
+    #self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -218,51 +217,47 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def roi_item_changed(self, prev_name, new_name):
-    # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
-    prev_name = str(prev_name)
-    new_name = str(new_name)
-    if str(new_name) == '':
-      qtutil.critical('Choose a name.')
-    elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-    self.remove_all_rois()
-    self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
-    roi = self.view.vb.rois[0]
-    roi.setName(str(new_name))
-    for i in range(len(self.project.files)):
-      if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
-        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-        self.project.files[i]['name'] = str(new_name)
-    self.project.save()
+  # def roi_item_changed(self, prev_name, new_name):
+  #   # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
+  #   prev_name = str(prev_name)
+  #   new_name = str(new_name)
+  #   if str(new_name) == '':
+  #     qtutil.critical('Choose a name.')
+  #   elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
+  #     qtutil.critical('ROI name taken.')
+  #   self.remove_all_rois()
+  #   self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
+  #   roi = self.view.vb.rois[0]
+  #   roi.setName(str(new_name))
+  #   for i in range(len(self.project.files)):
+  #     if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
+  #       os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
+  #       self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
+  #       self.project.files[i]['name'] = str(new_name)
+  #   self.project.save()
 
-  def update_roi_names(self, roi):
+  def update_project_roi(self, roi):
+    name = roi.name
+    if not name:
+      raise ValueError('ROI has no name')
     if self.view.vb.drawROImode:
       return
 
-    name = str(uuid.uuid4())
-    if not name:
-      qtutil.critical('Choose a name.')
-    elif name in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-    else:
-      roi.setName(name)
-      path = os.path.join(self.project.path, name + '.roi')
-      self.view.vb.saveROI(path)
-      # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-      self.project.files.append({
-        'path': path,
-        'type': 'roi',
-        'source_video': self.video_path,
-        'name': name
-      })
-      self.project.save()
+    path = os.path.join(self.project.path, name + '.roi')
+    self.view.vb.saveROI(path)
+    # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+    self.project.files.append({
+      'path': path,
+      'type': 'roi',
+      'source_video': self.video_path,
+      'name': name
+    })
+    self.project.save()
 
-      roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-      for roi_name in roi_names:
-        if roi_name not in self.roi_list.model().rois:
-          self.roi_list.model().appendRoi(roi_name)
+    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+    for roi_name in roi_names:
+      if roi_name not in self.roi_list.model().rois:
+        self.roi_list.model().appendRoi(roi_name)
 
   def delete_roi(self):
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
@@ -293,7 +288,7 @@ class Widget(QWidget):
 
 
   def auto_ROI(self):
-    locs = zip(self.data["3) X Coordinate"], self.data["4) Y Coordinate"])
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
     half_length = self.roi_size.value() * self.project['mmpixel']
 
     model = AutoROICoords(self.data, len(locs), 4)
@@ -302,24 +297,26 @@ class Widget(QWidget):
     self.open_dialogs.append(model)
 
     # todo: make individual ROI sizes editable
-    self.remove_all_rois()
-    for tup in locs:
-      x1 = (tup[0] - half_length)
-      x2 = (tup[0] - half_length)
-      x3 = (tup[0] + half_length)
-      x4 = (tup[0] + half_length)
-      y1 = (tup[1] - half_length)
-      y2 = (tup[1] + half_length)
-      y3 = (tup[1] + half_length)
-      y4 = (tup[1] - half_length)
+    for tri in locs:
+      self.remove_all_rois()
+      x1 = (tri[1] - half_length)
+      x2 = (tri[1] - half_length)
+      x3 = (tri[1] + half_length)
+      x4 = (tri[1] + half_length)
+      y1 = (tri[2] - half_length)
+      y2 = (tri[2] + half_length)
+      y3 = (tri[2] + half_length)
+      y4 = (tri[2] - half_length)
 
       self.view.vb.addPolyRoiRequest()
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x1, y1))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x2, y2))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x3, y3))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(finished=True)
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(tri[0], finished=True)
+      roi = self.view.vb.rois[0]
+      self.update_project_roi(roi)
 
     # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
     # path = os.path.join(self.project.path,   + '.roi')
