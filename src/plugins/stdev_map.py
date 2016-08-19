@@ -3,13 +3,15 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-
 from util import filter_jeff
 from util.mygraphicsview import MyGraphicsView
 from util.qt import MyListView, MyProgressDialog
+from util.gradient import GradientLegend
 
 from util import fileloader
 
+import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import math
 
@@ -22,8 +24,11 @@ def calc_stddev(video_path, progress):
 
   return stddev
 
-def prepare_image(stddev):
-  image = plt.cm.jet(stddev) * 255
+def prepare_image(stddev, max_stdev):
+  stddev[np.isnan(stddev)] = 0.0
+  gradient_range = matplotlib.colors.Normalize(0.0, max_stdev)
+  image = matplotlib.cm.ScalarMappable(
+    gradient_range, 'jet').to_rgba(stddev, bytes=True)
   image = image.swapaxes(0, 1)
   if image.ndim == 2:
     image = image[:, ::-1]
@@ -32,15 +37,18 @@ def prepare_image(stddev):
   return image
 
 class StdDevDialog(QDialog):
-  def __init__(self, project, video_path, stddevmap, parent=None):
+  def __init__(self, project, video_path, stddevmap, max_stdev, parent=None):
     super(StdDevDialog, self).__init__(parent)
     self.project = project
     self.video_path = video_path
     self.stddev = stddevmap
+    self.max_stdev = max_stdev
     self.setup_ui()
+    l = GradientLegend(0.0, max_stdev)
+    l.setParentItem(self.view.vb)
     self.setWindowTitle('Standard Deviation Map')
 
-    self.view.show(prepare_image(stddevmap))
+    self.view.show(prepare_image(stddevmap, max_stdev))
     self.view.vb.hovering.connect(self.vbc_hovering)
 
   def setup_ui(self):
@@ -91,10 +99,13 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list = MyListView()
     vbox.addWidget(self.video_list)
+    self.max_stdev = QDoubleSpinBox(decimals=4)
+    self.max_stdev.setMinimum(0.0000)
+    self.max_stdev.setValue(1.0000)
+    vbox.addWidget(self.max_stdev)
     pb = QPushButton('Generate Std. Dev. Map')
     pb.clicked.connect(self.go)
     vbox.addWidget(pb)
-    vbox.addStretch()
     
     hbox.addLayout(vbox)    
     hbox.setStretch(0, 1)
@@ -114,7 +125,7 @@ class Widget(QWidget):
 
     progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
     stddev = calc_stddev(self.video_path, progress)
-    dialog = StdDevDialog(self.project, self.video_path, stddev, self)
+    dialog = StdDevDialog(self.project, self.video_path, stddev, self.max_stdev.value(), self)
     dialog.show()
     self.open_dialogs.append(dialog)
 
