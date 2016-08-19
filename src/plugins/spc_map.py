@@ -5,7 +5,7 @@ from PyQt4.QtCore import *
 
 from util import filter_jeff
 from util.mygraphicsview import MyGraphicsView
-from util.qt import MyListView, MyProgressDialog
+from util.qt import MyListView, MyProgressDialog, InfoWidget
 
 from util import fileloader
 
@@ -45,27 +45,6 @@ def colorize_spc(spc_map):
     spc_map_color = spc_map_color[:, ::-1, :]
 
   return spc_map_color
-
-class InfoWidget(QFrame):
-  def __init__(self, text, parent=None):
-    super(InfoWidget, self).__init__(parent)
-    self.setup_ui(text)
-  
-  def setup_ui(self, text):
-    hbox = QHBoxLayout()
-    icon = QLabel()
-    image = QImage('pics/info.png')
-    icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
-    hbox.addWidget(icon)
-    self.label = QLabel(text)
-    self.label.setWordWrap(True)
-    hbox.addWidget(self.label)
-    hbox.addStretch()
-    self.setLayout(hbox)
-
-    self.setFrameStyle(QFrame.Panel | QFrame.Raised)
-    self.setLineWidth(2)
-    self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
 class SPCMapDialog(QDialog):
   def __init__(self, project, video_path, spcmap, parent=None):
