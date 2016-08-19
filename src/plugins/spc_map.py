@@ -115,9 +115,6 @@ class SPCMapDialog(QDialog):
     except:
       value = '-'
     self.the_label.setText('Correlation value at crosshair: {}'.format(value))
-#    if not math.isnan(spc[int(x), int(y)]):
-#      self.the_label.setText('Correlation value at crosshair: '
-#                             + str(spc[int(x), int(y)]))
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
