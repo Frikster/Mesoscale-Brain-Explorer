@@ -24,19 +24,20 @@ class Exporter(QWidget):
     pass
   
   def export_avi(self, fileinfo, filename):
+    progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
       frames = fileloader.load_file(fileinfo['path'])
       video = cv2.VideoWriter(
         filename, cv2.cv.CV_FOURCC(*'DIVX'), 10,
         (frames.shape[1], frames.shape[2]), False
       )
-      progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
       for i, frame in enumerate(frames):
         progress.setValue(100 * i / float(len(frames)-1))
         video.write(frame)
       cv2.destroyAllWindows()
       video.release()
     except:
+      progress.close()
       qtutil.critical('Video file could not be written.', self)
   
   def export_tif(self, fileinfo, filename):
