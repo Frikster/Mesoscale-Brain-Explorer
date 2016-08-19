@@ -90,6 +90,19 @@ class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
+    anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
+                "AC": [3, (0.0, 0.5)], "HL": [3, (2.0, 0.0)],
+                "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
+    roi_names = anatomy_rois.keys()
+    roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
+    roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
+    roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
+    self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
+    self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+                 self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+
+    self.open_dialogs = []
+
     if not project:
       return
     self.project = project
@@ -105,7 +118,7 @@ class Widget(QWidget):
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel()
-    model.textChanged.connect(self.roi_item_changed)
+    model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     # A flag to see whether selected_roi_changed is being entered for the first time
@@ -116,7 +129,7 @@ class Widget(QWidget):
     for roi_name in roi_names:
       model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    self.view.vb.roi_placed.connect(self.update_roi_names)
+    #self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -146,7 +159,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('ROI size NxN'))
     self.roi_size = QSpinBox()
     self.roi_size.setMinimum(1)
-    self.roi_size.setValue(100)
+    self.roi_size.setValue(3)
     vbox.addWidget(self.roi_size)
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
@@ -204,54 +217,47 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def roi_item_changed(self, prev_name, new_name):
-    # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
-    prev_name = str(prev_name)
-    new_name = str(new_name)
-    if str(new_name) == '':
-      qtutil.critical('Choose a name.')
-    elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-    self.remove_all_rois()
-    self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
-    roi = self.view.vb.rois[0]
-    roi.setName(str(new_name))
-    for i in range(len(self.project.files)):
-      if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
-        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-        self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-        self.project.files[i]['name'] = str(new_name)
-    self.project.save()
+  # def roi_item_changed(self, prev_name, new_name):
+  #   # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
+  #   prev_name = str(prev_name)
+  #   new_name = str(new_name)
+  #   if str(new_name) == '':
+  #     qtutil.critical('Choose a name.')
+  #   elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
+  #     qtutil.critical('ROI name taken.')
+  #   self.remove_all_rois()
+  #   self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
+  #   roi = self.view.vb.rois[0]
+  #   roi.setName(str(new_name))
+  #   for i in range(len(self.project.files)):
+  #     if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
+  #       os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
+  #       self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
+  #       self.project.files[i]['name'] = str(new_name)
+  #   self.project.save()
 
-  def update_roi_names(self, roi):
+  def update_project_roi(self, roi):
+    name = roi.name
+    if not name:
+      raise ValueError('ROI has no name')
     if self.view.vb.drawROImode:
       return
 
-    name = str(uuid.uuid4())
-    if not name:
-      qtutil.critical('Choose a name.')
-    elif name in [f['name'] for f in self.project.files if 'name' in f]:
-      qtutil.critical('ROI name taken.')
-    else:
-      roi.setName(name)
-      path = os.path.join(self.project.path, name + '.roi')
-      self.view.vb.saveROI(path)
-      # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-      self.project.files.append({
-        'path': path,
-        'type': 'roi',
-        'source_video': self.video_path,
-        'name': name
-      })
-      self.project.save()
+    path = os.path.join(self.project.path, name + '.roi')
+    self.view.vb.saveROI(path)
+    # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+    self.project.files.append({
+      'path': path,
+      'type': 'roi',
+      'source_video': self.video_path,
+      'name': name
+    })
+    self.project.save()
 
-      roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-      for roi_name in roi_names:
-        if roi_name not in self.roi_list.model().rois:
-          self.roi_list.model().appendRoi(roi_name)
-
-  def create_roi(self):
-    self.view.vb.addPolyRoiRequest()
+    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+    for roi_name in roi_names:
+      if roi_name not in self.roi_list.model().rois:
+        self.roi_list.model().appendRoi(roi_name)
 
   def delete_roi(self):
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
@@ -268,81 +274,52 @@ class Widget(QWidget):
     for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
       self.roi_list.model().removeRow(roi_to_remove)
 
-  clicked = QtCore.pyqtSignal(QtGui.QMouseEvent)
+  def update_auto_rois(self, item):
+    col = item.column
+    row = item.row
+    try:
+      val = float(item.text())
+    except:
+      val = val
+    header = item.tableWidget.itemAt(0, col)
+    col_to_change = self.data[header]
+    col_to_change[row] = val
+    self.data[header] = col_to_change
+
+
   def auto_ROI(self):
-    #frame = fileloader.load_reference_frame(self.video_path).shape
-    # xr and yr are the view range centered on the origin
-    #xr, yr = self.view.vb.viewRange()
-
-    # pos(ii).name = 'M2'; pos(ii).y = 2.5; pos(ii).x = 1; ii = ii + 1;
-    # (1/(mm/pixel) * 2.5) is the y position for M2 *from bregma*
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
     half_length = self.roi_size.value() * self.project['mmpixel']
-    # m2_x = (1*(1/self.mmpixel))+self.origin[0]
-    # m2_y = (2.5*(1/self.mmpixel))+self.origin[1]
-    # m1_x = (1.5*(1/self.mmpixel))+self.origin[0]
-    # m1_y = (1.75*(1/self.mmpixel))+self.origin[1]
-    # ac_x = (0*(1/self.mmpixel))+self.origin[0]
-    # ac_y = (0.5*(1/self.mmpixel))+self.origin[1]
-    # hl_x = (2*(1/self.mmpixel))+self.origin[0]
-    # hl_y = (0*(1/self.mmpixel))+self.origin[1]
-    # bc_x = (3.5*(1/self.mmpixel))+self.origin[0]
-    # bc_y = (-1*(1/self.mmpixel))+self.origin[1]
-    # rs_x = (0.5*(1/self.mmpixel))+self.origin[0]
-    # rs_y = (-2.5*(1/self.mmpixel))+self.origin[1]
-    # v1_x = (2.5*(1/self.mmpixel))+self.origin[0]
-    # v1_y = (-2.5*(1/self.mmpixel))+self.origin[1]
 
-    m2_x = (1)
-    m2_y = (2.5)
-    m1_x = (1.5)
-    m1_y = (1.75)
-    ac_x = (0)
-    ac_y = (0.5)
-    hl_x = (2)
-    hl_y = (0)
-    bc_x = (3.5)
-    bc_y = (-1)
-    rs_x = (0.5)
-    rs_y = (-2.5)
-    v1_x = (2.5)
-    v1_y = (-2.5)
+    model = AutoROICoords(self.data, len(locs), 4)
+    model.itemChanged.connect(self.update_auto_rois)
+    model.show()
+    self.open_dialogs.append(model)
 
-    locs = [(m2_x, m2_y), (m1_x, m1_y), (ac_x, ac_y), (hl_x, hl_y), (bc_x, bc_y), (rs_x, rs_y), (v1_x, v1_y)]
-
-    # Map val in a frame size frame_size to the view_range
-    # def map_to_view_range(val, frame_size, view_range):
-    #     return ((val / frame_size)*(view_range[1]-view_range[0]))+view_range[0]
-
-    for tup in locs:
-      # Convert these to values in the view range
-      # x1 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
-      # x2 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
-      # x3 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
-      # x4 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
-      # y1 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
-      # y2 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
-      # y3 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
-      # y4 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
-
-      x1 = (tup[0] - half_length)
-      x2 = (tup[0] - half_length)
-      x3 = (tup[0] + half_length)
-      x4 = (tup[0] + half_length)
-      y1 = (tup[1] - half_length)
-      y2 = (tup[1] + half_length)
-      y3 = (tup[1] + half_length)
-      y4 = (tup[1] - half_length)
+    # todo: make individual ROI sizes editable
+    for tri in locs:
+      self.remove_all_rois()
+      x1 = (tri[1] - half_length)
+      x2 = (tri[1] - half_length)
+      x3 = (tri[1] + half_length)
+      x4 = (tri[1] + half_length)
+      y1 = (tri[2] - half_length)
+      y2 = (tri[2] + half_length)
+      y3 = (tri[2] + half_length)
+      y4 = (tri[2] - half_length)
 
       self.view.vb.addPolyRoiRequest()
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x1, y1))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x2, y2))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x3, y3))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(finished=True)
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(tri[0], finished=True)
+      roi = self.view.vb.rois[0]
+      self.update_project_roi(roi)
 
-    # # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    # path = os.path.join(self.project.path,   + '.npy')
+    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
+    # path = os.path.join(self.project.path,   + '.roi')
     # np.save(path, roi_frames)
     # self.project.files.append({
     #   'path': path,
@@ -351,68 +328,24 @@ class Widget(QWidget):
     #   'manipulations': ['crop']
     # })
 
-class AutoROICoords(QWidget):
-  def __init__(self, parent=None):
-    super(QWidget, self).__init__(parent)
-    self.setup_ui()
+class AutoROICoords(QTableWidget):
+  def __init__(self, data, *args):
+    QTableWidget.__init__(self, *args)
+    self.data = data
+    self.resizeColumnsToContents()
+    self.resizeRowsToContents()
+    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+    self.verticalHeader().setResizeMode(QHeaderView.Stretch)
+    self.setmydata()
 
-  def setup_ui(self):
-    hbox = QHBoxLayout()
 
-    vbox = QVBoxLayout()
-
-    # vbox.addWidget(QLabel('ROI size NxN'))
-    # self.roi_size = QSpinBox()
-    # self.roi_size.setMinimum(1)
-    # self.roi_size.setValue(100)
-    # vbox.addWidget(self.roi_size)
-    # pb = QPushButton('auto ROI')
-    # pb.clicked.connect(self.auto_ROI)
-    # vbox.addWidget(pb)
-    # pb = QPushButton('Delete selected ROIs')
-    # pb.clicked.connect(self.delete_roi)
-    # vbox.addWidget(pb)
-    #
-    # vbox.addWidget(qtutil.separator())
-    #
-    # vbox2 = QVBoxLayout()
-    # w = QWidget()
-    # w.setLayout(vbox2)
-    # vbox.addWidget(w)
-    #
-    # vbox.addWidget(qtutil.separator())
-    # vbox.addWidget(QLabel('ROIs'))
-    # self.roi_list = QListView()
-    # vbox.addWidget(self.roi_list)
-    #
-    # hbox.addLayout(vbox)
-    # hbox.setStretch(0, 1)
-    # hbox.setStretch(1, 0)
-    # self.setLayout(hbox)
-
-  # def update_project_roi(self, roi):
-  #   name = roi.name
-  #   if not name:
-  #     raise ValueError('ROI has no name')
-  #   if self.view.vb.drawROImode:
-  #     return
-  #
-  #   roi.setName(name)
-  #   path = os.path.join(self.project.path, name + '.roi')
-  #   self.view.vb.saveROI(path)
-  #   # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-  #   self.project.files.append({
-  #     'path': path,
-  #     'type': 'roi',
-  #     'source_video': self.video_path,
-  #     'name': name
-  #   })
-  #   self.project.save()
-  #
-  #   roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-  #   for roi_name in roi_names:
-  #     if roi_name not in self.roi_list.model().rois:
-  #       self.roi_list.model().appendRoi(roi_name)
+  def setmydata(self):
+    horHeaders = self.data.keys()
+    for n, key in enumerate(sorted(horHeaders)):
+      for m, item in enumerate(self.data[key]):
+        newitem = QTableWidgetItem(str(item))
+        self.setItem(m, n, newitem)
+    self.setHorizontalHeaderLabels(sorted(horHeaders))
 
 
 class MyPlugin:

@@ -30,7 +30,8 @@ def calc_connectivity(video_path, image, rois):
   avgs = [calc_avg(roi, frames, image) for roi in rois]
   pearson = lambda x, y: stats.pearsonr(x, y)[0]
   return [[pearson(x, y) for x in avgs] for y in avgs]
- 
+
+# todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
   def __init__(self, video_path, image, rois, parent=None):
     super(ConnectivityModel, self).__init__(parent)

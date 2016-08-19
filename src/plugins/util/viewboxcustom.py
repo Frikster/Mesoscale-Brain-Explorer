@@ -248,14 +248,14 @@ class MultiRoiViewBox(pg.ViewBox):
             self.endPolyRoiRequest()
             self.roi_placed.emit(roi)
 
-    def autoDrawPolygonRoi(self, pos=QtCore.QPointF(0, 0), finished=False):
+    def autoDrawPolygonRoi(self, name, pos=QtCore.QPointF(0, 0), finished=False):
         "Function to draw a polygon ROI"
         roi = self.drawingROI
 
         if not finished:
             if roi is None:
                 roi = PolyLineROIcustom(removable=False)
-                #roi.setName('ROI-%i' % self.getROIid())  # Do this before self.selectROIs(roi)
+                roi.setName(name)  # Do this before self.selectROIs(roi)
                 self.drawingROI = roi
                 roi.addFreeHandle(pos)
                 roi.addFreeHandle(pos)

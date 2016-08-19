@@ -13,7 +13,6 @@ from util import fileloader
 
 sys.path.append('..')
 import qtutil
-import uuid
 
 #todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
