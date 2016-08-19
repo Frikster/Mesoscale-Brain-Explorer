@@ -90,6 +90,16 @@ class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
+    anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
+                "AC": [3, (0.0, 0.5)], "HL": [3, (2.0, 0.0)],
+                "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
+    roi_names = anatomy_rois.keys()
+    roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
+    roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
+    roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
+    self.data = {"1) ROI Name": roi_names, "2) Length": roi_sizes,
+                 "3) X Coordinate": roi_coord_x, "4) Y Coordinate": roi_coord_y}
+
     self.open_dialogs = []
 
     if not project:
@@ -119,6 +129,8 @@ class Widget(QWidget):
       model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_roi_names)
+
+
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -252,9 +264,6 @@ class Widget(QWidget):
         if roi_name not in self.roi_list.model().rois:
           self.roi_list.model().appendRoi(roi_name)
 
-  def create_roi(self):
-    self.view.vb.addPolyRoiRequest()
-
   def delete_roi(self):
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
@@ -270,66 +279,31 @@ class Widget(QWidget):
     for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
       self.roi_list.model().removeRow(roi_to_remove)
 
-  clicked = QtCore.pyqtSignal(QtGui.QMouseEvent)
+  def update_auto_rois(self, item):
+    col = item.column
+    row = item.row
+    try:
+      val = float(item.text())
+    except:
+      val = val
+    header = item.tableWidget.itemAt(0, col)
+    col_to_change = self.data[header]
+    col_to_change[row] = val
+    self.data[header] = col_to_change
+
+
   def auto_ROI(self):
-    #frame = fileloader.load_reference_frame(self.video_path).shape
-    # xr and yr are the view range centered on the origin
-    #xr, yr = self.view.vb.viewRange()
-
-    # pos(ii).name = 'M2'; pos(ii).y = 2.5; pos(ii).x = 1; ii = ii + 1;
-    # (1/(mm/pixel) * 2.5) is the y position for M2 *from bregma*
+    locs = zip(self.data["3) X Coordinate"], self.data["4) Y Coordinate"])
     half_length = self.roi_size.value() * self.project['mmpixel']
-    # m2_x = (1*(1/self.mmpixel))+self.origin[0]
-    # m2_y = (2.5*(1/self.mmpixel))+self.origin[1]
-    # m1_x = (1.5*(1/self.mmpixel))+self.origin[0]
-    # m1_y = (1.75*(1/self.mmpixel))+self.origin[1]
-    # ac_x = (0*(1/self.mmpixel))+self.origin[0]
-    # ac_y = (0.5*(1/self.mmpixel))+self.origin[1]
-    # hl_x = (2*(1/self.mmpixel))+self.origin[0]
-    # hl_y = (0*(1/self.mmpixel))+self.origin[1]
-    # bc_x = (3.5*(1/self.mmpixel))+self.origin[0]
-    # bc_y = (-1*(1/self.mmpixel))+self.origin[1]
-    # rs_x = (0.5*(1/self.mmpixel))+self.origin[0]
-    # rs_y = (-2.5*(1/self.mmpixel))+self.origin[1]
-    # v1_x = (2.5*(1/self.mmpixel))+self.origin[0]
-    # v1_y = (-2.5*(1/self.mmpixel))+self.origin[1]
 
-    m2_x = (1)
-    m2_y = (2.5)
-    m1_x = (1.5)
-    m1_y = (1.75)
-    ac_x = (0)
-    ac_y = (0.5)
-    hl_x = (2)
-    hl_y = (0)
-    bc_x = (3.5)
-    bc_y = (-1)
-    rs_x = (0.5)
-    rs_y = (-2.5)
-    v1_x = (2.5)
-    v1_y = (-2.5)
+    model = AutoROICoords(self.data, len(locs), 4)
+    model.itemChanged.connect(self.update_auto_rois)
+    model.show()
+    self.open_dialogs.append(model)
 
-    locs = [(m2_x, m2_y), (m1_x, m1_y), (ac_x, ac_y), (hl_x, hl_y), (bc_x, bc_y), (rs_x, rs_y), (v1_x, v1_y)]
-
-    w = AutoROICoords(len(locs), 4)
-    w.show()
-    self.open_dialogs.append(w)
-
-    # Map val in a frame size frame_size to the view_range
-    # def map_to_view_range(val, frame_size, view_range):
-    #     return ((val / frame_size)*(view_range[1]-view_range[0]))+view_range[0]
-
+    # todo: make individual ROI sizes editable
+    self.remove_all_rois()
     for tup in locs:
-      # Convert these to values in the view range
-      # x1 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
-      # x2 = map_to_view_range(tup[0] - half_length, frame_shape[0], xr)
-      # x3 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
-      # x4 = map_to_view_range(tup[0] + half_length, frame_shape[0], xr)
-      # y1 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
-      # y2 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
-      # y3 = map_to_view_range(tup[1] + half_length, frame_shape[1], yr)
-      # y4 = map_to_view_range(tup[1] - half_length, frame_shape[1], yr)
-
       x1 = (tup[0] - half_length)
       x2 = (tup[0] - half_length)
       x3 = (tup[0] + half_length)
@@ -347,8 +321,8 @@ class Widget(QWidget):
       self.view.vb.autoDrawPolygonRoi(pos=QtCore.QPointF(x4, y4))
       self.view.vb.autoDrawPolygonRoi(finished=True)
 
-    # # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    # path = os.path.join(self.project.path,   + '.npy')
+    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
+    # path = os.path.join(self.project.path,   + '.roi')
     # np.save(path, roi_frames)
     # self.project.files.append({
     #   'path': path,
@@ -358,38 +332,13 @@ class Widget(QWidget):
     # })
 
 class AutoROICoords(QTableWidget):
-  def __init__(self, *args):
+  def __init__(self, data, *args):
     QTableWidget.__init__(self, *args)
+    self.data = data
     self.resizeColumnsToContents()
     self.resizeRowsToContents()
     self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
     self.verticalHeader().setResizeMode(QHeaderView.Stretch)
-
-    # Define commonly used coordinates
-    m2_x = (1)
-    m2_y = (2.5)
-    m1_x = (1.5)
-    m1_y = (1.75)
-    ac_x = (0)
-    ac_y = (0.5)
-    hl_x = (2)
-    hl_y = (0)
-    bc_x = (3.5)
-    bc_y = (-1)
-    rs_x = (0.5)
-    rs_y = (-2.5)
-    v1_x = (2.5)
-    v1_y = (-2.5)
-
-    self.anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
-                "AC": [3, (0.0, 0.5)], "HL": [3, (2.0, 0.0)],
-                "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
-    self.roi_names = self.anatomy_rois.keys()
-    self.roi_sizes = [self.anatomy_rois[x][0] for x in self.anatomy_rois.keys()]
-    self.roi_coord_x = [self.anatomy_rois[x][1][0] for x in self.anatomy_rois.keys()]
-    self.roi_coord_y = [self.anatomy_rois[x][1][1] for x in self.anatomy_rois.keys()]
-    self.data = {"1) ROI Name": self.roi_names, "2) Length": self.roi_sizes,
-                 "3) X Coordinate": self.roi_coord_x, "4) Y Coordinate": self.roi_coord_y}
     self.setmydata()
 
 
@@ -400,94 +349,6 @@ class AutoROICoords(QTableWidget):
         newitem = QTableWidgetItem(str(item))
         self.setItem(m, n, newitem)
     self.setHorizontalHeaderLabels(sorted(horHeaders))
-
-  def add_new_coord(self):
-    return
-
-  # def setup_ui(self):
-  #   self.hbox.addWidget(QLabel('ROI names'))
-  #   self.hbox.addWidget(QLabel('ROI sizes (NxN)'))
-  #   self.hbox.addWidget(QLabel('X'))
-  #   self.hbox.addWidget(QLabel('Y'))
-  #   self.vbox.addLayout(self.hbox)
-  #
-  #   roi_name = QTextEdit()
-  #   self.hbox.addWidget(QTextEdit())
-  #   self.roi_names.append(roi_name)
-  #   x = QDoubleSpinBox()
-  #   x.setMinimum(0.0)
-  #   x.setValue(1)
-  #   self.hbox.addWidget(x)
-  #   y = QDoubleSpinBox()
-  #   y.setMinimum(0.0)
-  #   y.setValue(1)
-  #   self.roi_coordinates.append((x, y))
-  #   self.hbox.addWidget(y)
-  #   self.vbox.addLayout(self.hbox)
-  #
-  #   #self.hbox.setStretch(0, 1)
-  #   #self.hbox.setStretch(1, 0)
-  #   self.setLayout(self.vbox)
-
-
-
-
-
-
-
-
-    # vbox.addWidget(QLabel('ROI size NxN'))
-    # self.roi_size = QSpinBox()
-    # self.roi_size.setMinimum(1)
-    # self.roi_size.setValue(100)
-    # vbox.addWidget(self.roi_size)
-    # pb = QPushButton('auto ROI')
-    # pb.clicked.connect(self.auto_ROI)
-    # vbox.addWidget(pb)
-    # pb = QPushButton('Delete selected ROIs')
-    # pb.clicked.connect(self.delete_roi)
-    # vbox.addWidget(pb)
-    #
-    # vbox.addWidget(qtutil.separator())
-    #
-    # vbox2 = QVBoxLayout()
-    # w = QWidget()
-    # w.setLayout(vbox2)
-    # vbox.addWidget(w)
-    #
-    # vbox.addWidget(qtutil.separator())
-    # vbox.addWidget(QLabel('ROIs'))
-    # self.roi_list = QListView()
-    # vbox.addWidget(self.roi_list)
-    #
-    # hbox.addLayout(vbox)
-    # hbox.setStretch(0, 1)
-    # hbox.setStretch(1, 0)
-    # self.setLayout(hbox)
-
-  # def update_project_roi(self, roi):
-  #   name = roi.name
-  #   if not name:
-  #     raise ValueError('ROI has no name')
-  #   if self.view.vb.drawROImode:
-  #     return
-  #
-  #   roi.setName(name)
-  #   path = os.path.join(self.project.path, name + '.roi')
-  #   self.view.vb.saveROI(path)
-  #   # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-  #   self.project.files.append({
-  #     'path': path,
-  #     'type': 'roi',
-  #     'source_video': self.video_path,
-  #     'name': name
-  #   })
-  #   self.project.save()
-  #
-  #   roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-  #   for roi_name in roi_names:
-  #     if roi_name not in self.roi_list.model().rois:
-  #       self.roi_list.model().appendRoi(roi_name)
 
 
 class MyPlugin:
