@@ -182,7 +182,10 @@ class Widget(QWidget):
     if filename in [f['path'] for f in self.project.files]:
       raise FileAlreadyInProjectError(filename)      
 
+    name, ext = os.path.splitext(os.path.basename(filename))
+
     self.project.files.append({
+      'name': name,
       'path': filename,
       'type': 'video',
       'manipulations': []
