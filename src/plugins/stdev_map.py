@@ -64,10 +64,10 @@ class StdDevDialog(QDialog):
     mmpixel = self.project['mmpixel']
     x = x / mmpixel
     y = y / mmpixel
-    spc = self.spc.swapaxes(0, 1)
-    spc = spc[:, ::-1]
+    stddev = self.stddev.swapaxes(0, 1)
+    stddev = stddev[:, ::-1]
     try:
-      value = str(spc[int(x)+int(x_origin), int(y)+int(y_origin)])
+      value = str(stddev[int(x)+int(x_origin), int(y)+int(y_origin)])
     except:
       value = '-'
     self.the_label.setText('Standard deviation at crosshair: {}'.format(value))
