@@ -8,6 +8,7 @@ from pyqtgraph.graphicsItems.UIGraphicsItem import *
 from util import filter_jeff
 from util.mygraphicsview import MyGraphicsView
 from util.qt import MyListView, MyProgressDialog, InfoWidget
+from util.gradient import GradientLegend
 
 from util import fileloader
 
@@ -73,73 +74,6 @@ class InfoWidget(QFrame):
     self.setLineWidth(2)
     self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
-class GradientLegend(UIGraphicsItem):
-  def __init__(self):
-    super(GradientLegend, self).__init__(self)
-
-    self.labels = {'max': 1, 'min': 0}
-
-  def maximumLabelSize(self, p):
-    width, height = 0, 0
-    for label in self.labels:
-      b = p.boundingRect(QtCore.QRectF(0, 0, 0, 0), QtCore.Qt.AlignLeft
-                         | QtCore.Qt.AlignVCenter, str(label))
-      width = max(b.width(), width)
-      height = max(b.height(), height)
-    return QtCore.QSize(width, height)
-
-  def paint(self, p, opt, widget):
-    super(GradientLegend, self).paint(p, opt, widget)
-    pen = QtGui.QPen(QtGui.QColor(0, 0, 0))
-    rect = self.boundingRect()
-    unit = self.pixelSize()
-
-    offset = 10, 10
-    size = 30, 200
-    padding = 10
-
-    x1 = rect.left() + unit[0] * offset[0]
-    x2 = x1 + unit[0] * size[0]
-    y1 = rect.bottom() - unit[1] * offset[1]
-    y2 = y1 - unit[1] * size[1]
-
-    # Draw background
-    p.setPen(pen)
-    p.setBrush(QtGui.QBrush(QtGui.QColor(255, 255, 255, 100)))
-    rect = QtCore.QRectF(
-        QtCore.QPointF(x1 - padding * unit[0], y1 + padding * unit[1]),
-        QtCore.QPointF(x2 + padding * unit[0], y2 - padding * unit[1])
-    )
-    p.drawRect(rect)
-
-    p.scale(unit[0], unit[1])
-
-    # Draw color bar
-    gradient = QtGui.QLinearGradient()
-    i = 0.0
-    while i < 1:
-      color = plt.cm.jet(i)
-      color = [x * 255 for x in color]
-      gradient.setColorAt(i, QtGui.QColor(*color))
-      i += 0.1
-    gradient.setStart(0, y1 / unit[1])
-    gradient.setFinalStop(0, y2 / unit[1])
-    p.setBrush(gradient)
-    rect = QtCore.QRectF(
-      QtCore.QPointF(x1 / unit[0], y1 / unit[1]),
-      QtCore.QPointF(x2 / unit[0], y2 / unit[1])
-    )
-    p.drawRect(rect)
-
-    # Draw labels
-    labelsize = self.maximumLabelSize(p)
-    lh = labelsize.height()
-    p.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0)))
-    for label in self.labels:
-      y = y1 + self.labels[label] * (y2 - y1)
-      p.drawText(QtCore.QRectF(x1, y-lh/2.0, 1000, lh),
-                 QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, str(label))
-
 class SPCMapDialog(QDialog):
   def __init__(self, project, video_path, spcmap, parent=None):
     super(SPCMapDialog, self).__init__(parent)
@@ -153,7 +87,7 @@ class SPCMapDialog(QDialog):
     self.view.vb.clicked.connect(self.vbc_clicked)
     self.view.vb.hovering.connect(self.vbc_hovering)
 
-    l = GradientLegend()
+    l = GradientLegend(-1.0, 1.0)
     l.setParentItem(self.view.vb)
 
   def setup_ui(self):
@@ -181,9 +115,6 @@ class SPCMapDialog(QDialog):
     except:
       value = '-'
     self.the_label.setText('Correlation value at crosshair: {}'.format(value))
-#    if not math.isnan(spc[int(x), int(y)]):
-#      self.the_label.setText('Correlation value at crosshair: '
-#                             + str(spc[int(x), int(y)]))
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
