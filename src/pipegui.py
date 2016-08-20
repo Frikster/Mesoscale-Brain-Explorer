@@ -17,7 +17,7 @@ from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
 from project import ProjectManager
 
-APPNAME = 'spcanalyse'
+APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
 
 def clear_layout(layout):
@@ -191,8 +191,6 @@ class MainWindow(QMainWindow):
     about_action.setStatusTip('About ' + APPNAME)
     about_action.triggered.connect(self.about)
     about_action.setShortcut('F1')
- 
-    edit_menu = self.menu.addMenu('&Edit')
 
     m = self.menu.addMenu('&Project')
     m.setEnabled(False)
@@ -203,6 +201,12 @@ class MainWindow(QMainWindow):
     self.project_menu = m
 
     settings_menu = self.menu.addMenu('&Settings')
+    a = QAction('&Pipeline Automation', self)
+    a.setEnabled(False)
+    #a.setStatusTip('Create new project')
+    #a.triggered.connect(self.create_project)
+    settings_menu.addAction(a)
+
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
 
