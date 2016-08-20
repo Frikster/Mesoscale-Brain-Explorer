@@ -54,7 +54,7 @@ class PluginList(QListView):
     self.setDragEnabled(True)
     self.setDragDropMode(QAbstractItemView.DragOnly)
 
-    for plugin in plugins:
+    for plugin in sorted(plugins, key=lambda x: plugins[x].name):
       item = QStandardItem(plugins[plugin].name)
       item.setData(plugin, Qt.UserRole)
       self.model().appendRow(item)
