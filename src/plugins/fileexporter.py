@@ -27,7 +27,8 @@ class Exporter(QWidget):
     progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
       frames = fileloader.load_file(fileinfo['path'])
-      frames = frames.astype(np.uint8)
+      if frames.dtype != np.uint8:
+        frames = frames.astype(np.uint8)
       video = cv2.VideoWriter(
         filename, cv2.cv.CV_FOURCC(*'DIVX'), 10,
         (frames.shape[1], frames.shape[2]), False

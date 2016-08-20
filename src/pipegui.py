@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
     self.setWindowTitle(APPNAME)
 
     self.project = None
+    self.current_plugin = None
     self.project_manager = ProjectManager(self)
     self.plugins = self.load_plugins()
     self.setup_ui()
@@ -133,10 +134,13 @@ class MainWindow(QMainWindow):
       p = self.load_plugin('plugins.' + plugin_name)
       if p:
         self.plugins[plugin_name] = p
+    if self.current_plugin:
+      self.set_plugin(self.current_plugin)
 
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)
     self.datadialog = DataDialog(self)
+    self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
 
     self.sidebar = Sidebar()
     self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
@@ -240,6 +244,7 @@ class MainWindow(QMainWindow):
     p = self.load_plugin('plugins.' + str(plugin_name))
     if not p:
       return
+    self.current_plugin = plugin_name
     self.plugins[plugin_name] = p
 
     lt = QVBoxLayout()
@@ -269,7 +274,7 @@ class MainWindow(QMainWindow):
 
   def open_datadialog(self):
     self.datadialog.update(self.project)
-    self.datadialog.show()
+    self.datadialog.exec_()
 
   def about(self):
     author = 'Cornelis Dirk Haupt'
