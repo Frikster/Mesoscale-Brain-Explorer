@@ -3,8 +3,7 @@ Known problems
 
 General
 -------
-* filter_jeff.py and diplacement_jeff.py
-  are my worst nightmares
+* Refactor filter_jeff.py and diplacement_jeff.py
 * Removing all plugins from project causes error
 * Move commonly used widgets and models to util.qt
 * Tweak progress dialogs to behave nicely
@@ -13,7 +12,6 @@ General
 
 Data management
 ---------------
-* Allow to remove or detach files from project
 * Manage 'manipulations' correctly
 
 alignment + concat
