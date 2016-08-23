@@ -1,8 +1,24 @@
 {
-  "name": "",
-  "pipeline": [],
   "files": [],
   "mmpixel": 0.04,
+  "pipeline": [
+    "fileimporter",
+    "videoplayer",
+    "alignment",
+    "concatenation",
+    "roi_creator",
+    "chebyshev_filter",
+    "calculate_df_f0",
+    "gsr",
+    "spc_map",
+    "stdev_map",
+    "set_coordinate_system",
+    "autoROIplacer",
+    "connectivity2",
+    "roi_activity_plot",
+    "fileexporter"
+  ],
+  "name": "",
   "origin": [
     0.0,
     0.0

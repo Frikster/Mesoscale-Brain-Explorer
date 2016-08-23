@@ -158,6 +158,6 @@ class Project:
     self.attrs['files'] = self.files
     json.dump(self.attrs, open(os.path.join(self.path, 'spcproject.json'), 'w'),
       indent=2)
-    
+
   def set_pipeline(self, data):
     self.pipeline = data

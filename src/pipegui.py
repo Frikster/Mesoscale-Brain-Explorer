@@ -11,8 +11,6 @@ import multiprocessing
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-import qtutil
-
 from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
 from project import ProjectManager

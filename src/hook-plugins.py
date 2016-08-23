@@ -1,0 +1,21 @@
+hiddenimports = [
+    "plugins.__init__",
+    "plugins.alignment",
+    "plugins.autoROIplacer",
+    "plugins.calculate_df_f0",
+    "plugins.chebyshev_filter",
+    "plugins.concatenation",
+    "plugins.connectivity2",
+    "plugins.connectivity_diagram",
+    "plugins.empty_plugin",
+    "plugins.fileexporter",
+    "plugins.fileimporter",
+    "plugins.gsr",
+    "plugins.roi_activity_plot",
+    "plugins.roi_creator",
+    "plugins.scatterplot",
+    "plugins.set_coordinate_system",
+    "plugins.spc_map",
+    "plugins.stdev_map",
+    "plugins.videoplayer"
+]
