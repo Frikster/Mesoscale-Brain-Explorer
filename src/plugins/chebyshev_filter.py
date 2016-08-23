@@ -100,6 +100,7 @@ class Widget(QWidget):
             'source_video': self.video_path,
             'manipulations': ['chebyshev']
         })
+        self.project.save()
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0

@@ -279,6 +279,7 @@ class Widget(QWidget):
       'source_video': self.video_path,
       'manipulations': ['crop']
     })
+    self.project.save()
 
 class MyPlugin:
   def __init__(self, project=None):

@@ -78,6 +78,7 @@ class Widget(QWidget):
             'source_video': self.video_path,
             'manipulations': ['df_f0']
         })
+        self.project.save()
 
 class MyPlugin:
     def __init__(self, project=None):
