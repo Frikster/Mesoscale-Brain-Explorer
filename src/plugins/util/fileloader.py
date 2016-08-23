@@ -7,7 +7,7 @@ class UnknownFileFormatError(Exception):
 
 def load_npy(filename):
   frames = np.load(filename)
-  frames[np.isnan(frames)] = 0
+  # frames[np.isnan(frames)] = 0
   return frames
 
 def load_file(filename):

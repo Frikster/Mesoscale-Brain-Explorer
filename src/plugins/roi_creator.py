@@ -258,7 +258,8 @@ class Widget(QWidget):
 
     combined_mask = np.sum(arrRegion_masks, axis=0)
     # Make all rows with all zeros na
-    combined_mask[(combined_mask == 0)] = None
+    # todo: figure out where zeros are converted to na. In BMD it isn't here...
+    # combined_mask[(combined_mask == 0)] = None
     self.mask = combined_mask
     # TODO: save mask as well
     # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")

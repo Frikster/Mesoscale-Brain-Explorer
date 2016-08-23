@@ -47,7 +47,7 @@ class Widget(QWidget):
       return
     frames = [fileloader.load_file(f) for f in filenames]
     frames = np.concatenate(frames)
-    path = os.path.join(self.project.path, str(uuid.uuid4()) + '.npy')
+    path = os.path.join(self.project.path, str(uuid.uuid4()) + 'Concat.npy')
     np.save(path, frames)
     self.project.files.append({
       'path': path,

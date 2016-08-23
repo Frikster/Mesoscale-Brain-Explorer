@@ -91,7 +91,7 @@ class Widget(QWidget):
     super(Widget, self).__init__(parent)
 
     anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
-                "AC": [3, (0.0, 0.5)], "HL": [3, (2.0, 0.0)],
+                "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
                 "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
     roi_names = anatomy_rois.keys()
     roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
