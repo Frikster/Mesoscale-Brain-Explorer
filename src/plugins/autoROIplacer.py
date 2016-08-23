@@ -127,9 +127,17 @@ class Widget(QWidget):
                                                     QItemSelection].connect(self.selected_roi_changed)
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
-      model.appendRoi(roi_name)
+      if roi_name not in self.roi_list.model().rois:
+        model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
     #self.view.vb.roi_placed.connect(self.update_roi_names)
+
+  def show_table(self):
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
+    model = AutoROICoords(self.data, len(locs), 4)
+    model.itemChanged.connect(self.update_auto_rois)
+    model.show()
+    self.open_dialogs.append(model)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -163,6 +171,9 @@ class Widget(QWidget):
     vbox.addWidget(self.roi_size)
     pb = QPushButton('auto ROI')
     pb.clicked.connect(self.auto_ROI)
+    vbox.addWidget(pb)
+    pb = QPushButton('auto ROI table')
+    pb.clicked.connect(self.show_table)
     vbox.addWidget(pb)
     pb = QPushButton('Delete selected ROIs')
     pb.clicked.connect(self.delete_roi)
@@ -246,12 +257,17 @@ class Widget(QWidget):
     path = os.path.join(self.project.path, name + '.roi')
     self.view.vb.saveROI(path)
     # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-    self.project.files.append({
-      'path': path,
-      'type': 'roi',
-      'source_video': self.video_path,
-      'name': name
-    })
+    if path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+      self.project.files.append({
+        'path': path,
+        'type': 'roi',
+        'source_video': self.video_path,
+        'name': name
+      })
+    else:
+      for i, file in enumerate(self.project.files):
+        if file['path'] == path:
+          self.project.files[i]['source_video'] = self.video_path
     self.project.save()
 
     roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
@@ -275,28 +291,29 @@ class Widget(QWidget):
       self.roi_list.model().removeRow(roi_to_remove)
 
   def update_auto_rois(self, item):
-    col = item.column
-    row = item.row
+    col = item.column()
+    row = item.row()
     try:
       val = float(item.text())
     except:
-      val = val
-    header = item.tableWidget.itemAt(0, col)
+      val = str(item.text())
+    header = item.tableWidget().horizontalHeaderItem(col).text()
+    header = str(header)
     col_to_change = self.data[header]
     col_to_change[row] = val
     self.data[header] = col_to_change
+    self.auto_ROI()
 
 
   def auto_ROI(self):
     locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
     half_length = self.roi_size.value() * self.project['mmpixel']
 
-    model = AutoROICoords(self.data, len(locs), 4)
-    model.itemChanged.connect(self.update_auto_rois)
-    model.show()
-    self.open_dialogs.append(model)
+    # model = AutoROICoords(self.data, len(locs), 4)
+    # model.itemChanged.connect(self.update_auto_rois)
+    # model.show()
+    # self.open_dialogs.append(model)
 
-    # todo: make individual ROI sizes editable
     for tri in locs:
       self.remove_all_rois()
       x1 = (tri[1] - half_length)
@@ -317,16 +334,6 @@ class Widget(QWidget):
       self.view.vb.autoDrawPolygonRoi(tri[0], finished=True)
       roi = self.view.vb.rois[0]
       self.update_project_roi(roi)
-
-    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    # path = os.path.join(self.project.path,   + '.roi')
-    # np.save(path, roi_frames)
-    # self.project.files.append({
-    #   'path': path,
-    #   'type': 'video',
-    #   'source_video': self.video_path,
-    #   'manipulations': ['crop']
-    # })
 
 class AutoROICoords(QTableWidget):
   def __init__(self, data, *args):

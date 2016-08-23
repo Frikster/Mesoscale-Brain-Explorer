@@ -16,7 +16,7 @@ import qtutil
 
 #todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
-    textChanged = pyqtSignal(str, str, QModelIndex)
+    textChanged = pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         super(RoiItemModel, self).__init__(parent)
@@ -48,8 +48,8 @@ class RoiItemModel(QAbstractListModel):
         elif value in self.rois:
           qtutil.critical('Roi name taken.')
         else:
+          self.textChanged.emit(self.rois[index.row()], value)
           self.rois[index.row()] = value
-          self.textChanged.emit(self.rois[index.row()], value.toString())
         return True
       return super(RoiItemModel, self).setData(index, value, role)
 
@@ -172,14 +172,15 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def roi_item_changed(self, prev_name, new_name, index):
+  def roi_item_changed(self, prev_name, new_name):
     # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
     if prev_name == '':
       raise ValueError("The ROI already has no name... you monster")
     prev_name_str = str(prev_name)
     new_name_str = str(new_name)
     self.remove_all_rois()
-    self.view.vb.loadROI([self.project.path + '/' + str(prev_name_str) + '.roi'])
+    old_path = self.project.path + '/' + str(prev_name_str) + '.roi'
+    self.view.vb.loadROI([old_path])
     roi = self.view.vb.rois[0]
     roi.setName(str(new_name_str))
     for i in range(len(self.project.files)):
@@ -200,12 +201,17 @@ class Widget(QWidget):
     path = os.path.join(self.project.path, name + '.roi')
     self.view.vb.saveROI(path)
     # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-    self.project.files.append({
-      'path': path,
-      'type': 'roi',
-      'source_video': self.video_path,
-      'name': name
-    })
+    if path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+      self.project.files.append({
+        'path': path,
+        'type': 'roi',
+        'source_video': self.video_path,
+        'name': name
+      })
+    else:
+      for i, file in enumerate(self.project.files):
+        if file['path'] == path:
+          self.project.files[i]['source_video'] = self.video_path
     self.project.save()
 
     roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
