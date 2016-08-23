@@ -13,6 +13,7 @@ from util import fileloader
 
 sys.path.append('..')
 import qtutil
+import uuid
 
 #todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
@@ -151,6 +152,7 @@ class Widget(QWidget):
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
+    # todo: Is this terrible practice? Having self.video_path defined here? This function always runs through init so it works
     self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
@@ -268,7 +270,8 @@ class Widget(QWidget):
     roi_frames = (frames * combined_mask[np.newaxis, :, :])
 
     # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    path = os.path.join(self.project.path, 'roi' + '.npy')
+    # path = os.path.join(self.project.path, 'roi' + '.npy')
+    path = self.video_path + 'roi' + '.npy'
     np.save(path, roi_frames)
     self.project.files.append({
       'path': path,

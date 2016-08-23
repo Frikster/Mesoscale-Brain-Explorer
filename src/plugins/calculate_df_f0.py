@@ -69,7 +69,8 @@ class Widget(QWidget):
         frames[where_are_NaNs] = 0
 
         # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
-        path = os.path.join(self.project.path, 'df_f0' + '.npy')
+        #path = os.path.join(self.project.path, 'df_f0' + '.npy')
+        path = self.video_path + 'df_f0' + '.npy'
         np.save(path, frames)
         self.project.files.append({
             'path': path,

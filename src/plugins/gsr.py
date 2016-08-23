@@ -68,7 +68,8 @@ class Widget(QWidget):
     frames = fj.gsr(frames, width, height)
 
     #todo: solve issue where rerunning this will overwrite any previous 'gsr.npy'
-    path = os.path.join(self.project.path, 'gsr' + '.npy')
+    # path = os.path.join(self.project.path, 'gsr' + '.npy')
+    path = self.video_path + 'gsr' + '.npy'
     np.save(path, frames)
     self.project.files.append({
       'path': path,

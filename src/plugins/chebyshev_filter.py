@@ -91,7 +91,8 @@ class Widget(QWidget):
         frames += avg_frames
 
         # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
-        path = os.path.join(self.project.path, 'cheby' + '.npy')
+        #path = os.path.join(self.project.path, 'cheby' + '.npy')
+        path = self.video_path + 'cheby' + '.npy'
         np.save(path, frames)
         self.project.files.append({
             'path': path,
@@ -119,7 +120,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project=None):
-        self.name = 'Chebyshev filter'
+        self.name = 'Chebyshev fiflter'
         self.widget = Widget(project)
 
     def run(self):
