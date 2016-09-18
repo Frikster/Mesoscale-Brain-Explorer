@@ -54,15 +54,16 @@ class MyGraphicsView(pg.GraphicsView):
 
   def _update_rect(self):
     w, h = self.shape[0], self.shape[1]
-    ox, oy = self.project['origin']
-    mmpixel = self.project['mmpixel']
+    if not (not self.project):
+      ox, oy = self.project['origin']
+      mmpixel = self.project['mmpixel']
 
-    x = -ox * mmpixel
-    y = -oy * mmpixel
-    w = w * mmpixel
-    h = h * mmpixel
- 
-    self.vb.update_rect(x, y, w, h)
+      x = -ox * mmpixel
+      y = -oy * mmpixel
+      w = w * mmpixel
+      h = h * mmpixel
+
+      self.vb.update_rect(x, y, w, h)
 
   def update(self):
     self._update_rect()

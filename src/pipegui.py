@@ -8,8 +8,8 @@ import collections
 import traceback
 import multiprocessing
 
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
   app = QApplication(sys.argv)
   app.setApplicationName(APPNAME)
-  app.setOrganizationName('The SPC Corporation')
+  app.setOrganizationName('University of British Columbia')
   app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()

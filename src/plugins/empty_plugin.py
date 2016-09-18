@@ -2,6 +2,7 @@
 
 import os
 import sys
+import chebyshev_filter
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *

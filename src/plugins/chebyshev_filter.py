@@ -4,6 +4,7 @@ import os, sys
 import numpy as np
 from scipy import signal
 
+import PyQt4
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -19,16 +20,36 @@ class Widget(QWidget):
 
         if not project:
             return
-        self.project = project
-        self.setup_ui()
+        if project == "standalone":
+            filenames = QFileDialog.getOpenFileNames(
+                self, 'Load data', QSettings().value('last_load_data_path').toString(),
+                'Video files (*.npy)')
+            self.project = None
+        else:
+            self.project = project
 
+
+
+            # for filename in filenames:
+            #     self.project.files.append({
+            #         'path': filename,
+            #         'type': 'video',
+            #         'manipulations': ['chebyshev']
+            #     })
+
+        self.setup_ui()
         self.listview.setModel(QStandardItemModel())
         self.listview.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_video_changed)
-        for f in project.files:
-            if f['type'] != 'video':
-                continue
-            self.listview.model().appendRow(QStandardItem(f['path']))
+
+        if self.project:
+            for f in self.project.files:
+                if f['type'] != 'video':
+                    continue
+                self.listview.model().appendRow(QStandardItem(f['path']))
+        else:
+            for f in filenames:
+                self.listview.model().appendRow(QStandardItem(f))
         self.listview.setCurrentIndex(self.listview.model().index(0, 0))
         self.temp_filter_pb.clicked.connect(self.temporal_filter)
 
@@ -91,17 +112,27 @@ class Widget(QWidget):
         frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
         frames += avg_frames
 
-        # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
-        #path = os.path.join(self.project.path, 'cheby' + '.npy')
-        path = self.video_path + 'cheby' + '.npy'
-        np.save(path, frames)
-        self.project.files.append({
-            'path': path,
-            'type': 'video',
-            'source_video': self.video_path,
-            'manipulations': ['chebyshev']
-        })
-        self.project.save()
+        if not self.project:
+            filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
+                                                               QSettings().value('last_load_data_path').toString(),
+                                                          selectedFilter='*.npy')
+            np.save(str(filename), frames)
+            msgBox = PyQt4.QtGui.QMessageBox()
+            msgBox.setText(str(filename)+" saved")
+            msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
+            msgBox.exec_()
+        else:
+            # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
+            #path = os.path.join(self.project.path, 'cheby' + '.npy')
+            path = self.video_path + 'cheby' + '.npy'
+            np.save(path, frames)
+            self.project.files.append({
+                'path': path,
+                'type': 'video',
+                'source_video': self.video_path,
+                'manipulations': ['chebyshev']
+            })
+            self.project.save()
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0
@@ -132,7 +163,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.aboutToQuit.connect(app.deleteLater)
     w = QMainWindow()
-    w.setCentralWidget(Widget())
+    w.setCentralWidget(Widget("standalone"))
     w.show()
     app.exec_()
     sys.exit()
