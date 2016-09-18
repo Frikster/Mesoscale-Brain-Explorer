@@ -8,8 +8,8 @@ import collections
 import traceback
 import multiprocessing
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
