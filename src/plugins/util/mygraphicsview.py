@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: cp1252 -*-
 
 import os
 import sys
@@ -10,7 +11,7 @@ from PyQt4.QtCore import *
 
 import pyqtgraph as pg
 
-from viewboxcustom import MultiRoiViewBox
+from .viewboxcustom import MultiRoiViewBox
 
 class MyGraphicsView(pg.GraphicsView):
   def __init__(self, project, parent=None):

@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore,QtGui
 import numpy as np
-from roi import ROI,RectROIcustom, PolyLineROIcustom
-from custom_items import QActionCustom, QMenuCustom, ImageExporterCustom
+from .roi import ROI,RectROIcustom, PolyLineROIcustom
+from .custom_items import QActionCustom, QMenuCustom, ImageExporterCustom
 import matplotlib
 import pickle
 import pyqtgraph.functions as fn
@@ -621,7 +621,7 @@ class MultiRoiViewBox(pg.ViewBox):
             self.img = None
             return
         if self.img==None:
-            #arr = arr.astype("float64")
+            arr = arr.astype("float64")
             self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
             self.addItem(self.img)
         # Add/readd crosshair

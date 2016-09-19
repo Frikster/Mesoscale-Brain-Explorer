@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, sys
 import numpy as np
@@ -22,13 +22,12 @@ class Widget(QWidget):
             return
         if project == "standalone":
             filenames = QFileDialog.getOpenFileNames(
-                self, 'Load data', QSettings().value('last_load_data_path').toString(),
+                self, 'Load data', str(QSettings().value('last_load_data_path')),
                 'Video files (*.npy)')
+            QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
             self.project = None
         else:
             self.project = project
-
-
 
             # for filename in filenames:
             #     self.project.files.append({
@@ -96,7 +95,7 @@ class Widget(QWidget):
     def selected_video_changed(self, selection):
         if not selection.indexes():
             return
-        self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+        self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
         frame = fileloader.load_reference_frame(self.video_path)
         self.view.show(frame)
 
@@ -114,8 +113,8 @@ class Widget(QWidget):
 
         if not self.project:
             filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
-                                                               QSettings().value('last_load_data_path').toString(),
-                                                          selectedFilter='*.npy')
+                                                               str(QSettings().value('last_load_data_path')),
+                                                               filter='*.npy')
             np.save(str(filename), frames)
             msgBox = PyQt4.QtGui.QMessageBox()
             msgBox.setText(str(filename)+" saved")
