@@ -11,13 +11,78 @@ from PyQt4.QtCore import *
 from util.mygraphicsview import MyGraphicsView
 from util import fileloader
 
+import numba as nb
+from numba import cuda
 import uuid
 import psutil
+
+#
+# def cheby_filter(frames, low_limit, high_limit, frame_rate):
+#     nyq = frame_rate / 2.0
+#     low_limit = low_limit / nyq
+#     high_limit = high_limit / nyq
+#     order = 4
+#     rp = 0.1
+#     Wn = [low_limit, high_limit]
+#
+#     b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+#     print("Filtering...")
+#     frames = signal.filtfilt(b, a, frames, axis=0)
+#     # frames = parmap.map(filt, frames.T, b, a)
+#     # for i in range(frames.shape[-1]):
+#     #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
+#     print("Done!")
+#     return frames
+#
+def temporal_filter_beams(frames):
+    frame_rate = 30
+    f_low = 0.3
+    f_high = 3.0
+    for i in range(frames.shape[1]):
+        for j in range(frames.shape[2]):
+            # print("i: " + str(i))
+            # print("j: " + str(j))
+            frames_beam = np.array(frames[:, i, j])
+            avg_beam = np.mean(frames_beam, axis=0)
+            nyq = frame_rate / 2.0
+            f_low = f_low / nyq
+            f_high = f_high / nyq
+            order = 4
+            rp = 0.1
+            Wn = [f_low, f_high]
+            b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+            frames = signal.filtfilt(b, a, frames, axis=0)
+            frames_beam += avg_beam
+            frames[:, i, j] = frames_beam
+    return frames
+
+# @cuda.jit(nb.void(nb.uint8[:,:,:],nb.uint8[:,:,:]))
+# def temporal_filter_beams_nb(output, frames):
+#     frame_rate = 30
+#     f_low = 0.3
+#     f_high = 3.0
+#     i, j = cuda.grid(2)
+#     if i < output.shape[1] and j < output.shape[2]:
+#         frames_beam = np.array(frames[:, i, j])
+#         avg_beam = np.mean(frames_beam, axis=0)
+#         nyq = frame_rate / 2.0
+#         f_low = f_low / nyq
+#         f_high = f_high / nyq
+#         order = 4
+#         rp = 0.1
+#         Wn = [f_low, f_high]
+#         b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+#         frames_beam = signal.filtfilt(b, a, frames_beam, axis=0)
+#         frames_beam += avg_beam
+#         output[:, i, j] = frames_beam
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
         super(Widget, self).__init__(parent)
 
+        self.temporal_filter_beams_nb = nb.jit(nb.float64[:, :, :]
+                                          (nb.float64[:, :, :]),
+                                          nopython=True)(temporal_filter_beams)
         if not project:
             return
         if project == "standalone":
@@ -99,17 +164,22 @@ class Widget(QWidget):
         frame = fileloader.load_reference_frame(self.video_path)
         self.view.show(frame)
 
+
     def temporal_filter(self):
         assert(self.f_low.value() < self.f_high.value())
-        import matplotlib.pylab as plt
-        frames = fileloader.load_file(self.video_path)
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
         f_high = self.f_high.value()
 
-        avg_frames = np.mean(frames, axis=0)
-        frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
-        frames += avg_frames
+        frames_mmap = np.load(self.video_path, mmap_mode='c')
+
+        self.temporal_filter_beams_nb(frames_mmap)
+        frames = np.array(frames_mmap)
+
+        #frames = fileloader.load_file(self.video_path)
+        # avg_frames = np.mean(frames, axis=0)
+        # frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+        # frames += avg_frames
 
         if not self.project:
             filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
@@ -132,23 +202,6 @@ class Widget(QWidget):
                 'manipulations': ['chebyshev']
             })
             self.project.save()
-
-    def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
-        nyq = frame_rate / 2.0
-        low_limit = low_limit / nyq
-        high_limit = high_limit / nyq
-        order = 4
-        rp = 0.1
-        Wn = [low_limit, high_limit]
-
-        b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-        print("Filtering...")
-        frames = signal.filtfilt(b, a, frames, axis=0)
-        # frames = parmap.map(filt, frames.T, b, a)
-        # for i in range(frames.shape[-1]):
-        #    frames[:, i] = signal.filtfilt(b, a, frames[:, i])
-        print("Done!")
-        return frames
 
 class MyPlugin:
     def __init__(self, project=None):
