@@ -16,7 +16,7 @@ from numba import cuda
 import uuid
 import psutil
 
-#
+
 # def cheby_filter(frames, low_limit, high_limit, frame_rate):
 #     nyq = frame_rate / 2.0
 #     low_limit = low_limit / nyq
@@ -33,7 +33,7 @@ import psutil
 #     #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
 #     print("Done!")
 #     return frames
-#
+
 def temporal_filter_beams(frames):
     frame_rate = 30
     f_low = 0.3
