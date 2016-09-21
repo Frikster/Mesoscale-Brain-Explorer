@@ -81,7 +81,6 @@ class Widget(QWidget):
 
     def temporal_filter(self):
         assert(self.f_low.value() < self.f_high.value())
-        import matplotlib.pylab as plt
         frames = fileloader.load_file(self.video_path)
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
