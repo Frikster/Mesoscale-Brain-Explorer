@@ -125,7 +125,7 @@ class Widget(QWidget):
 
   def selected_roi_changed(self, selected, deselected):
     for index in deselected.indexes():
-      roiname = str(index.data(Qt.DisplayRole).toString())
+      roiname = str(index.data(Qt.DisplayRole))
       self.view.vb.removeRoi(roiname)
     for index in selected.indexes():
       roiname = str(index.data(Qt.DisplayRole))

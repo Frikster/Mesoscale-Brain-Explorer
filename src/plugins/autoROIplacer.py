@@ -70,8 +70,8 @@ class RoiItemModel(QAbstractListModel):
 
   def setData(self, index, value, role):
     if role in [Qt.DisplayRole, Qt.EditRole]:
-      self.textChanged.emit(self.rois[index.row()], value.toString())
-      self.rois[index.row()] = str(value.toString())
+      self.textChanged.emit(self.rois[index.row()], value)
+      self.rois[index.row()] = str(value)
       return True
     return super(RoiItemModel, self).setData(index, value, role)
 
@@ -132,7 +132,7 @@ class Widget(QWidget):
 
   def show_table(self):
     locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
-    model = AutoROICoords(self.data, len(locs), 4)
+    model = AutoROICoords(self.data, len(list(locs)), 4)
     model.itemChanged.connect(self.update_auto_rois)
     model.show()
     self.open_dialogs.append(model)
@@ -218,8 +218,8 @@ class Widget(QWidget):
     self.remove_all_rois()
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
-    # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole))
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
@@ -274,7 +274,7 @@ class Widget(QWidget):
         self.roi_list.model().appendRoi(roi_name)
 
   def delete_roi(self):
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     if rois_selected == None:
       return

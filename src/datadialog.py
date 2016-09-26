@@ -24,12 +24,12 @@ class DetailsModel(QAbstractTableModel):
   def data(self, index, role):
     if role == Qt.DisplayRole:
       return self.obj.items()[index.row()][index.column()]
-    return QVariant()
+    return
 
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
       return self.header[section]
-    return QVariant()       
+    return
 
 class DetailsDialog(QDialog):
   def __init__(self, fileinfo, parent=None):

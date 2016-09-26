@@ -88,7 +88,7 @@ class Widget(QWidget):
     path = QSettings().value('export_path')
     dialog = QFileDialog(self)
     dialog.setWindowTitle('Export to')
-    dialog.setDirectory(str(path.toString()))
+    dialog.setDirectory(str(path))
     dialog.setFileMode(QFileDialog.AnyFile)
     dialog.setOption(QFileDialog.DontUseNativeDialog)
     dialog.selectFile(name)

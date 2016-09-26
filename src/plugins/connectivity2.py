@@ -53,12 +53,12 @@ class ConnectivityModel(QAbstractTableModel):
       return QColor(*color)
     elif role == Qt.TextAlignmentRole:
       return Qt.AlignCenter
-    return QVariant()
+    return
 
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole:
       return self.rois[section].name
-    return QVariant()
+    return
 
 class ConnectivityTable(QTableView):
   def __init__(self, parent=None):
