@@ -8,8 +8,8 @@ import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
 
 sys.path.append('..')
 import qtutil
@@ -39,7 +39,7 @@ class RoiItemModel(QAbstractListModel):
     def data(self, index, role):
         if role == Qt.DisplayRole:
             return self.rois[index.row()]
-        return QVariant()
+        return
 
     def setData(self, index, value, role):
       if role == Qt.EditRole:
@@ -153,7 +153,7 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     # todo: Is this terrible practice? Having self.video_path defined here? This function always runs through init so it works
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
@@ -167,7 +167,7 @@ class Widget(QWidget):
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]

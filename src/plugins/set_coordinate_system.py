@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):

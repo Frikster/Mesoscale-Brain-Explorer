@@ -10,8 +10,8 @@ from PyQt4.QtCore import *
 sys.path.append('..')
 import qtutil
 
-from util.qt import FileTable, InfoWidget, MyProgressDialog
-from util import fileloader
+from .util.qt import FileTable, InfoWidget, MyProgressDialog
+from .util import fileloader
 
 import tifffile as tiff
 import cv2

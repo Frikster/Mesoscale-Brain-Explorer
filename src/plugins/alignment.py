@@ -6,8 +6,8 @@ from PyQt4.QtCore import *
 import pandas as pd
 import time
 
-import util.displacement_jeff as djeff
-from util.qt import PandasModel, FileTableModel
+from .util import displacement_jeff as djeff
+from .util.qt import PandasModel, FileTableModel
 
 class TableView(QTableView):
   def __init__(self, parent=None):

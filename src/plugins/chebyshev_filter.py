@@ -8,53 +8,53 @@ import PyQt4
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
 
-import numba as nb
-from numba import cuda
+#import numba as nb
+#from numba import cuda
 import uuid
 import psutil
 
 
-# def cheby_filter(frames, low_limit, high_limit, frame_rate):
-#     nyq = frame_rate / 2.0
-#     low_limit = low_limit / nyq
-#     high_limit = high_limit / nyq
-#     order = 4
-#     rp = 0.1
-#     Wn = [low_limit, high_limit]
-#
-#     b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-#     print("Filtering...")
-#     frames = signal.filtfilt(b, a, frames, axis=0)
-#     # frames = parmap.map(filt, frames.T, b, a)
-#     # for i in range(frames.shape[-1]):
-#     #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
-#     print("Done!")
-#     return frames
+def cheby_filter(frames, low_limit, high_limit, frame_rate):
+    nyq = frame_rate / 2.0
+    low_limit = low_limit / nyq
+    high_limit = high_limit / nyq
+    order = 4
+    rp = 0.1
+    Wn = [low_limit, high_limit]
 
-def temporal_filter_beams(frames):
-    frame_rate = 30
-    f_low = 0.3
-    f_high = 3.0
-    for i in range(frames.shape[1]):
-        for j in range(frames.shape[2]):
-            # print("i: " + str(i))
-            # print("j: " + str(j))
-            frames_beam = np.array(frames[:, i, j])
-            avg_beam = np.mean(frames_beam, axis=0)
-            nyq = frame_rate / 2.0
-            f_low = f_low / nyq
-            f_high = f_high / nyq
-            order = 4
-            rp = 0.1
-            Wn = [f_low, f_high]
-            b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-            frames = signal.filtfilt(b, a, frames, axis=0)
-            frames_beam += avg_beam
-            frames[:, i, j] = frames_beam
+    b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+    print("Filtering...")
+    frames = signal.filtfilt(b, a, frames, axis=0)
+    # frames = parmap.map(filt, frames.T, b, a)
+    # for i in range(frames.shape[-1]):
+    #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
+    print("Done!")
     return frames
+
+# def temporal_filter_beams(frames):
+#     frame_rate = 30
+#     f_low = 0.3
+#     f_high = 3.0
+#     for i in range(frames.shape[1]):
+#         for j in range(frames.shape[2]):
+#             # print("i: " + str(i))
+#             # print("j: " + str(j))
+#             frames_beam = np.array(frames[:, i, j])
+#             avg_beam = np.mean(frames_beam, axis=0)
+#             nyq = frame_rate / 2.0
+#             f_low = f_low / nyq
+#             f_high = f_high / nyq
+#             order = 4
+#             rp = 0.1
+#             Wn = [f_low, f_high]
+#             b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+#             frames = signal.filtfilt(b, a, frames, axis=0)
+#             frames_beam += avg_beam
+#             frames[:, i, j] = frames_beam
+#     return frames
 
 # @cuda.jit(nb.void(nb.uint8[:,:,:],nb.uint8[:,:,:]))
 # def temporal_filter_beams_nb(output, frames):
@@ -63,8 +63,8 @@ def temporal_filter_beams(frames):
 #     f_high = 3.0
 #     i, j = cuda.grid(2)
 #     if i < output.shape[1] and j < output.shape[2]:
-#         frames_beam = np.array(frames[:, i, j])
-#         avg_beam = np.mean(frames_beam, axis=0)
+#         frames_beam = frames[:, i, j]
+#         avg_beam = (frames_beam) / float(len(frames_beam))
 #         nyq = frame_rate / 2.0
 #         f_low = f_low / nyq
 #         f_high = f_high / nyq
@@ -80,9 +80,9 @@ class Widget(QWidget):
     def __init__(self, project, parent=None):
         super(Widget, self).__init__(parent)
 
-        self.temporal_filter_beams_nb = nb.jit(nb.float64[:, :, :]
-                                          (nb.float64[:, :, :]),
-                                          nopython=True)(temporal_filter_beams)
+        # self.temporal_filter_beams_nb = nb.jit(nb.float64[:, :, :]
+        #                                   (nb.float64[:, :, :]),
+        #                                   nopython=True)(temporal_filter_beams)
         if not project:
             return
         if project == "standalone":
@@ -171,15 +171,15 @@ class Widget(QWidget):
         f_low = self.f_low.value()
         f_high = self.f_high.value()
 
-        frames_mmap = np.load(self.video_path, mmap_mode='c')
+        #frames_mmap = np.load(self.video_path, mmap_mode='c')
+        #out = np.empty([frames_mmap.shape[1], frames_mmap.shape[2]])
+        #temporal_filter_beams_nb(out, frames_mmap)
+        #frames = np.array(frames_mmap)
 
-        self.temporal_filter_beams_nb(frames_mmap)
-        frames = np.array(frames_mmap)
-
-        #frames = fileloader.load_file(self.video_path)
-        # avg_frames = np.mean(frames, axis=0)
-        # frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
-        # frames += avg_frames
+        frames = fileloader.load_file(self.video_path)
+        avg_frames = np.mean(frames, axis=0)
+        frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+        frames += avg_frames
 
         if not self.project:
             filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',

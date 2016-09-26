@@ -6,9 +6,9 @@ import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import filter_jeff as fj
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import filter_jeff as fj
+from .util import fileloader
 
 # on button click!
 
@@ -34,7 +34,7 @@ class Widget(QWidget):
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 

@@ -12,7 +12,7 @@ from PyQt4.QtCore import *
 sys.path.append('..')
 import qtutil
 
-from util import fileloader, fileconverter
+from .util import fileloader, fileconverter
 
 class NotConvertedError(Exception):
   pass
@@ -211,9 +211,8 @@ class Widget(QWidget):
 
   def new_video(self):
     filenames = QFileDialog.getOpenFileNames(
-      self, 'Load images', QSettings().value('last_load_data_path').toString(),
+      self, 'Load images', QSettings().value('last_load_data_path'),
       'Video files (*.npy *.tif *.raw)')
-    filenames = map(str, filenames)
     if not filenames:
       return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))

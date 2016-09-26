@@ -3,9 +3,7 @@ from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.stats.stats import pearsonr
 from scipy import ndimage
-import parmap
-import image_registration
-from PIL import Image
+#import parmap
 from numpy import *
 import tifffile as tiff
 
@@ -305,8 +303,8 @@ class CorrelationMapDisplayer:
         #for i in range(frames.shape[-1]):
         #    correlation_map.append(pearsonr(frames[:, i], seed_pixel)[0])
         # Todo: NaN's generated via this line. Why?
-        correlation_map = parmap.map(corr, frames.T, seed_pixel)
-        #correlation_map = map(corr, frames.T, seed_pixel)
+        #correlation_map = parmap.map(corr, frames.T, seed_pixel)
+        correlation_map = map(corr, frames.T, seed_pixel)
         correlation_map = np.asarray(correlation_map, dtype=np.float32)
         correlation_map = np.reshape(correlation_map, (width, height))
         print(np.shape(correlation_map))
@@ -339,7 +337,8 @@ def correlation_map(seed_x, seed_y, frames, progress):
 
     total = float(width * height - 1)
     cmap = []
-    for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+    #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+    for i, value in enumerate(map(corr, frames.T, seed_pixel)):
         progress.setValue(100 * i / total)
         QApplication.processEvents()
         cmap.append(value)

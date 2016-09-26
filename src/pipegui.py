@@ -41,7 +41,7 @@ class PipelineView(QListView):
 
   def currentChanged(self, current, previous):
     super(PipelineView, self).currentChanged(current, previous)
-    plugin_name = str(current.data(Qt.UserRole).toString())
+    plugin_name = str(current.data(Qt.UserRole))
     self.active_plugin_changed.emit(plugin_name)
 
 class ToolButton(QToolButton):
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
     self.sidebar.pl_list.setModel(self.pipeline_model)
     self.pipeconf.pipeline_list.setModel(self.pipeline_model)
 
-    last = str(QSettings().value('path_of_last_project').toString())
+    last = str(QSettings().value('path_of_last_project'))
     if last:
       self.open_project(last)
 

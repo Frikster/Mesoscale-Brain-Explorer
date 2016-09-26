@@ -10,8 +10,8 @@ import matplotlib.pylab as plt
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
 
 import uuid
 import psutil

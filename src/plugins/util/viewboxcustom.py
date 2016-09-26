@@ -572,9 +572,6 @@ class MultiRoiViewBox(pg.ViewBox):
             fileNames = QtGui.QFileDialog.getOpenFileNames(None, self.tr("Load ROI"),
                                                            QtCore.QDir.currentPath(),
                                                            self.tr("ROI (*.roi)"))
-        # Fix for PyQt/PySide compatibility. PyQt returns a QString,
-        # whereas PySide returns a tuple (first entry is filename as string)
-        if isinstance(fileNames, types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore, 'QStringList') and \
                 isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
         if len(fileNames) > 0:

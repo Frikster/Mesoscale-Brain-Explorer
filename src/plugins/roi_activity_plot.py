@@ -6,9 +6,9 @@ import sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
-import util.pyqtgraph as pg
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
+import pyqtgraph as pg
 
 import numpy as np
 
@@ -119,7 +119,7 @@ class Widget(QWidget):
   def selected_video_changed(self, selected, deselected):
     if not selected.indexes():
       return
-    self.video_path = str(selected.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(selected.indexes()[0].data(Qt.DisplayRole))
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
@@ -128,8 +128,8 @@ class Widget(QWidget):
       roiname = str(index.data(Qt.DisplayRole).toString())
       self.view.vb.removeRoi(roiname)
     for index in selected.indexes():
-      roiname = str(index.data(Qt.DisplayRole).toString())
-      roipath = str(index.data(Qt.UserRole).toString())
+      roiname = str(index.data(Qt.DisplayRole))
+      roipath = str(index.data(Qt.UserRole))
       self.view.vb.addRoi(roipath, roiname)
 
   def plot_triggered(self):

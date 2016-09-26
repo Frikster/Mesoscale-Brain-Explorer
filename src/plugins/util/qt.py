@@ -27,12 +27,12 @@ class JSObjectModel(QAbstractTableModel):
       col = self.cols[index.column()]
       obj = self._data[index.row()]
       return col in obj and obj[col] or ''
-    return QVariant()
+    return
 
   def headerData(self, section, orientation, role):
     if role == Qt.DisplayRole and orientation == Qt.Horizontal:
       return self.cols[section]
-    return QVariant()
+    return
 
   def retrieve(self, row, key=None):
     obj = self._data[row]

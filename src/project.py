@@ -66,7 +66,7 @@ class NewProjectDialog(QDialog):
       self.final_path_edit.clear()
 
   def get_path(self):
-    dialog = QFileDialog(self, 'Select project location', str(QSettings().value('projects_path').toString()))
+    dialog = QFileDialog(self, 'Select project location', str(QSettings().value('projects_path')))
     dialog.setFileMode(QFileDialog.Directory)
     dialog.setOption(QFileDialog.DontUseNativeDialog)
     dialog.setOption(QFileDialog.ShowDirsOnly, True)
@@ -117,7 +117,7 @@ class ProjectManager:
 
   def open_project(self, path=''):
     if not path:
-      dialog = QFileDialog(self.mainwindow, 'Select project location', str(QSettings().value('projects_path').toString()))
+      dialog = QFileDialog(self.mainwindow, 'Select project location', str(QSettings().value('projects_path')))
       dialog.setFileMode(QFileDialog.Directory)
       dialog.setOption(QFileDialog.DontUseNativeDialog)
       dialog.setOption(QFileDialog.ShowDirsOnly, True)

@@ -1,31 +1,13 @@
 #!/usr/bin/env python
 
-from filter_jeff import load_frames, filter2_test_j
+from .filter_jeff import load_frames, filter2_test_j
 from math import pow, sqrt
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import parmap
-import image_registration
-import fileloader
-
-'''
-base_dir = ["/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/",
-"/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/",
-"/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/",
-"/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/",
-"/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/"
-]
-
-mice = ["1312000377", "2015050115", "1302000245", "1312000159", "1312000300"]
-#mice = ["1312000377"]
-
-
-
-#mice = ["1312000377", "2015050115", "1302000245", "1312000159", "1312000300", "2015050202", "1312000573"]
-frame_oi = 400
-limit_time = 1438365391.603202
-'''
+#import parmap
+#import image_registration
+from .fileloader import *
 
 class Position:
     def __init__(self, dx, dy):

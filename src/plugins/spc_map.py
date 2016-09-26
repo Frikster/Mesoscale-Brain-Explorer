@@ -5,12 +5,12 @@ from PyQt4.QtCore import *
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.graphicsItems.UIGraphicsItem import *
 
-from util import filter_jeff
-from util.mygraphicsview import MyGraphicsView
-from util.qt import MyListView, MyProgressDialog, InfoWidget
-from util.gradient import GradientLegend
+from .util import filter_jeff
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import MyListView, MyProgressDialog, InfoWidget
+from .util.gradient import GradientLegend
 
-from util import fileloader
+from .util import fileloader
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -157,7 +157,7 @@ class Widget(QWidget):
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 

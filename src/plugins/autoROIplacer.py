@@ -12,14 +12,12 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
 
 sys.path.append('..')
 import qtutil
 import uuid
-from util import fileloader
-from util.viewboxcustom import MultiRoiViewBox
+from .util import fileloader
 
 #This the code for getting the ROI locations from bregma.
 
@@ -68,7 +66,7 @@ class RoiItemModel(QAbstractListModel):
   def data(self, index, role):
     if role == Qt.DisplayRole:
       return self.rois[index.row()]
-    return QVariant()
+    return
 
   def setData(self, index, value, role):
     if role in [Qt.DisplayRole, Qt.EditRole]:
@@ -206,7 +204,7 @@ class Widget(QWidget):
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
