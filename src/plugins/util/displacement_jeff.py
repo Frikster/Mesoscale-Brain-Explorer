@@ -1,13 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from .filter_jeff import load_frames, filter2_test_j
 from math import pow, sqrt
 import os
 import numpy as np
+from . import fileloader
+
 import matplotlib.pyplot as plt
 #import parmap
 #import image_registration
-from .fileloader import *
+
 
 class Position:
     def __init__(self, dx, dy):

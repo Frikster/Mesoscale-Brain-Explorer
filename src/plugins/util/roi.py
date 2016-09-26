@@ -560,7 +560,8 @@ def imageToArray(img):
         arr = np.frombuffer(ptr, dtype=np.ubyte)
     else:   
         ptr.setsize(img.byteCount())
-        buf = buffer(ptr, 0, img.byteCount())
+        #buf = buffer(ptr, 0, img.byteCount())
+        buf = memoryview(ptr)
         arr = np.frombuffer(buf, dtype=np.ubyte)  
     if fmt == img.Format_RGB32:
         arr = arr.reshape(img.height(), img.width(), 3)

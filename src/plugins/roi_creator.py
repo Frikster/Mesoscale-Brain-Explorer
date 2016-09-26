@@ -43,7 +43,7 @@ class RoiItemModel(QAbstractListModel):
 
     def setData(self, index, value, role):
       if role == Qt.EditRole:
-        value = str(value.toString())
+        value = str(value)
         if value in self.rois[index.row()]:
           pass
         elif value in self.rois:

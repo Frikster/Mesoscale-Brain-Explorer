@@ -614,11 +614,11 @@ class MultiRoiViewBox(pg.ViewBox):
       self.img.setRect(QtCore.QRectF(x1, y1, x2, y2))
        
     def showImage(self, arr):
-        if arr is None: 
+        arr = arr.astype("float64")
+        if arr is None:
             self.img = None
             return
         if self.img==None:
-            arr = arr.astype("float64")
             self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
             self.addItem(self.img)
         # Add/readd crosshair

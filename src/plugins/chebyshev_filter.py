@@ -17,23 +17,6 @@ import uuid
 import psutil
 
 
-def cheby_filter(frames, low_limit, high_limit, frame_rate):
-    nyq = frame_rate / 2.0
-    low_limit = low_limit / nyq
-    high_limit = high_limit / nyq
-    order = 4
-    rp = 0.1
-    Wn = [low_limit, high_limit]
-
-    b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-    print("Filtering...")
-    frames = signal.filtfilt(b, a, frames, axis=0)
-    # frames = parmap.map(filt, frames.T, b, a)
-    # for i in range(frames.shape[-1]):
-    #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
-    print("Done!")
-    return frames
-
 # def temporal_filter_beams(frames):
 #     frame_rate = 30
 #     f_low = 0.3
@@ -164,6 +147,22 @@ class Widget(QWidget):
         frame = fileloader.load_reference_frame(self.video_path)
         self.view.show(frame)
 
+    def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
+        nyq = frame_rate / 2.0
+        low_limit = low_limit / nyq
+        high_limit = high_limit / nyq
+        order = 4
+        rp = 0.1
+        Wn = [low_limit, high_limit]
+
+        b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+        print("Filtering...")
+        frames = signal.filtfilt(b, a, frames, axis=0)
+        # frames = parmap.map(filt, frames.T, b, a)
+        # for i in range(frames.shape[-1]):
+        #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
+        print("Done!")
+        return frames
 
     def temporal_filter(self):
         assert(self.f_low.value() < self.f_high.value())
