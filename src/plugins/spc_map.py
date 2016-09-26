@@ -16,6 +16,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import multiprocessing
 
 def calc_spc(video_path, x, y, progress):
   frame = fileloader.load_reference_frame(video_path)

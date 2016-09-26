@@ -75,7 +75,8 @@ class MyListView(QListView):
 
 class MyProgressDialog(QProgressDialog):
   def __init__(self, title, desc, parent=None):
-    super(MyProgressDialog, self).__init__(desc, QString(), 0, 100, parent)
+    super(MyProgressDialog, self).__init__(desc, str(), 0, 100, parent)
+    #super(MyProgressDialog, self).__init__(desc, QString(), 0, 100, parent)
     self.setWindowTitle(title)
     self.setAutoClose(True)
     self.setMinimumDuration(0)

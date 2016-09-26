@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats.stats import pearsonr
 from scipy import ndimage
 #import parmap
+from multiprocessing import Pool
 from numpy import *
 import tifffile as tiff
 
@@ -25,10 +26,7 @@ def load_raw(filename, width, height, dat_type):
         total_number_of_frames = int(np.size(frames)/(width*height))
         print("n_frames: "+str(total_number_of_frames))
         frames = np.reshape(frames, (total_number_of_frames, width, height))
-    #todo: note that you got rid of starting_frame!
-    # frames = frames[starting_frame:, :, :, 1]
     frames = np.asarray(frames, dtype=dat_type)
-
     return frames
 
 def load_tiff(filename):
@@ -63,8 +61,6 @@ def get_frames(rgb_file, width, height, dat_type):
             total_number_of_frames = int(np.size(frames) / (width * height * 3))
             print("n_frames: " + str(total_number_of_frames))
             frames = np.reshape(frames, (total_number_of_frames, width, height, 3))
-            #todo: note that you got rid of starting_frame!
-            # frames = frames[starting_frame:, :, :, 1]
             frames = frames[:, :, :, 1]
             frames = np.asarray(frames, dtype=dat_type)
             return frames
@@ -337,11 +333,15 @@ def correlation_map(seed_x, seed_y, frames, progress):
 
     total = float(width * height - 1)
     cmap = []
-    #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
-    for i, value in enumerate(map(corr, frames.T, seed_pixel)):
-        progress.setValue(100 * i / total)
-        QApplication.processEvents()
-        cmap.append(value)
+    with Pool() as pool:
+        #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+        for i, value in enumerate(pool.starmap(corr,
+                                               zip(frames.T,
+                                                   [seed_pixel for i in range(frames.T.shape[0])]
+                                                   ))):
+            progress.setValue(100 * i / total)
+            QApplication.processEvents()
+            cmap.append(value)
 
     cmap = np.reshape(cmap, (width, height))
     return cmap
