@@ -5,6 +5,7 @@ from PyQt4.QtCore import *
 
 import pandas as pd
 import time
+import os
 
 from .util import displacement_jeff as djeff
 from .util.qt import PandasModel, FileTableModel
@@ -72,7 +73,9 @@ class Widget(QWidget):
     for filename in filenames:
       if filename in [f['path'] for f in self.project.files]:
         continue
+      name, ext = os.path.splitext(os.path.basename(filename))
       f = {
+        'name': name,
         'path': filename,
         'type': 'video',
         'manipulations': 'align'

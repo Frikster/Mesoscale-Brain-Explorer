@@ -18,6 +18,7 @@ sys.path.append('..')
 import qtutil
 import uuid
 from .util import fileloader
+from .util.mse_ui_elements import Video_Selector
 
 #This the code for getting the ROI locations from bregma.
 
@@ -108,11 +109,11 @@ class Widget(QWidget):
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
-                                                    QItemSelection].connect(self.selected_video_changed)
+                                                    QItemSelection].connect(Video_Selector.selected_video_changed)
     for f in project.files:
       if f['type'] != 'video':
         continue
-      self.listview.model().appendRow(QStandardItem(f['path']))
+      self.listview.model().appendRow(QStandardItem(str(f['name'])))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel()
@@ -157,11 +158,6 @@ class Widget(QWidget):
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
 
-    # todo: finish implementing commented out ui elements
-    # pb = QPushButton('Create poly ROI')
-    # pb.clicked.connect(self.create_roi)
-    # vbox.addWidget(pb)
-
     vbox.addWidget(QLabel('ROI size NxN'))
     self.roi_size = QSpinBox()
     self.roi_size.setMinimum(1)
@@ -204,7 +200,9 @@ class Widget(QWidget):
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
