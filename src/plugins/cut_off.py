@@ -10,6 +10,7 @@ from .util.gradient import GradientLegend
 
 from .util import fileloader
 
+import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt

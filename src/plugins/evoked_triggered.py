@@ -73,7 +73,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project):
-        self.name = 'Concat videos'
+        self.name = 'Evoked triggered'
         self.widget = Widget(project)
 
     def run(self):
