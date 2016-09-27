@@ -93,11 +93,15 @@ class SPCMapDialog(QDialog):
     def vbc_clicked(self, x, y):
         progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
         self.spc = calc_spc(self.video_path, x, y, progress)
-        self.view.show(colorize_spc(self.spc))
+        self.view.show(self.colorize_spc(self.spc))
 
     def colorize_spc(self, spc_map):
         spc_map[np.isnan(spc_map)] = 0.0
+        #todo: http://stackoverflow.com/questions/22548813/python-color-map-but-with-all-zero-values-mapped-to-black
+        # a = np.ma.masked_where(spc_map == 0, spc_map)
+        # cmap = plt.cm.OrRd
         gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+        #cmap.set_bad(color='black')
         spc_map_color = matplotlib.cm.ScalarMappable(
           gradient_range, self.cm_type).to_rgba(spc_map, bytes=True)
 

@@ -275,7 +275,7 @@ class Widget(QWidget):
 
     # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
     # path = os.path.join(self.project.path, 'roi' + '.npy')
-    pfs.save_project_video(self.video_path, self.project, frames, 'crop')
+    pfs.save_project_video(self.video_path, self.project, roi_frames, 'crop')
 
 class MyPlugin:
   def __init__(self, project=None):
