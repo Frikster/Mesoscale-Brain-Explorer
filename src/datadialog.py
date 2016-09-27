@@ -23,7 +23,7 @@ class DetailsModel(QAbstractTableModel):
 
   def data(self, index, role):
     if role == Qt.DisplayRole:
-      return self.obj.items()[index.row()][index.column()]
+      return list(self.obj.items())[index.row()][index.column()]
     return
 
   def headerData(self, section, orientation, role):
