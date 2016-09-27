@@ -109,7 +109,7 @@ class Widget(QWidget):
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
-                                                    QItemSelection].connect(Video_Selector.selected_video_changed)
+                                                    QItemSelection].connect(self.selected_video_changed)
     for f in project.files:
       if f['type'] != 'video':
         continue

@@ -78,7 +78,7 @@ class Widget(QWidget):
     for f in project.files:
       if f['type'] != 'video':
         continue
-      self.listview.model().appendRow(QStandardItem(f['path']))
+      self.listview.model().appendRow(QStandardItem(f['name']))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel() 
@@ -153,7 +153,9 @@ class Widget(QWidget):
     if not selection.indexes():
       return
     # todo: Is this terrible practice? Having self.video_path defined here? This function always runs through init so it works
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 

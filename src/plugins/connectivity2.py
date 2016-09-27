@@ -104,7 +104,7 @@ class Widget(QWidget):
 
     for f in project.files:
       if f['type'] == 'video':
-        self.video_list.model().appendRow(QStandardItem(f['path']))
+        self.video_list.model().appendRow(QStandardItem(f['name']))
       elif f['type'] == 'roi':
         item = QStandardItem(f['name'])
         item.setData(f['path'], Qt.UserRole)
@@ -140,10 +140,12 @@ class Widget(QWidget):
     hbox.setStretch(1, 0)
     self.setLayout(hbox) 
 
-  def selected_video_changed(self, selected, deselected):
-    if not selected.indexes():
+  def selected_video_changed(self, selection):
+    if not selection.indexes():
       return
-    self.video_path = str(selected.indexes()[0].data(Qt.DisplayRole))
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 

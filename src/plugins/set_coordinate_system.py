@@ -21,6 +21,14 @@ class Widget(QWidget):
     self.project = project
 
     self.setup_ui()
+    self.listview.setModel(QStandardItemModel())
+    self.listview.selectionModel().selectionChanged[QItemSelection,
+      QItemSelection].connect(self.selected_video_changed)
+    for f in project.files:
+      if f['type'] != 'video':
+        continue
+      self.listview.model().appendRow(QStandardItem(f['name']))
+    self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
   def setup_ui(self):
     hbox = QHBoxLayout()
@@ -30,6 +38,11 @@ class Widget(QWidget):
     hbox.addWidget(self.view)
     
     vbox = QVBoxLayout()
+    vbox.addWidget(QLabel('Choose video:'))
+    self.listview = QListView()
+    self.listview.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.listview)
+
     self.origin_label = QLabel('Origin:')
     vbox.addWidget(self.origin_label)
 
@@ -48,6 +61,15 @@ class Widget(QWidget):
     self.setLayout(hbox)
 
     self.setEnabled(False)
+
+  def selected_video_changed(self, selection):
+    if not selection.indexes():
+      return
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
+    frame = fileloader.load_reference_frame(self.video_path)
+    self.view.show(frame)
 
   def set_origin_label(self):
     x, y = self.project['origin']

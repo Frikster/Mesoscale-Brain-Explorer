@@ -93,7 +93,7 @@ class Widget(QWidget):
             for f in self.project.files:
                 if f['type'] != 'video':
                     continue
-                self.listview.model().appendRow(QStandardItem(f['path']))
+                self.listview.model().appendRow(QStandardItem(f['name']))
         else:
             for f in filenames:
                 self.listview.model().appendRow(QStandardItem(f))
@@ -143,7 +143,9 @@ class Widget(QWidget):
     def selected_video_changed(self, selection):
         if not selection.indexes():
             return
-        self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole))
+        self.video_path = str(os.path.join(self.project.path,
+                                           selection.indexes()[0].data(Qt.DisplayRole))
+                              + '.npy')
         frame = fileloader.load_reference_frame(self.video_path)
         self.view.show(frame)
 

@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 import os
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4 import QtCore
 from . import fileloader
 
 class Video_Selector:
+    def __init__(self, project, view):
+        self.project = project
+        self.view = view
+
     def selected_video_changed(self, selection):
         if not selection.indexes():
             return
