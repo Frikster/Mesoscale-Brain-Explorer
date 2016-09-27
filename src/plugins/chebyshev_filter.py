@@ -3,6 +3,7 @@
 import os, sys
 import numpy as np
 from scipy import signal
+from .util import project_file_saver as pfs
 
 import PyQt4
 from PyQt4.QtGui import *
@@ -10,6 +11,8 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import project_file_saver as pfs
+
 
 #import numba as nb
 #from numba import cuda
@@ -76,7 +79,6 @@ class Widget(QWidget):
             self.project = None
         else:
             self.project = project
-
             # for filename in filenames:
             #     self.project.files.append({
             #         'path': filename,
@@ -192,17 +194,8 @@ class Widget(QWidget):
             msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
             msgBox.exec_()
         else:
-            # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
-            #path = os.path.join(self.project.path, 'cheby' + '.npy')
-            path = self.video_path + 'cheby' + '.npy'
-            np.save(path, frames)
-            self.project.files.append({
-                'path': path,
-                'type': 'video',
-                'source_video': self.video_path,
-                'manipulations': ['chebyshev']
-            })
-            self.project.save()
+
+            pfs.save_project_video(self.video_path, self.project, frames, 'cheby')
 
 class MyPlugin:
     def __init__(self, project=None):

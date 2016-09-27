@@ -7,6 +7,7 @@ from .util import filter_jeff
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog
 from .util.gradient import GradientLegend
+from .util import project_file_saver as pfs
 
 from .util import fileloader
 
@@ -85,20 +86,8 @@ class Widget(QWidget):
         frames_mmap = np.load(self.video_path, mmap_mode='c')
         cut_off_start = self.left_cut_off.value()
         cut_off_end = self.right_cut_off.value()
-
         frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-
-        # todo: solve issue where rerunning this will overwrite any previous 'cut_off.npy'
-        # path = os.path.join(self.project.path, 'roi' + '.npy')
-        path = self.video_path + 'cut_off' + '.npy'
-        np.save(path, frames)
-        self.project.files.append({
-            'path': path,
-            'type': 'video',
-            'source_video': self.video_path,
-            'manipulations': ['cut_off']
-        })
-        self.project.save()
+        pfs.save_project_video(self.video_path, self.project, frames, 'cut_off')
 
 
 class MyPlugin:

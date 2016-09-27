@@ -224,25 +224,6 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  # def roi_item_changed(self, prev_name, new_name):
-  #   # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
-  #   prev_name = str(prev_name)
-  #   new_name = str(new_name)
-  #   if str(new_name) == '':
-  #     qtutil.critical('Choose a name.')
-  #   elif str(new_name) in [f['name'] for f in self.project.files if 'name' in f]:
-  #     qtutil.critical('ROI name taken.')
-  #   self.remove_all_rois()
-  #   self.view.vb.loadROI([self.project.path + '/' + str(prev_name) + '.roi'])
-  #   roi = self.view.vb.rois[0]
-  #   roi.setName(str(new_name))
-  #   for i in range(len(self.project.files)):
-  #     if self.project.files[i]['path'].endswith(str(prev_name) + '.roi'):
-  #       os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name, new_name))
-  #       self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name, new_name)
-  #       self.project.files[i]['name'] = str(new_name)
-  #   self.project.save()
-
   def update_project_roi(self, roi):
     name = roi.name
     if not name:

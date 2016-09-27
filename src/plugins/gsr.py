@@ -9,6 +9,7 @@ from PyQt4.QtCore import *
 from .util.mygraphicsview import MyGraphicsView
 from .util import filter_jeff as fj
 from .util import fileloader
+from .util import project_file_saver as pfs
 
 # on button click!
 
@@ -69,21 +70,7 @@ class Widget(QWidget):
     height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
 
-    #todo: solve issue where rerunning this will overwrite any previous 'gsr.npy'
-    # path = os.path.join(self.project.path, 'gsr' + '.npy')
-    path = self.video_path + 'gsr' + '.npy'
-    np.save(path, frames)
-    self.project.files.append({
-      'path': path,
-      'type': 'video',
-      'source_video': self.video_path,
-      'manipulations': ['gsr']
-    })
-    self.project.save()
-
-    #np.save(os.path.expanduser('/Downloads/')+"gsr", frames)
-    #frames.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"gsr.raw")
-    #print("gsr saved to "+os.path.expanduser('/Downloads/')+"gsr")
+    pfs.save_project_video(self.video_path, self.project, frames, 'gsr')
 
 class MyPlugin:
   def __init__(self, project):

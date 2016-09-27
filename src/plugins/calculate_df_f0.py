@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, sys
 import numpy as np
@@ -12,6 +12,8 @@ from .util import fileloader
 
 import uuid
 import psutil
+
+from .util import project_file_saver as pfs
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
@@ -69,18 +71,7 @@ class Widget(QWidget):
         frames = np.divide(np.subtract(frames, baseline), baseline)
         where_are_NaNs = np.isnan(frames)
         frames[where_are_NaNs] = 0
-
-        # todo: solve issue where rerunning this will overwrite any previous 'cheby.npy'
-        #path = os.path.join(self.project.path, 'df_f0' + '.npy')
-        path = self.video_path + 'df_f0' + '.npy'
-        np.save(path, frames)
-        self.project.files.append({
-            'path': path,
-            'type': 'video',
-            'source_video': self.video_path,
-            'manipulations': ['df_f0']
-        })
-        self.project.save()
+        pfs.save_project_video(self.video_path, self.project, frames, 'df_d0')
 
 class MyPlugin:
     def __init__(self, project=None):
