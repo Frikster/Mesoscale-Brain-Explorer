@@ -156,7 +156,7 @@ class Widget(QWidget):
         low_limit = low_limit / nyq
         high_limit = high_limit / nyq
         order = 4
-        rp = 0.1
+        rp = 0.1 #Ripple in the passband. Maximum allowable ripple
         Wn = [low_limit, high_limit]
 
         b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
