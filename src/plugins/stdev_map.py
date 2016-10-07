@@ -20,7 +20,7 @@ def calc_stddev(video_path, progress):
   progress.setValue(0)
   frames = fileloader.load_file(video_path)
   #stddev = filter_jeff.standard_deviation(frames, progress)
-  stddev = filter_jeff.standard_deviation(frames)
+  stddev = np.std(frames, axis=0)
   progress.setValue(100)
 
   return stddev

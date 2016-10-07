@@ -28,6 +28,7 @@ class Widget(QWidget):
         self.open_dialogs = []
 
         self.listview.setModel(QStandardItemModel())
+        self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_video_changed)
         for f in project.files:

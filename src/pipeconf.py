@@ -42,6 +42,7 @@ class PipelineModel(QStandardItemModel):
     for name, title in plugins:
       item = QStandardItem(title)
       item.setData(name, Qt.UserRole)
+      print('set_plugins: '+str(item))
       self.appendRow(item)
 
 class PluginList(QListView):

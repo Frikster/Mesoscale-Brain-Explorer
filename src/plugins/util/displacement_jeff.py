@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .filter_jeff import load_frames, filter2_test_j
+from .filter_jeff import filter2_test
 from math import pow, sqrt
 import os
 import numpy as np

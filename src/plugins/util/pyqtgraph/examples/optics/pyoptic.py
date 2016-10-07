@@ -13,7 +13,7 @@ class GlassDB:
     """
     def __init__(self, fileName='schott_glasses.csv'):
         path = os.path.dirname(__file__)
-        fh = gzip.open(os.path.join(path, 'schott_glasses.csv.gz'), 'rb')
+        fh = gzip.open(os.path.join(path, 'schott_glasses.csv.gz'), 'r')
         r = csv.reader(map(str, fh.readlines()))
         lines = [x for x in r]
         self.data = {}
@@ -231,7 +231,7 @@ class Lens(Optic):
         For reflection:
         For the incident vector I and surface orientation N,
         returns the reflection direction:
-        I “ 2 ˆ— dot(N, I) ˆ— N
+        I ï¿½ 2 ï¿½ï¿½ dot(N, I) ï¿½ï¿½ N
         N must already be normalized in order to achieve the
         desired result.
         """

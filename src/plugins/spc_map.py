@@ -96,14 +96,19 @@ class SPCMapDialog(QDialog):
         self.view.show(self.colorize_spc(self.spc))
 
     def colorize_spc(self, spc_map):
-        spc_map[np.isnan(spc_map)] = 0.0
+        spc_map_with_nan = np.copy(spc_map)
+        spc_map[np.isnan(spc_map)] = 0
         #todo: http://stackoverflow.com/questions/22548813/python-color-map-but-with-all-zero-values-mapped-to-black
-        # a = np.ma.masked_where(spc_map == 0, spc_map)
-        # cmap = plt.cm.OrRd
         gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
-        #cmap.set_bad(color='black')
-        spc_map_color = matplotlib.cm.ScalarMappable(
-          gradient_range, self.cm_type).to_rgba(spc_map, bytes=True)
+        spc_map = np.ma.masked_where(spc_map == 0, spc_map)
+        cmap = matplotlib.cm.ScalarMappable(
+          gradient_range, self.cm_type)
+        spc_map_color = cmap.to_rgba(spc_map, bytes=True)
+        # turn areas outside mask black
+        spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
+
+
+        # make regions where RGB values are taken from 0, black. take the top left corner value...
 
         spc_map_color = spc_map_color.swapaxes(0, 1)
         if spc_map_color.ndim == 2:

@@ -194,7 +194,6 @@ class Widget(QWidget):
             msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
             msgBox.exec_()
         else:
-
             pfs.save_project_video(self.video_path, self.project, frames, 'cheby')
 
 class MyPlugin:

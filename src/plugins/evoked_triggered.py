@@ -50,13 +50,16 @@ class Widget(QWidget):
         lens = [len(frames[x]) for x in range(len(frames))]
         min_lens = np.min(lens)
 
-        trig_avg = []
+        length = frames[0].shape[1]
+        breadth = frames[0].shape[2]
+
+        trig_avg = np.empty([min_lens, length, breadth])
         for frame_set_index in range(min_lens):
             frames_to_avg = [frames[frame_index][frame_set_index]
                              for frame_index in range(len(frames))]
             frames_to_avg = np.concatenate(frames_to_avg)
             avg = np.mean(frames_to_avg, axis=0)
-            trig_avg.append(avg)
+            trig_avg[frame_set_index] = avg
         pfs.save_project_video(os.path.join(self.project.path, str(uuid.uuid4())
                                             , self.project, trig_avg, 'trigger-avg'))
 
