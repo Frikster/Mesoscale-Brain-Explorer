@@ -16,6 +16,9 @@ import qtutil
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
+import pyqtgraph as pg
+
+import itertools
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -37,10 +40,22 @@ class ConnectivityModel(QAbstractTableModel):
         self.rois = rois
 
         avg_data = []
-        for video_path in selected_videos:
-            self.data_one = calc_connectivity(video_path, image, rois)
+        dict_for_stdev = {}
 
+        for key in [i for i in list(itertools.product(xrange(len(rois)),xrange(len(rois))))]:
+            dict_for_stdev[key] = []
+
+        for video_path in selected_videos:
+            self._data = calc_connectivity(video_path, image, rois)
+            if avg_data == []:
+                avg_data = self._data
+            for i in xrange(len(avg_data)):
+                for j in xrange(len(avg_data)):
+                    dict_for_stdev[(i,j)] = dict_for_stdev[(i,j)] + [self._data[i][j]]
+                    if video_path != selected_videos[0]:
+                        avg_data[i][j] = (avg_data[i][j] + self._data[i][j]) / len(selected_videos)
         self._data = avg_data
+        assert(avg_data != [])
 
     def rowCount(self, parent):
         return len(self._data)
@@ -171,7 +186,7 @@ class Widget(QWidget):
 
     def selected_roi_changed(self, selected, deselected):
         #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
-        #todo: what's the point of the forloops??
+        #todo: what's the point of the forloops?
         for index in deselected.indexes():
             roiname = str(index.data(Qt.DisplayRole))
             self.view.vb.removeRoi(roiname)
@@ -189,6 +204,12 @@ class Widget(QWidget):
         elif not rois:
             qtutil.critical('Select Roi(s).')
         else:
+            #todo:
+
+            #pg.ImageItem(arr, autoRange=False, autoLevels=False)
+
+
+
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
                                    rois, self)
             win.show()
