@@ -54,6 +54,13 @@ class ConnectivityModel(QAbstractTableModel):
                     dict_for_stdev[(i,j)] = dict_for_stdev[(i,j)] + [self._data[i][j]]
                     if video_path != selected_videos[0]:
                         avg_data[i][j] = (avg_data[i][j] + self._data[i][j]) / len(selected_videos)
+        stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
+
+        # combine stddev and avg data
+        for i in xrange(len(avg_data)):
+            for j in xrange(len(avg_data)):
+                avg_data[i][j] = (avg_data[i][j],stdev_dict[(i,j)])
+
         self._data = avg_data
         assert(avg_data != [])
 
@@ -64,10 +71,11 @@ class ConnectivityModel(QAbstractTableModel):
         return len(self._data)
 
     def data(self, index, role):
+        tup = self._data[index.row()][index.column()]
         if role == Qt.DisplayRole:
-            return str(round(self._data[index.row()][index.column()], 2))
+            return str(round(tup[0], 2))+" +/- "+str(round(tup[1], 2))
         elif role == Qt.BackgroundRole:
-            value = float(self._data[index.row()][index.column()])
+            value = float(tup[0])
             color = plt.cm.jet(value)
             color = [x * 255 for x in color]
             return QColor(*color)
