@@ -21,86 +21,86 @@ class FileAlreadyInProjectError(Exception):
   def __init__(self, filename):
     self.filename = filename
 
-class RawConverterDialog(QDialog):
-  def __init__(self, project, filename, parent=None):
-    super(RawConverterDialog, self).__init__(parent)
-    self.project = project
-    self.filename = filename
-    self.setup_ui()
-  
-  def setup_ui(self):
-    self.setWindowTitle('Import Raw File')
-
-    vbox = QVBoxLayout()
-    vbox.addWidget(QLabel('<center><b>Importing \'{}\'</b></center>'.format(
-      os.path.basename(self.filename))))
-    vbox.addSpacing(10)
-
-    grid = QGridLayout()
-
-    grid.addWidget(QLabel('Width:'), 0, 0)
-    self.sb_width = QSpinBox()
-    self.sb_width.setMinimum(1)
-    self.sb_width.setMaximum(1024)
-    self.sb_width.setValue(256)
-    grid.addWidget(self.sb_width, 0, 1)
-
-    grid.addWidget(QLabel('Height:'), 1, 0)
-    self.sb_height = QSpinBox()
-    self.sb_height.setMinimum(1)
-    self.sb_height.setMaximum(1024)
-    self.sb_height.setValue(256)
-    grid.addWidget(self.sb_height, 1, 1)
-
-    grid.addWidget(QLabel('Channel:'), 2, 0)
-    self.sb_channel = QSpinBox()
-    self.sb_channel.setMinimum(1)
-    self.sb_channel.setMaximum(3)
-    self.sb_channel.setValue(3)
-    grid.addWidget(self.sb_channel, 2, 1)
-
-    grid.addWidget(QLabel('dtype:'), 3, 0)
-    self.cb_dtype = QComboBox()
-    for t in 'uint8', 'float32', 'float64':
-      self.cb_dtype.addItem(t)
-    grid.addWidget(self.cb_dtype, 3, 1)
-
-    vbox.addLayout(grid)
-    vbox.addStretch()
-
-    pb = QPushButton('&Convert')
-    pb.clicked.connect(self.convert_clicked)
-    vbox.addWidget(pb)
-
-    self.setLayout(vbox)
-    self.resize(400, 220)
-
-  def convert_clicked(self):
-    dtype = str(self.cb_dtype.currentText())
-    width = int(self.sb_width.value())
-    height = int(self.sb_height.value())
-    channels = int(self.sb_channel.value())
-    path = os.path.splitext(os.path.basename(self.filename))[0] + '.npy'
-    path = os.path.join(self.project.path, path)
-
-    progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
-    progress.setAutoClose(True)
-    progress.setMinimumDuration(0)
-    progress.setValue(0)
-
-    def callback(value):
-      progress.setValue(int(value * 100))
-      QApplication.processEvents()
-
-    try:
-      fileconverter.raw2npy(self.filename, path, dtype, width, height,
-        channels, callback)
-    except:
-      qtutil.critical('Converting raw to npy failed.')
-      progress.close()
-    else:
-      self.ret_filename = path
-      self.close()
+# class RawConverterDialog(QDialog):
+#   def __init__(self, project, filename, parent=None):
+#     super(RawConverterDialog, self).__init__(parent)
+#     self.project = project
+#     self.filename = filename
+#     self.setup_ui()
+#
+#   def setup_ui(self):
+#     self.setWindowTitle('Import Raw File')
+#
+#     vbox = QVBoxLayout()
+#     vbox.addWidget(QLabel('<center><b>Importing \'{}\'</b></center>'.format(
+#       os.path.basename(self.filename))))
+#     vbox.addSpacing(10)
+#
+#     grid = QGridLayout()
+#
+#     grid.addWidget(QLabel('Width:'), 0, 0)
+#     self.sb_width = QSpinBox()
+#     self.sb_width.setMinimum(1)
+#     self.sb_width.setMaximum(1024)
+#     self.sb_width.setValue(256)
+#     grid.addWidget(self.sb_width, 0, 1)
+#
+#     grid.addWidget(QLabel('Height:'), 1, 0)
+#     self.sb_height = QSpinBox()
+#     self.sb_height.setMinimum(1)
+#     self.sb_height.setMaximum(1024)
+#     self.sb_height.setValue(256)
+#     grid.addWidget(self.sb_height, 1, 1)
+#
+#     grid.addWidget(QLabel('Channel:'), 2, 0)
+#     self.sb_channel = QSpinBox()
+#     self.sb_channel.setMinimum(1)
+#     self.sb_channel.setMaximum(3)
+#     self.sb_channel.setValue(3)
+#     grid.addWidget(self.sb_channel, 2, 1)
+#
+#     grid.addWidget(QLabel('dtype:'), 3, 0)
+#     self.cb_dtype = QComboBox()
+#     for t in 'uint8', 'float32', 'float64':
+#       self.cb_dtype.addItem(t)
+#     grid.addWidget(self.cb_dtype, 3, 1)
+#
+#     vbox.addLayout(grid)
+#     vbox.addStretch()
+#
+#     pb = QPushButton('&Convert')
+#     pb.clicked.connect(self.convert_clicked)
+#     vbox.addWidget(pb)
+#
+#     self.setLayout(vbox)
+#     self.resize(400, 220)
+#
+#   def convert_clicked(self):
+#     dtype = str(self.cb_dtype.currentText())
+#     width = int(self.sb_width.value())
+#     height = int(self.sb_height.value())
+#     channels = int(self.sb_channel.value())
+#     path = os.path.splitext(os.path.basename(self.filename))[0] + '.npy'
+#     path = os.path.join(self.project.path, path)
+#
+#     progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
+#     progress.setAutoClose(True)
+#     progress.setMinimumDuration(0)
+#     progress.setValue(0)
+#
+#     def callback(value):
+#       progress.setValue(int(value * 100))
+#       QApplication.processEvents()
+#
+#     try:
+#       fileconverter.raw2npy(self.filename, path, dtype, width, height,
+#         channels, callback)
+#     except:
+#       qtutil.critical('Converting raw to npy failed.')
+#       progress.close()
+#     else:
+#       self.ret_filename = path
+#       self.close()
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -195,10 +195,32 @@ class Widget(QWidget):
     self.setLayout(vbox)
 
   def convert_raw(self, filename):
-    dialog = RawConverterDialog(self.project, filename, self)
-    dialog.ret_filename = None
-    dialog.exec_()
-    return dialog.ret_filename      
+    dtype = str(self.cb_dtype.currentText())
+    width = int(self.sb_width.value())
+    height = int(self.sb_height.value())
+    channels = int(self.sb_channel.value())
+    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+    path = os.path.join(self.project.path, path)
+
+    progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
+    progress.setAutoClose(True)
+    progress.setMinimumDuration(0)
+    progress.setValue(0)
+
+    def callback(value):
+      progress.setValue(int(value * 100))
+      QApplication.processEvents()
+
+    try:
+      fileconverter.raw2npy(filename, path, dtype, width, height,
+        channels, callback)
+    except:
+      qtutil.critical('Converting raw to npy failed.')
+      progress.close()
+    else:
+      ret_filename = path
+      self.close()
+    return ret_filename
 
   def convert_tif(self, filename):
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
