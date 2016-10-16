@@ -120,6 +120,66 @@ class Widget(QWidget):
   def setup_ui(self):
     vbox = QVBoxLayout()
 
+    ## Related to importing Raws
+    self.setWindowTitle('Import Raw File')
+
+    vbox.addWidget(QLabel('Set the size all files are to be rescaled to'))
+
+    grid = QGridLayout()
+
+    grid.addWidget(QLabel('Width:'), 0, 0)
+    self.rescale_width = QSpinBox()
+    self.rescale_width.setMinimum(1)
+    self.rescale_width.setMaximum(1024)
+    self.rescale_width.setValue(256)
+    grid.addWidget(self.rescale_width, 0, 1)
+
+    grid.addWidget(QLabel('Height:'), 1, 0)
+    self.rescale_height = QSpinBox()
+    self.rescale_height.setMinimum(1)
+    self.rescale_height.setMaximum(1024)
+    self.rescale_height.setValue(256)
+    grid.addWidget(self.rescale_height, 1, 1)
+
+    grid.addWidget(QLabel('Set paramaters for of all imported raws'),2,0)
+    grid.addWidget(QLabel('All raws will be rescaled upon import'),3,0)
+
+    grid.addWidget(QLabel('Width:'), 4, 0)
+    self.sb_width = QSpinBox()
+    self.sb_width.setMinimum(1)
+    self.sb_width.setMaximum(1024)
+    self.sb_width.setValue(256)
+    grid.addWidget(self.sb_width, 4, 1)
+
+    grid.addWidget(QLabel('Height:'), 5, 0)
+    self.sb_height = QSpinBox()
+    self.sb_height.setMinimum(1)
+    self.sb_height.setMaximum(1024)
+    self.sb_height.setValue(256)
+    grid.addWidget(self.sb_height, 5, 1)
+
+    grid.addWidget(QLabel('Channel:'), 6, 0)
+    self.sb_channel = QSpinBox()
+    self.sb_channel.setMinimum(1)
+    self.sb_channel.setMaximum(3)
+    self.sb_channel.setValue(3)
+    grid.addWidget(self.sb_channel, 6, 1)
+
+    grid.addWidget(QLabel('dtype:'), 7, 0)
+    self.cb_dtype = QComboBox()
+    for t in 'uint8', 'float32', 'float64':
+      self.cb_dtype.addItem(t)
+    grid.addWidget(self.cb_dtype, 7, 1)
+
+    vbox.addLayout(grid)
+    vbox.addStretch()
+
+    self.setLayout(vbox)
+    self.resize(400, 220)
+
+    ##
+
+
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     self.listview.setSelectionMode(QAbstractItemView.NoSelection)
