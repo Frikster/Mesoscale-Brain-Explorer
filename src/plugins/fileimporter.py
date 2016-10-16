@@ -11,6 +11,7 @@ from PyQt4.QtCore import *
 
 sys.path.append('..')
 import qtutil
+import tifffile as tiff
 
 from .util import fileloader, fileconverter
 
@@ -111,6 +112,8 @@ class Widget(QWidget):
     self.setLayout(vbox)
 
   def convert_raw(self, filename):
+    rescale_width = int(self.rescale_width.value())
+    rescale_height = int(self.rescale_height.value())
     dtype = str(self.cb_dtype.currentText())
     width = int(self.sb_width.value())
     height = int(self.sb_height.value())
@@ -134,11 +137,27 @@ class Widget(QWidget):
       qtutil.critical('Converting raw to npy failed.')
       progress.close()
     else:
-      ret_filename = path
-      self.close()
+      if width != rescale_width or height != rescale_height:
+        unscaled = np.load(path)
+        no_frames = len(unscaled)
+        try:
+          scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
+                                      rescale_width), callback, operation='mean')
+          np.save(path, scaled)
+        except:
+          qtutil.critical('Rebinning raw failed. We can only scale down from larger sized files to preserve data')
+          progress.close()
+        else:
+          ret_filename = path
+      else:
+        ret_filename = path
     return ret_filename
 
   def convert_tif(self, filename):
+    rescale_width = int(self.rescale_width.value())
+    rescale_height = int(self.rescale_height.value())
+    channels = int(self.sb_channel.value())
+
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
 
@@ -154,11 +173,26 @@ class Widget(QWidget):
     try:
       fileconverter.tif2npy(filename, path, callback)
     except:
-      qtutil.critical('Converting raw to npy failed.')
+      qtutil.critical('Converting tiff to npy failed.')
       progress.close()
     else:
-      ret_filename = path
-    return ret_filename      
+      with tiff.TiffFile(filename) as tif:
+        w, h = tif[0].shape
+        no_frames = len(tif)
+        if w != rescale_width or h != rescale_height:
+          unscaled = np.load(path)
+          try:
+            scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
+                                        rescale_width), callback, operation='mean')
+            np.save(path, scaled)
+          except:
+            qtutil.critical('Rebinning tiff failed. We can only scale down from larger sized files to preserve data')
+            progress.close()
+          else:
+            ret_filename = path
+        else:
+          ret_filename = path
+    return ret_filename
 
   def to_npy(self, filename):
     if filename.endswith('.raw'):
@@ -215,6 +249,44 @@ class Widget(QWidget):
       return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
     self.import_files(filenames)
+
+  def bin_ndarray(self, ndarray, new_shape, progress_callback, operation='sum'):
+    """
+    Bins an ndarray in all axes based on the target shape, by summing or
+        averaging.
+
+    Number of output dimensions must match number of input dimensions and
+        new axes must divide old ones.
+
+    Example
+    -------
+    #>>> m = np.arange(0,100,1).reshape((10,10))
+    #>>> n = bin_ndarray(m, new_shape=(5,5), operation='sum')
+    #>>> print(n)
+
+    [[ 22  30  38  46  54]
+     [102 110 118 126 134]
+     [182 190 198 206 214]
+     [262 270 278 286 294]
+     [342 350 358 366 374]]
+
+    """
+    operation = operation.lower()
+    if not operation in ['sum', 'mean']:
+      raise ValueError("Operation not supported.")
+    if ndarray.ndim != len(new_shape):
+      raise ValueError("Shape mismatch: {} -> {}".format(ndarray.shape,
+                                                         new_shape))
+    compression_pairs = [(d, c // d) for d, c in zip(new_shape,
+                                                     ndarray.shape)]
+    flattened = [l for p in compression_pairs for l in p]
+    ndarray = ndarray.reshape(flattened)
+    for i in range(len(new_shape)):
+      progress_callback(i / len(new_shape))
+      op = getattr(ndarray, operation)
+      ndarray = op(-1 * (i + 1))
+    progress_callback(1)
+    return ndarray
 
 class MyPlugin:
   def __init__(self, project):
