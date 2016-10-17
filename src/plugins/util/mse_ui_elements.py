@@ -10,11 +10,24 @@ class Video_Selector:
         self.project = project
         self.view = view
 
-    def selected_video_changed(self, selection):
-        if not selection.indexes():
+    def selected_video_changed(self, selected, deselected):
+        if not selected.indexes():
             return
-        self.video_path = str(os.path.join(self.project.path,
-                                           selection.indexes()[0].data(Qt.DisplayRole))
+
+        for index in deselected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
                               + '.npy')
-        frame = fileloader.load_reference_frame(self.video_path)
+            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+        for index in selected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
+                              + '.npy')
+        if vidpath not in self.selected_videos and vidpath != 'None':
+            self.selected_videos = self.selected_videos + [vidpath]
+
+        self.shown_video_path = str(os.path.join(self.project.path,
+                                           selected.indexes()[0].data(Qt.DisplayRole))
+                              + '.npy')
+        frame = fileloader.load_reference_frame(self.shown_video_path)
         self.view.show(frame)

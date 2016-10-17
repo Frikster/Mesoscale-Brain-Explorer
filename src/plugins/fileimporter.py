@@ -43,7 +43,7 @@ class Widget(QWidget):
     ## Related to importing Raws
     self.setWindowTitle('Import Raw File')
 
-    vbox.addWidget(QLabel('Set the size all files are to be rescaled to'))
+    vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
 
     grid = QGridLayout()
 
@@ -61,35 +61,44 @@ class Widget(QWidget):
     self.rescale_height.setValue(256)
     grid.addWidget(self.rescale_height, 1, 1)
 
-    grid.addWidget(QLabel('Set paramaters for of all imported raws'),2,0)
-    grid.addWidget(QLabel('All raws will be rescaled upon import'),3,0)
+    grid.addWidget(QLabel('Set channel imported for all data'), 2, 0)
 
-    grid.addWidget(QLabel('Width:'), 4, 0)
+    grid.addWidget(QLabel('Channel:'), 3, 0)
+    self.channel = QSpinBox()
+    self.channel.setMinimum(1)
+    self.channel.setMaximum(3)
+    self.channel.setValue(2)
+    grid.addWidget(self.channel, 3, 1)
+
+    grid.addWidget(QLabel('Set paramaters for  all imported raws'), 4, 0)
+    grid.addWidget(QLabel('All raws will be rescaled and specified channel imported upon conversion'), 5, 0)
+
+    grid.addWidget(QLabel('Width:'), 6, 0)
     self.sb_width = QSpinBox()
     self.sb_width.setMinimum(1)
     self.sb_width.setMaximum(1024)
     self.sb_width.setValue(256)
-    grid.addWidget(self.sb_width, 4, 1)
+    grid.addWidget(self.sb_width, 6, 1)
 
-    grid.addWidget(QLabel('Height:'), 5, 0)
+    grid.addWidget(QLabel('Height:'), 7, 0)
     self.sb_height = QSpinBox()
     self.sb_height.setMinimum(1)
     self.sb_height.setMaximum(1024)
     self.sb_height.setValue(256)
-    grid.addWidget(self.sb_height, 5, 1)
+    grid.addWidget(self.sb_height, 7, 1)
 
-    grid.addWidget(QLabel('Channel:'), 6, 0)
+    grid.addWidget(QLabel('Number of channels:'), 8, 0)
     self.sb_channel = QSpinBox()
     self.sb_channel.setMinimum(1)
     self.sb_channel.setMaximum(3)
     self.sb_channel.setValue(3)
-    grid.addWidget(self.sb_channel, 6, 1)
+    grid.addWidget(self.sb_channel, 8, 1)
 
-    grid.addWidget(QLabel('dtype:'), 7, 0)
+    grid.addWidget(QLabel('dtype:'), 9, 0)
     self.cb_dtype = QComboBox()
     for t in 'uint8', 'float32', 'float64':
       self.cb_dtype.addItem(t)
-    grid.addWidget(self.cb_dtype, 7, 1)
+    grid.addWidget(self.cb_dtype, 9, 1)
 
     vbox.addLayout(grid)
     vbox.addStretch()
@@ -118,6 +127,7 @@ class Widget(QWidget):
     width = int(self.sb_width.value())
     height = int(self.sb_height.value())
     channels = int(self.sb_channel.value())
+    channel = int(self.channel.value())
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
 
@@ -132,7 +142,7 @@ class Widget(QWidget):
 
     try:
       fileconverter.raw2npy(filename, path, dtype, width, height,
-        channels, callback)
+        channels, channel, callback)
     except:
       qtutil.critical('Converting raw to npy failed.')
       progress.close()
@@ -156,7 +166,7 @@ class Widget(QWidget):
   def convert_tif(self, filename):
     rescale_width = int(self.rescale_width.value())
     rescale_height = int(self.rescale_height.value())
-    channels = int(self.sb_channel.value())
+    channel = int(self.channel.value())
 
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)

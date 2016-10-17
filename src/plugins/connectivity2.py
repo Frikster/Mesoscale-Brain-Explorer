@@ -42,7 +42,7 @@ class ConnectivityModel(QAbstractTableModel):
         avg_data = []
         dict_for_stdev = {}
 
-        for key in [i for i in list(itertools.product(xrange(len(rois)),xrange(len(rois))))]:
+        for key in [i for i in list(itertools.product(xrange(len(rois)), xrange(len(rois))))]:
             dict_for_stdev[key] = []
 
         for video_path in selected_videos:
@@ -51,7 +51,7 @@ class ConnectivityModel(QAbstractTableModel):
                 avg_data = self._data
             for i in xrange(len(avg_data)):
                 for j in xrange(len(avg_data)):
-                    dict_for_stdev[(i,j)] = dict_for_stdev[(i,j)] + [self._data[i][j]]
+                    dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
                     if video_path != selected_videos[0]:
                         avg_data[i][j] = (avg_data[i][j] + self._data[i][j]) / len(selected_videos)
         stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
@@ -59,7 +59,7 @@ class ConnectivityModel(QAbstractTableModel):
         # combine stddev and avg data
         for i in xrange(len(avg_data)):
             for j in xrange(len(avg_data)):
-                avg_data[i][j] = (avg_data[i][j],stdev_dict[(i,j)])
+                avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
 
         self._data = avg_data
         assert(avg_data != [])
