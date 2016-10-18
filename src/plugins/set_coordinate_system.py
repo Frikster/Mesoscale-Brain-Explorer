@@ -13,6 +13,7 @@ from .util import fileloader
 from .util import project_functions as pfs
 
 import qtutil
+import ast
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -42,7 +43,9 @@ class Widget(QWidget):
     self.view = MyGraphicsView(self.project)
     self.view.vb.setCursor(Qt.CrossCursor)
     hbox.addWidget(self.view)
-    
+
+    self.view.vb.clicked.connect(self.vbc_clicked)
+
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
@@ -62,9 +65,9 @@ class Widget(QWidget):
     sb.valueChanged[float].connect(self.set_mmpixel)
     hhbox.addWidget(sb)
 
-    # pb = QPushButton('&Averaged origin from selection')
-    # pb.clicked.connect(self.avg_origin)
-    # vbox.addWidget(pb)
+    pb = QPushButton('&Average origin from selected files\' origins')
+    pb.clicked.connect(self.avg_origin)
+    vbox.addWidget(pb)
 
     vbox.addLayout(hhbox)
     vbox.addStretch()
@@ -90,19 +93,53 @@ class Widget(QWidget):
       if vidpath not in self.selected_videos and vidpath != 'None':
           self.selected_videos = self.selected_videos + [vidpath]
 
+      project_file = pfs.get_project_file_from_key_item(self.project,
+                                                        'path',
+                                                        self.selected_videos[0])
+      # Check if origin exists
+      try:
+        (x, y) = ast.literal_eval(project_file['origin'])
+      except KeyError:
+        self.origin_label.setText('Origin:')
+      else:
+        (x , y) = ast.literal_eval(project_file['origin'])
+        self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
       # shown_video_path = str(os.path.join(self.project.path,
       #                                          selected.indexes()[0].data(Qt.DisplayRole))
       #                             + '.npy')
       frame = fileloader.load_reference_frame(self.selected_videos[0])
       self.view.show(frame)
 
-  # def avg_origin(self):
-  #     qutil.info('Please choose the origin for each file')
-  #     self.view.vb.clicked.connect(self.vbc_clicked)
-  #     """Set origin to mouse pos averaged over all clicks"""
-  #     for selected_path in self.selected_videos:
-  #         frame = fileloader.load_reference_frame(selected_path)
-  #         self.view.show(frame)
+  def avg_origin(self):
+    """Set origin to averaged over all selected files' origins"""
+    if not self.selected_videos:
+        return
+
+    relevant_files = []
+    for selected_path in self.selected_videos:
+        relevant_files = relevant_files + \
+                         [pfs.get_project_file_from_key_item(self.project, 'path', selected_path)]
+
+    # check to see if all selected files have an origin
+    try:
+        [file['origin'] for file in relevant_files]
+    except KeyError:
+        qtutil.warning('One or more of your selected files have no origin. These will be ignored.')
+
+    #collect dict items that have origins
+    orgs = [file.get("origin") for file in relevant_files]
+    orgs = [x for x in orgs if x is not None]
+    orgs = [ast.literal_eval(org) for org in orgs]
+
+    # collect and avg origins
+    (x_tot, y_tot) = (0, 0)
+    for (x, y) in orgs:
+      (x_tot, y_tot) = (x_tot+x, y_tot+y)
+    no_orgs = len(relevant_files)
+    (x_avg, y_avg) = (x_tot / no_orgs, y_tot / no_orgs)
+    self.project['origin'] = (x_avg, y_avg)
+    self.view.update()
+    self.save()
 
   def set_origin_label(self, x, y):
     #x, y = self.project['origin']

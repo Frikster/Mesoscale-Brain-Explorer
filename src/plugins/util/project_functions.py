@@ -52,6 +52,9 @@ def refresh_video_list(project, video_list):
         video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
-def get_project_file_from_path(project, path):
-    file = [files for files in project.files if files['path'] == path]
+def get_project_file_from_key_item(project, key, item):
+    file = [files for files in project.files if files[key] == item]
+    if not file:
+        return
     assert (len(file) == 1)
+    return file[0]
