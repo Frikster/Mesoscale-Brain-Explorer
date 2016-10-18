@@ -13,7 +13,7 @@ from .util import fileloader
 import uuid
 import psutil
 
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
@@ -71,7 +71,7 @@ class Widget(QWidget):
         frames = np.divide(np.subtract(frames, baseline), baseline)
         where_are_NaNs = np.isnan(frames)
         frames[where_are_NaNs] = 0
-        pfs.save_project_video(self.video_path, self.project, frames, 'df_d0')
+        pfs.save_project(self.video_path, self.project, frames, 'df_d0', 'video')
 
 class MyPlugin:
     def __init__(self, project=None):

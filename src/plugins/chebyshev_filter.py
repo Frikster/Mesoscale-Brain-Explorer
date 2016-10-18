@@ -3,7 +3,7 @@
 import os, sys
 import numpy as np
 from scipy import signal
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 import PyQt4
 from PyQt4.QtGui import *
@@ -11,7 +11,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 
 #import numba as nb
@@ -194,7 +194,7 @@ class Widget(QWidget):
             msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
             msgBox.exec_()
         else:
-            pfs.save_project_video(self.video_path, self.project, frames, 'cheby')
+            pfs.save_project(self.video_path, self.project, frames, 'cheby', 'video')
 
 class MyPlugin:
     def __init__(self, project=None):

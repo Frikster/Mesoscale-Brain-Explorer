@@ -1,6 +1,7 @@
 hiddenimports = [
     "plugins.__init__",
     "plugins.alignment",
+    "plugins.alignment2",
     "plugins.autoROIplacer",
     "plugins.calculate_df_f0",
     "plugins.chebyshev_filter",

@@ -7,7 +7,7 @@ from .util import filter_jeff
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog
 from .util.gradient import GradientLegend
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 from .util import fileloader
 
@@ -112,7 +112,7 @@ class Widget(QWidget):
             cut_off_start = self.left_cut_off.value()
             cut_off_end = self.right_cut_off.value()
             frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project_video(video_path, self.project, frames, 'cut_off')
+            pfs.save_project(video_path, self.project, frames, 'cut_off', 'video')
 
 
 class MyPlugin:

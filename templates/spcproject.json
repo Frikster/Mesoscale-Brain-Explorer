@@ -4,7 +4,8 @@
   "pipeline": [
     "fileimporter",
     "videoplayer",
-    "alignment",
+    "alignment2",
+	"set_coordinate_system",
     "concatenation",
     "roi_creator",
     "chebyshev_filter",
@@ -12,7 +13,6 @@
     "gsr",
     "spc_map",
     "stdev_map",
-    "set_coordinate_system",
     "autoROIplacer",
     "connectivity2",
     "roi_activity_plot",

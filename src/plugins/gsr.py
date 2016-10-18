@@ -9,7 +9,7 @@ from PyQt4.QtCore import *
 from .util.mygraphicsview import MyGraphicsView
 from .util import filter_jeff as fj
 from .util import fileloader
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 # on button click!
 
@@ -70,7 +70,7 @@ class Widget(QWidget):
     height = frames.shape[2]
     frames = fj.gsr(frames, width, height)
 
-    pfs.save_project_video(self.video_path, self.project, frames, 'gsr')
+    pfs.save_project(self.video_path, self.project, frames, 'gsr', 'video')
 
 class MyPlugin:
   def __init__(self, project):

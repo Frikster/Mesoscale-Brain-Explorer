@@ -10,7 +10,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 sys.path.append('..')
 import qtutil
@@ -275,7 +275,7 @@ class Widget(QWidget):
 
     # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
     # path = os.path.join(self.project.path, 'roi' + '.npy')
-    pfs.save_project_video(self.video_path, self.project, roi_frames, 'crop')
+    pfs.save_project(self.video_path, self.project, roi_frames, 'crop', 'video')
 
 class MyPlugin:
   def __init__(self, project=None):
