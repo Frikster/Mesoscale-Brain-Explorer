@@ -114,30 +114,6 @@ class Widget(QWidget):
         # Refresh showing reference_frame
         pfs.refresh_all_list(self.project, self.video_list)
 
-
-
-
-    # def align_videos(self, filenames, reference_frame, progress_callback):
-    #     if not self.selected_videos:
-    #         qCritical("No files selected")
-    #         return
-    #     if self.selected_videos[0][-9:] != 'ref_frame':
-    #         qCritical("No reference frame selected")
-    #         return
-    #     # use if above doesn't work
-    #     # if [vid[-9:] for vid in self.selected_videos if vid[-9:]=='ref_frame']:
-    #     #     qCritical("No reference frame selected")
-    #     #     return
-    #
-    #     progress = QProgressDialog('Aligning file...', 'Abort', 0, 100, self)
-    #     progress.setAutoClose(True)
-    #     progress.setMinimumDuration(0)
-    #
-    #     def callback(x):
-    #         progress.setValue(x * 100)
-    #         QApplication.processEvents()
-    #         # time.sleep(0.01)
-
     def align_clicked(self):
         if not self.selected_videos:
             qCritical("No files selected")

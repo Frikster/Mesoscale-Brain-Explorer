@@ -51,7 +51,7 @@ def separator():
 class MyToolBar(QToolBar):
   def __init__(self, parent=None):
     super(MyToolBar, self).__init__(parent)
-    self.setMovable(False)
+    self.setMovable(True)
 
   def add_action(self, data, pic, label, parent, func=None, shortcut=None, checkable=False, checked=False):
     a = QAction(QIcon('pics/'+pic), label, parent)

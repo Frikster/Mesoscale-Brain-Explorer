@@ -10,6 +10,9 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import project_functions as pfs
+
+import qtutil
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -21,25 +24,29 @@ class Widget(QWidget):
     self.project = project
 
     self.setup_ui()
+
+    self.selected_videos = []
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_video_changed)
-    for f in project.files:
-      if f['type'] != 'video':
-        continue
-      self.listview.model().appendRow(QStandardItem(f['name']))
-    self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+
+    pfs.refresh_video_list(self.project, self.listview)
+    # for f in project.files:
+    #   if f['type'] != 'video':
+    #     continue
+    #   self.listview.model().appendRow(QStandardItem(f['name']))
+    # self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
   def setup_ui(self):
     hbox = QHBoxLayout()
     self.view = MyGraphicsView(self.project)
-    self.view.vb.clicked.connect(self.vbc_clicked)
     self.view.vb.setCursor(Qt.CrossCursor)
     hbox.addWidget(self.view)
     
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
+    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
 
@@ -54,6 +61,11 @@ class Widget(QWidget):
     sb.setValue(self.project['mmpixel'])
     sb.valueChanged[float].connect(self.set_mmpixel)
     hhbox.addWidget(sb)
+
+    # pb = QPushButton('&Averaged origin from selection')
+    # pb.clicked.connect(self.avg_origin)
+    # vbox.addWidget(pb)
+
     vbox.addLayout(hhbox)
     vbox.addStretch()
     
@@ -62,17 +74,38 @@ class Widget(QWidget):
 
     self.setEnabled(False)
 
-  def selected_video_changed(self, selection):
-    if not selection.indexes():
-      return
-    self.video_path = str(os.path.join(self.project.path,
-                                   selection.indexes()[0].data(Qt.DisplayRole))
-                          + '.npy')
-    frame = fileloader.load_reference_frame(self.video_path)
-    self.view.show(frame)
+  def selected_video_changed(self, selected, deselected):
+      if not selected.indexes():
+          return
 
-  def set_origin_label(self):
-    x, y = self.project['origin']
+      for index in deselected.indexes():
+          vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
+                        + '.npy')
+          self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+      for index in selected.indexes():
+          vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
+                        + '.npy')
+      if vidpath not in self.selected_videos and vidpath != 'None':
+          self.selected_videos = self.selected_videos + [vidpath]
+
+      # shown_video_path = str(os.path.join(self.project.path,
+      #                                          selected.indexes()[0].data(Qt.DisplayRole))
+      #                             + '.npy')
+      frame = fileloader.load_reference_frame(self.selected_videos[0])
+      self.view.show(frame)
+
+  # def avg_origin(self):
+  #     qutil.info('Please choose the origin for each file')
+  #     self.view.vb.clicked.connect(self.vbc_clicked)
+  #     """Set origin to mouse pos averaged over all clicks"""
+  #     for selected_path in self.selected_videos:
+  #         frame = fileloader.load_reference_frame(selected_path)
+  #         self.view.show(frame)
+
+  def set_origin_label(self, x, y):
+    #x, y = self.project['origin']
     self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
 
   def update(self):
@@ -82,7 +115,7 @@ class Widget(QWidget):
       return
     frame = fileloader.load_reference_frame(videos[0]['path'])
     self.view.show(frame)
-    self.set_origin_label()
+    #self.set_origin_label()
     self.setEnabled(True)
 
   def save(self):
@@ -94,11 +127,14 @@ class Widget(QWidget):
     self.save()
 
   def vbc_clicked(self, x, y):
-    """Set origin to mouse pos"""
-    self.project['origin'] = (x, y)
-    self.set_origin_label()
+    pfs.change_origin(self.project, self.selected_videos[0], (x, y))
+    self.set_origin_label(x, y)
     self.view.update()
-    self.save()
+
+    #self.project['origin'] = (x, y)
+    #self.set_origin_label()
+    #self.view.update()
+    #self.save()
 
 class MyPlugin:
   def __init__(self, project):
