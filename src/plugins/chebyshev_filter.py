@@ -87,6 +87,7 @@ class Widget(QWidget):
             #     })
 
         self.setup_ui()
+        self.selected_videos = []
         self.listview.setModel(QStandardItemModel())
         self.listview.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_video_changed)
@@ -112,6 +113,7 @@ class Widget(QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
         self.listview = QListView()
+        self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.listview)
 
@@ -142,13 +144,26 @@ class Widget(QWidget):
         hbox.setStretch(1, 0)
         self.setLayout(hbox)
 
-    def selected_video_changed(self, selection):
-        if not selection.indexes():
+    def selected_video_changed(self, selected, deselected):
+        if not selected.indexes():
             return
-        self.video_path = str(os.path.join(self.project.path,
-                                           selection.indexes()[0].data(Qt.DisplayRole))
+
+        for index in deselected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
                               + '.npy')
-        frame = fileloader.load_reference_frame(self.video_path)
+            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+        for index in selected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
+                              + '.npy')
+        if vidpath not in self.selected_videos and vidpath != 'None':
+            self.selected_videos = self.selected_videos + [vidpath]
+
+        self.shown_video_path = str(os.path.join(self.project.path,
+                                           selected.indexes()[0].data(Qt.DisplayRole))
+                              + '.npy')
+        frame = fileloader.load_reference_frame(self.shown_video_path)
         self.view.show(frame)
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
@@ -179,22 +194,23 @@ class Widget(QWidget):
         #temporal_filter_beams_nb(out, frames_mmap)
         #frames = np.array(frames_mmap)
 
-        frames = fileloader.load_file(self.video_path)
-        avg_frames = np.mean(frames, axis=0)
-        frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
-        frames += avg_frames
+        for i, video_path in enumerate(self.selected_videos):
+            frames = fileloader.load_file(video_path)
+            avg_frames = np.mean(frames, axis=0)
+            frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+            frames += avg_frames
 
-        if not self.project:
-            filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
-                                                               str(QSettings().value('last_load_data_path')),
-                                                               filter='*.npy')
-            np.save(str(filename), frames)
-            msgBox = PyQt4.QtGui.QMessageBox()
-            msgBox.setText(str(filename)+" saved")
-            msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
-            msgBox.exec_()
-        else:
-            pfs.save_project(self.video_path, self.project, frames, 'cheby', 'video')
+            if not self.project:
+                filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
+                                                                   str(QSettings().value('last_load_data_path')),
+                                                                   filter='*.npy')
+                np.save(str(filename), frames)
+                msgBox = PyQt4.QtGui.QMessageBox()
+                msgBox.setText(str(filename)+" saved")
+                msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
+                msgBox.exec_()
+            else:
+                pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
 
 class MyPlugin:
     def __init__(self, project=None):

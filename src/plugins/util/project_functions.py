@@ -4,6 +4,7 @@ import os
 import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+import ast
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -18,7 +19,7 @@ def save_project(video_path, project, frames, manip, file_type):
         'path': path,
         'type': file_type,
         'source_video': video_path,
-        'manipulations': str(file_before['manipulations'] + [manip]),
+        'manipulations': str(ast.literal_eval(file_before['manipulations']) + [manip]),
         'name': name_after
     })
     project.save()

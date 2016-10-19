@@ -22,6 +22,7 @@ class Widget(QWidget):
 
     self.project = project
     self.setup_ui()
+    self.selected_videos = []
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
@@ -32,13 +33,26 @@ class Widget(QWidget):
       self.listview.model().appendRow(QStandardItem(f['name']))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
-  def selected_video_changed(self, selection):
-    if not selection.indexes():
+  def selected_video_changed(self, selected, deselected):
+    if not selected.indexes():
       return
-    self.video_path = str(os.path.join(self.project.path,
-                                   selection.indexes()[0].data(Qt.DisplayRole))
-                          + '.npy')
-    frame = fileloader.load_reference_frame(self.video_path)
+
+    for index in deselected.indexes():
+      vidpath = str(os.path.join(self.project.path,
+                                 index.data(Qt.DisplayRole))
+                    + '.npy')
+      self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+    for index in selected.indexes():
+      vidpath = str(os.path.join(self.project.path,
+                                 index.data(Qt.DisplayRole))
+                    + '.npy')
+    if vidpath not in self.selected_videos and vidpath != 'None':
+      self.selected_videos = self.selected_videos + [vidpath]
+
+    self.shown_video_path = str(os.path.join(self.project.path,
+                                             selected.indexes()[0].data(Qt.DisplayRole))
+                                + '.npy')
+    frame = fileloader.load_reference_frame(self.shown_video_path)
     self.view.show(frame)
 
   def setup_ui(self):
@@ -50,6 +64,7 @@ class Widget(QWidget):
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
+    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
 
@@ -58,19 +73,33 @@ class Widget(QWidget):
     hhbox.addWidget(butt_gsr)
     vbox.addLayout(hhbox)
     vbox.addStretch()
-    butt_gsr.clicked.connect(self.gsr)
+    butt_gsr.clicked.connect(self.gsr_clicked)
 
     hbox.addLayout(vbox)
     self.setLayout(hbox)
 
-  def gsr(self):
-    frames = fileloader.load_file(self.video_path)
+  def gsr_clicked(self):
+      progress = QProgressDialog('Computing gsr for selection', 'Abort', 0, 100, self)
+      progress.setAutoClose(True)
+      progress.setMinimumDuration(0)
 
-    width = frames.shape[1]
-    height = frames.shape[2]
-    frames = fj.gsr(frames, width, height)
+      def callback(x):
+          progress.setValue(x * 100)
+          QApplication.processEvents()
 
-    pfs.save_project(self.video_path, self.project, frames, 'gsr', 'video')
+      self.gsr(callback)
+
+  def gsr(self, progress_callback):
+    for i, video_path in enumerate(self.selected_videos):
+        progress_callback(i / len(self.selected_videos))
+        frames = fileloader.load_file(video_path)
+
+        width = frames.shape[1]
+        height = frames.shape[2]
+        frames = fj.gsr(frames, width, height)
+
+        pfs.save_project(video_path, self.project, frames, 'gsr', 'video')
+    progress_callback(1)
 
 class MyPlugin:
   def __init__(self, project):

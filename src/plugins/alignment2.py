@@ -94,7 +94,6 @@ class Widget(QWidget):
             return
 
         ref_no = self.ref_no.value()
-        self.selected_videos
 
         # find size, assuming all files in project have the same size
         frames_mmap = np.load(self.selected_videos[0], mmap_mode='c')
@@ -115,14 +114,10 @@ class Widget(QWidget):
         pfs.refresh_all_list(self.project, self.video_list)
 
     def align_clicked(self):
-        if not self.selected_videos:
-            qCritical("No files selected")
-            return
         if self.selected_videos[0][-13:] != 'ref_frame.npy':
             qCritical("No reference frame selected")
             return
 
-        #selection = self.table1.selectionModel().selectedRows()
         filenames = self.selected_videos
 
         progress = QProgressDialog('Aligning file...', 'Abort', 0, 100, self)
