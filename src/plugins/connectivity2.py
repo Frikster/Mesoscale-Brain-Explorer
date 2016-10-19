@@ -156,6 +156,12 @@ class Widget(QWidget):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
 
+        pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
+        pb.clicked.connect(self.load_ROI_table)
+        vbox.addWidget(pb)
+
+        vbox.addWidget(qtutil.separator())
+
         vbox.addWidget(QLabel('Select ROI:'))
         self.roi_list = QListView()
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -202,6 +208,9 @@ class Widget(QWidget):
             roiname = str(index.data(Qt.DisplayRole))
             roipath = str(index.data(Qt.UserRole))
             self.view.vb.addRoi(roipath, roiname)
+
+    def load_ROI_table(self):
+        return
 
     def connectivity_triggered(self):
         indexes = self.roi_list.selectionModel().selectedIndexes()

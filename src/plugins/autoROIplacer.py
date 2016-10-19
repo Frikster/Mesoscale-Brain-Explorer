@@ -129,7 +129,7 @@ class Widget(QWidget):
       if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    #self.view.vb.roi_placed.connect(self.update_roi_names)
+    # self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def show_table(self):
     locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
@@ -158,19 +158,8 @@ class Widget(QWidget):
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
 
-    vbox.addWidget(QLabel('ROI size NxN'))
-    self.roi_size = QSpinBox()
-    self.roi_size.setMinimum(1)
-    self.roi_size.setValue(3)
-    vbox.addWidget(self.roi_size)
-    pb = QPushButton('auto ROI')
-    pb.clicked.connect(self.auto_ROI)
-    vbox.addWidget(pb)
-    pb = QPushButton('auto ROI table')
-    pb.clicked.connect(self.show_table)
-    vbox.addWidget(pb)
-    pb = QPushButton('Delete selected ROIs')
-    pb.clicked.connect(self.delete_roi)
+    pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
+    #pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())

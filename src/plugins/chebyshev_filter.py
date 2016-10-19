@@ -13,12 +13,12 @@ from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
 from .util import project_functions as pfs
 
-
 #import numba as nb
 #from numba import cuda
 import uuid
 import psutil
 
+import parmap
 
 # def temporal_filter_beams(frames):
 #     frame_rate = 30
@@ -101,7 +101,7 @@ class Widget(QWidget):
             for f in filenames:
                 self.listview.model().appendRow(QStandardItem(f))
         self.listview.setCurrentIndex(self.listview.model().index(0, 0))
-        self.temp_filter_pb.clicked.connect(self.temporal_filter)
+        self.temp_filter_pb.clicked.connect(self.filter_clicked)
 
 
     def setup_ui(self):
@@ -166,24 +166,40 @@ class Widget(QWidget):
         frame = fileloader.load_reference_frame(self.shown_video_path)
         self.view.show(frame)
 
+    def filter_clicked(self):
+        progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+
+        self.temporal_filter(callback)
+
+
+
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0
         low_limit = low_limit / nyq
         high_limit = high_limit / nyq
         order = 4
-        rp = 0.1 #Ripple in the passband. Maximum allowable ripple
+        rp = 0.1 # Ripple in the passband. Maximum allowable ripple
         Wn = [low_limit, high_limit]
 
         b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
         print("Filtering...")
         frames = signal.filtfilt(b, a, frames, axis=0)
+        # non-working parallized version
+        # def filt(pixel, b, a):
+        #     return signal.filtfilt(b, a, pixel)
         # frames = parmap.map(filt, frames.T, b, a)
         # for i in range(frames.shape[-1]):
         #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
         print("Done!")
         return frames
 
-    def temporal_filter(self):
+    def temporal_filter(self, progress_callback):
         assert(self.f_low.value() < self.f_high.value())
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
@@ -195,6 +211,7 @@ class Widget(QWidget):
         #frames = np.array(frames_mmap)
 
         for i, video_path in enumerate(self.selected_videos):
+            progress_callback(i / len(self.selected_videos))
             frames = fileloader.load_file(video_path)
             avg_frames = np.mean(frames, axis=0)
             frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
@@ -211,6 +228,7 @@ class Widget(QWidget):
                 msgBox.exec_()
             else:
                 pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
+        progress_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):

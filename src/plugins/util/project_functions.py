@@ -15,13 +15,22 @@ def save_project(video_path, project, frames, manip, file_type):
     name_after = str(name_before + '_' + manip)
     path = str(os.path.join(project.path, name_after) + '.npy')
     np.save(path, frames)
-    project.files.append({
-        'path': path,
-        'type': file_type,
-        'source_video': video_path,
-        'manipulations': str(ast.literal_eval(file_before['manipulations']) + [manip]),
-        'name': name_after
-    })
+    if not file_before['manipulations'] == []:
+        project.files.append({
+            'path': path,
+            'type': file_type,
+            'source_video': video_path,
+            'manipulations': str(ast.literal_eval(file_before['manipulations']) + [manip]),
+            'name': name_after
+        })
+    else:
+        project.files.append({
+            'path': path,
+            'type': file_type,
+            'source_video': video_path,
+            'manipulations': str([manip]),
+            'name': name_after
+        })
     project.save()
 
 def change_origin(project, video_path, origin):
