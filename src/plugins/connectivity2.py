@@ -156,9 +156,9 @@ class Widget(QWidget):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
 
-        pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
-        pb.clicked.connect(self.load_ROI_table)
-        vbox.addWidget(pb)
+        # pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
+        # pb.clicked.connect(self.load_ROI_table)
+        # vbox.addWidget(pb)
 
         vbox.addWidget(qtutil.separator())
 
@@ -209,8 +209,14 @@ class Widget(QWidget):
             roipath = str(index.data(Qt.UserRole))
             self.view.vb.addRoi(roipath, roiname)
 
-    def load_ROI_table(self):
-        return
+    # def load_ROI_table(self):
+    #     text_file = QFileDialog.getOpenFileName(
+    #         self, 'Load images', QSettings().value('last_load_text_path'),
+    #         'Video files (*.txt)')
+    #     if not text_file:
+    #         return
+    #     QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
+
 
     def connectivity_triggered(self):
         indexes = self.roi_list.selectionModel().selectedIndexes()
@@ -224,9 +230,6 @@ class Widget(QWidget):
             #todo:
 
             #pg.ImageItem(arr, autoRange=False, autoLevels=False)
-
-
-
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
                                    rois, self)
             win.show()

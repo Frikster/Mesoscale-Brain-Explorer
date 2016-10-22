@@ -18,6 +18,7 @@ sys.path.append('..')
 import qtutil
 import uuid
 from .util import fileloader
+import csv
 from .util.mse_ui_elements import Video_Selector
 
 #This the code for getting the ROI locations from bregma.
@@ -159,8 +160,14 @@ class Widget(QWidget):
     vbox.addWidget(self.listview)
 
     pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
-    #pb.clicked.connect(self.load_ROI_table)
+    pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
+    # pb = QPushButton('auto ROI table')
+    # pb.clicked.connect(self.show_table)
+    # vbox.addWidget(pb)
+    # pb = QPushButton('Delete selected ROIs')
+    # pb.clicked.connect(self.delete_roi)
+    # vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
 
@@ -241,20 +248,44 @@ class Widget(QWidget):
       if roi_name not in self.roi_list.model().rois:
         self.roi_list.model().appendRoi(roi_name)
 
-  def delete_roi(self):
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-                     for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-    if rois_selected == None:
-      return
-    rois_dict = [self.project.files[x] for x in range(len(self.project.files))
-                 if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
-    self.project.files = [self.project.files[x] for x in range(len(self.project.files))
-                          if self.project.files[x] not in rois_dict]
-    self.project.save()
-    self.view.vb.setCurrentROIindex(None)
+  # def delete_roi(self):
+  #   rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+  #                    for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+  #   if rois_selected == None:
+  #     return
+  #   rois_dict = [self.project.files[x] for x in range(len(self.project.files))
+  #                if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
+  #   self.project.files = [self.project.files[x] for x in range(len(self.project.files))
+  #                         if self.project.files[x] not in rois_dict]
+  #   self.project.save()
+  #   self.view.vb.setCurrentROIindex(None)
+  #
+  #   for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
+  #     self.roi_list.model().removeRow(roi_to_remove)
 
-    for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
-      self.roi_list.model().removeRow(roi_to_remove)
+  def load_ROI_table(self):
+      text_file = QFileDialog.getOpenFileName(
+          self, 'Load images', QSettings().value('last_load_text_path'),
+          'Video files (*.csv *.txt)')
+      if not text_file:
+          return
+      QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
+
+      roi_table = []#np.empty(shape=(4, ))
+      with open(text_file, 'rt', encoding='ascii') as csvfile:
+         roi_table_it = csv.reader(csvfile, delimiter=',')
+         for row in roi_table_it:
+           roi_table = roi_table + [row]
+      roi_table = np.array(roi_table)
+      self.headers = roi_table[0, ]
+      roi_table_range = range(len(roi_table))[1:]
+      roi_names = [roi_table[x, 0] for x in roi_table_range]
+      roi_sizes = [roi_table[x, 1] for x in roi_table_range]
+      roi_coord_x = [roi_table[x, 2] for x in roi_table_range]
+      roi_coord_y = [roi_table[x, 3] for x in roi_table_range]
+      self.data =       {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+      self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+      self.show_table()
 
   def update_auto_rois(self, item):
     col = item.column()
