@@ -303,34 +303,34 @@ class Widget(QWidget):
 
 
   def auto_ROI(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
-    half_length = self.roi_size.value() * self.project['mmpixel']
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]], self.data[self.headers[2]], self.data[self.headers[3]])
 
-    # model = AutoROICoords(self.data, len(locs), 4)
-    # model.itemChanged.connect(self.update_auto_rois)
-    # model.show()
-    # self.open_dialogs.append(model)
+    # Warning: size must always be the second column under this assumption:
+    lengths = [int(x) for x in self.data[self.headers[1]]]
+    half_lengths = [x * self.project['mmpixel'] for x in lengths]
 
-    for tri in locs:
-      self.remove_all_rois()
-      x1 = (tri[1] - half_length)
-      x2 = (tri[1] - half_length)
-      x3 = (tri[1] + half_length)
-      x4 = (tri[1] + half_length)
-      y1 = (tri[2] - half_length)
-      y2 = (tri[2] + half_length)
-      y3 = (tri[2] + half_length)
-      y4 = (tri[2] - half_length)
+    for half_length in half_lengths:
+        for quad in list(locs):
+          half_length = quad[1] * self.project['mmpixel']
+          self.remove_all_rois()
+          x1 = (quad[1] - half_length)
+          x2 = (quad[1] - half_length)
+          x3 = (quad[1] + half_length)
+          x4 = (quad[1] + half_length)
+          y1 = (quad[2] - half_length)
+          y2 = (quad[2] + half_length)
+          y3 = (quad[2] + half_length)
+          y4 = (quad[2] - half_length)
 
-      self.view.vb.addPolyRoiRequest()
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x1, y1))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x2, y2))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x3, y3))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(tri[0], finished=True)
-      roi = self.view.vb.rois[0]
-      self.update_project_roi(roi)
+          self.view.vb.addPolyRoiRequest()
+          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x1, y1))
+          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x2, y2))
+          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x3, y3))
+          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+          self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
+          roi = self.view.vb.rois[0]
+          self.update_project_roi(roi)
 
 class AutoROICoords(QTableWidget):
   def __init__(self, data, *args):
