@@ -277,13 +277,13 @@ class Widget(QWidget):
          for row in roi_table_it:
            roi_table = roi_table + [row]
       roi_table = np.array(roi_table)
-      self.headers = roi_table[0, ]
+      self.headers = [str.strip(x) for x in roi_table[0, ]]
       roi_table_range = range(len(roi_table))[1:]
       roi_names = [roi_table[x, 0] for x in roi_table_range]
       roi_sizes = [roi_table[x, 1] for x in roi_table_range]
       roi_coord_x = [roi_table[x, 2] for x in roi_table_range]
       roi_coord_y = [roi_table[x, 3] for x in roi_table_range]
-      self.data =       {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+      self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
       self.show_table()
 

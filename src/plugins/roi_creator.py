@@ -243,7 +243,7 @@ class Widget(QWidget):
     self.view.vb.addPolyRoiRequest()
 
   def delete_roi(self):
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     if rois_selected == None:
       return
