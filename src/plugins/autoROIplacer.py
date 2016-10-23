@@ -18,6 +18,7 @@ sys.path.append('..')
 import qtutil
 import uuid
 from .util import fileloader
+import csv
 from .util.mse_ui_elements import Video_Selector
 
 #This the code for getting the ROI locations from bregma.
@@ -92,7 +93,7 @@ class Widget(QWidget):
     anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
                 "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
                 "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
-    roi_names = anatomy_rois.keys()
+    roi_names = list(anatomy_rois.keys())
     roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
     roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
     roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
@@ -129,10 +130,12 @@ class Widget(QWidget):
       if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    #self.view.vb.roi_placed.connect(self.update_roi_names)
+    self.view.vb.roi_placed.connect(self.update_project_roi)
+    # self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def show_table(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
+               self.data[self.headers[2]], self.data[self.headers[3]])
     model = AutoROICoords(self.data, len(list(locs)), 4)
     model.itemChanged.connect(self.update_auto_rois)
     model.show()
@@ -169,8 +172,11 @@ class Widget(QWidget):
     pb = QPushButton('auto ROI table')
     pb.clicked.connect(self.show_table)
     vbox.addWidget(pb)
-    pb = QPushButton('Delete selected ROIs')
-    pb.clicked.connect(self.delete_roi)
+    # pb = QPushButton('Delete selected ROIs')
+    # pb.clicked.connect(self.delete_roi)
+    # vbox.addWidget(pb)
+    pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
+    pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
@@ -252,20 +258,44 @@ class Widget(QWidget):
       if roi_name not in self.roi_list.model().rois:
         self.roi_list.model().appendRoi(roi_name)
 
-  def delete_roi(self):
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-                     for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-    if rois_selected == None:
-      return
-    rois_dict = [self.project.files[x] for x in range(len(self.project.files))
-                 if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
-    self.project.files = [self.project.files[x] for x in range(len(self.project.files))
-                          if self.project.files[x] not in rois_dict]
-    self.project.save()
-    self.view.vb.setCurrentROIindex(None)
+  # def delete_roi(self):
+  #   rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+  #                    for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+  #   if rois_selected == None:
+  #     return
+  #   rois_dict = [self.project.files[x] for x in range(len(self.project.files))
+  #                if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
+  #   self.project.files = [self.project.files[x] for x in range(len(self.project.files))
+  #                         if self.project.files[x] not in rois_dict]
+  #   self.project.save()
+  #   self.view.vb.setCurrentROIindex(None)
+  #
+  #   for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
+  #     self.roi_list.model().removeRow(roi_to_remove)
 
-    for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
-      self.roi_list.model().removeRow(roi_to_remove)
+  def load_ROI_table(self):
+      text_file = QFileDialog.getOpenFileName(
+          self, 'Load images', QSettings().value('last_load_text_path'),
+          'Video files (*.csv *.txt)')
+      if not text_file:
+          return
+      QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
+
+      roi_table = []#np.empty(shape=(4, ))
+      with open(text_file, 'rt', encoding='ascii') as csvfile:
+         roi_table_it = csv.reader(csvfile, delimiter=',')
+         for row in roi_table_it:
+           roi_table = roi_table + [row]
+      roi_table = np.array(roi_table)
+      self.headers = [str.strip(x) for x in roi_table[0, ]]
+      roi_table_range = range(len(roi_table))[1:]
+      roi_names = [roi_table[x, 0] for x in roi_table_range]
+      roi_sizes = [int(roi_table[x, 1]) for x in roi_table_range]
+      roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+      roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
+      self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+      self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+      self.auto_ROI()
 
   def update_auto_rois(self, item):
     col = item.column()
@@ -283,32 +313,29 @@ class Widget(QWidget):
 
 
   def auto_ROI(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
-    half_length = self.roi_size.value() * self.project['mmpixel']
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
+               self.data[self.headers[2]], self.data[self.headers[3]])
 
-    # model = AutoROICoords(self.data, len(locs), 4)
-    # model.itemChanged.connect(self.update_auto_rois)
-    # model.show()
-    # self.open_dialogs.append(model)
-
-    for tri in locs:
+    # Warning: size must always be the second column
+    for quad in list(locs):
+      half_length = quad[1] * self.project['mmpixel']
       self.remove_all_rois()
-      x1 = (tri[1] - half_length)
-      x2 = (tri[1] - half_length)
-      x3 = (tri[1] + half_length)
-      x4 = (tri[1] + half_length)
-      y1 = (tri[2] - half_length)
-      y2 = (tri[2] + half_length)
-      y3 = (tri[2] + half_length)
-      y4 = (tri[2] - half_length)
+      x1 = (quad[2] - half_length)
+      x2 = (quad[2] - half_length)
+      x3 = (quad[2] + half_length)
+      x4 = (quad[2] + half_length)
+      y1 = (quad[3] - half_length)
+      y2 = (quad[3] + half_length)
+      y3 = (quad[3] + half_length)
+      y4 = (quad[3] - half_length)
 
       self.view.vb.addPolyRoiRequest()
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x1, y1))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x2, y2))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x3, y3))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(tri[0], pos=QtCore.QPointF(x4, y4))
-      self.view.vb.autoDrawPolygonRoi(tri[0], finished=True)
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
       roi = self.view.vb.rois[0]
       self.update_project_roi(roi)
 
