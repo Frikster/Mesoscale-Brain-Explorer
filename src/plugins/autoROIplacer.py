@@ -52,6 +52,7 @@ from .util.mse_ui_elements import Video_Selector
 
 class RoiItemModel(QAbstractListModel):
   textChanged = pyqtSignal(str, str)
+  #dataChanged = pyqtSignal(int, int)
 
   def __init__(self, parent=None):
     super(RoiItemModel, self).__init__(parent)
@@ -90,6 +91,7 @@ class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
+    # defaults
     anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
                 "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
                 "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
@@ -117,9 +119,12 @@ class Widget(QWidget):
       self.listview.model().appendRow(QStandardItem(str(f['name'])))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
+    #####
     model = RoiItemModel()
     model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
+    #####
+    #self.roi_list.setModel(QStandardItemModel())
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
@@ -128,12 +133,14 @@ class Widget(QWidget):
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
-        model.appendRoi(roi_name)
+        self.roi_list.model().appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
+    self.view.vb.roi_placed.connect(self.update_project_roi)
     # self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def show_table(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[2]], self.data[self.headers[3]])
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
+               self.data[self.headers[2]], self.data[self.headers[3]])
     model = AutoROICoords(self.data, len(list(locs)), 4)
     model.itemChanged.connect(self.update_auto_rois)
     model.show()
@@ -280,11 +287,12 @@ class Widget(QWidget):
       self.headers = [str.strip(x) for x in roi_table[0, ]]
       roi_table_range = range(len(roi_table))[1:]
       roi_names = [roi_table[x, 0] for x in roi_table_range]
-      roi_sizes = [roi_table[x, 1] for x in roi_table_range]
-      roi_coord_x = [roi_table[x, 2] for x in roi_table_range]
-      roi_coord_y = [roi_table[x, 3] for x in roi_table_range]
+      roi_sizes = [int(roi_table[x, 1]) for x in roi_table_range]
+      roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+      roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
       self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+      self.auto_ROI()
       self.show_table()
 
   def update_auto_rois(self, item):
@@ -303,34 +311,31 @@ class Widget(QWidget):
 
 
   def auto_ROI(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]], self.data[self.headers[2]], self.data[self.headers[3]])
+    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
+               self.data[self.headers[2]], self.data[self.headers[3]])
 
-    # Warning: size must always be the second column under this assumption:
-    lengths = [int(x) for x in self.data[self.headers[1]]]
-    half_lengths = [x * self.project['mmpixel'] for x in lengths]
+    # Warning: size must always be the second column
+    for quad in list(locs):
+      half_length = quad[1] * self.project['mmpixel']
+      self.remove_all_rois()
+      x1 = (quad[2] - half_length)
+      x2 = (quad[2] - half_length)
+      x3 = (quad[2] + half_length)
+      x4 = (quad[2] + half_length)
+      y1 = (quad[3] - half_length)
+      y2 = (quad[3] + half_length)
+      y3 = (quad[3] + half_length)
+      y4 = (quad[3] - half_length)
 
-    for half_length in half_lengths:
-        for quad in list(locs):
-          half_length = quad[1] * self.project['mmpixel']
-          self.remove_all_rois()
-          x1 = (quad[1] - half_length)
-          x2 = (quad[1] - half_length)
-          x3 = (quad[1] + half_length)
-          x4 = (quad[1] + half_length)
-          y1 = (quad[2] - half_length)
-          y2 = (quad[2] + half_length)
-          y3 = (quad[2] + half_length)
-          y4 = (quad[2] - half_length)
-
-          self.view.vb.addPolyRoiRequest()
-          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x1, y1))
-          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x2, y2))
-          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x3, y3))
-          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
-          self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
-          self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
-          roi = self.view.vb.rois[0]
-          self.update_project_roi(roi)
+      self.view.vb.addPolyRoiRequest()
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x1, y1))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x2, y2))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x3, y3))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
+      self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
+      roi = self.view.vb.rois[0]
+      self.update_project_roi(roi)
 
 class AutoROICoords(QTableWidget):
   def __init__(self, data, *args):
