@@ -59,9 +59,16 @@ class RoiItemModel(QAbstractListModel):
     self.rois = []
 
   def appendRoi(self, name):
+    print("IN appendRoi")
+    print(name)
     self.rois.append(name)
     row = len(self.rois) - 1
     self.dataChanged.emit(self.index(row), self.index(row))
+
+  def edit_roi_name(self, name, index):
+      self.rois.append(name)
+      row = len(self.rois) - 1
+      self.dataChanged.emit(self.index(row), self.index(row))
 
   def rowCount(self, parent):
     return len(self.rois)
@@ -133,7 +140,9 @@ class Widget(QWidget):
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
-        self.roi_list.model().appendRoi(roi_name)
+        print("IN init")
+        print(roi_name)
+        model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_project_roi)
     # self.view.vb.roi_placed.connect(self.update_roi_names)
@@ -169,12 +178,6 @@ class Widget(QWidget):
     pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
     pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
-    # pb = QPushButton('auto ROI table')
-    # pb.clicked.connect(self.show_table)
-    # vbox.addWidget(pb)
-    # pb = QPushButton('Delete selected ROIs')
-    # pb.clicked.connect(self.delete_roi)
-    # vbox.addWidget(pb)
 
     vbox.addWidget(qtutil.separator())
 
@@ -253,6 +256,8 @@ class Widget(QWidget):
     roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
+        print("IN update_project_roi")
+        print(roi_name)
         self.roi_list.model().appendRoi(roi_name)
 
   # def delete_roi(self):
