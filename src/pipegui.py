@@ -158,8 +158,8 @@ class MainWindow(QMainWindow):
     splitter.addWidget(self.sidebar)
     splitter.addWidget(self.pl_frame)
 
-    splitter.setStretchFactor(0, 0)
-    splitter.setStretchFactor(1, 1)
+    #splitter.setStretchFactor(0, 0)
+    #splitter.setStretchFactor(1, 1)
 
     self.setCentralWidget(splitter)
 
@@ -199,8 +199,8 @@ class MainWindow(QMainWindow):
     self.project_menu = m
 
     settings_menu = self.menu.addMenu('&Settings')
-    a = QAction('&Pipeline Automation', self)
-    a.setEnabled(False)
+    #a = QAction('&Pipeline Automation', self)
+    #a.setEnabled(False)
     #a.setStatusTip('Create new project')
     #a.triggered.connect(self.create_project)
     settings_menu.addAction(a)

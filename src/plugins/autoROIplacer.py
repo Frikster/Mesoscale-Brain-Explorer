@@ -99,6 +99,7 @@ class Widget(QWidget):
     super(Widget, self).__init__(parent)
 
     # defaults
+    # todo: this needs to vanish
     anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
                 "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
                 "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
@@ -109,12 +110,19 @@ class Widget(QWidget):
     self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
     self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
                  self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
-
-    self.open_dialogs = []
-
+    ###
+    # check project
     if not project:
       return
     self.project = project
+
+    # define widgets
+    self.view = MyGraphicsView(self.project)
+    self.table_widget = AutoROICoords(self.data, len(self.data[self.headers[0]]), 4)
+    self.left = QFrame()
+    self.right = QFrame()
+    #self.open_dialogs = []
+
     self.setup_ui()
 
     self.listview.setModel(QStandardItemModel())
@@ -126,12 +134,9 @@ class Widget(QWidget):
       self.listview.model().appendRow(QStandardItem(str(f['name'])))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
-    #####
     model = RoiItemModel()
     model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
-    #####
-    #self.roi_list.setModel(QStandardItemModel())
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
@@ -140,12 +145,8 @@ class Widget(QWidget):
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
-        print("IN init")
-        print(roi_name)
         model.appendRoi(roi_name)
     self.roi_list.setCurrentIndex(model.index(0, 0))
-    self.view.vb.roi_placed.connect(self.update_project_roi)
-    # self.view.vb.roi_placed.connect(self.update_roi_names)
 
   def show_table(self):
     locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
@@ -153,7 +154,7 @@ class Widget(QWidget):
     model = AutoROICoords(self.data, len(list(locs)), 4)
     model.itemChanged.connect(self.update_auto_rois)
     model.show()
-    self.open_dialogs.append(model)
+    #self.open_dialogs.append(model)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -164,37 +165,37 @@ class Widget(QWidget):
     self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-
-    self.view = MyGraphicsView(self.project)
-    hbox.addWidget(self.view)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
-
     pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
     pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
-
-    vbox.addWidget(qtutil.separator())
-
-    vbox2 = QVBoxLayout()
-    w = QWidget()
-    w.setLayout(vbox2)
-    vbox.addWidget(w)
-
+    vbox.addWidget(self.table_widget)
+    # vbox2 = QVBoxLayout()
+    # w = QWidget()
+    # w.setLayout(vbox2)
+    # vbox.addWidget(w)
     vbox.addWidget(qtutil.separator())
     vbox.addWidget(QLabel('ROIs'))
     self.roi_list = QListView()
     vbox.addWidget(self.roi_list)
+    self.right.setLayout(vbox)
 
-    hbox.addLayout(vbox)
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox)
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
@@ -351,7 +352,6 @@ class AutoROICoords(QTableWidget):
     self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
     self.verticalHeader().setResizeMode(QHeaderView.Stretch)
     self.setmydata()
-
 
   def setmydata(self):
     horHeaders = self.data.keys()
