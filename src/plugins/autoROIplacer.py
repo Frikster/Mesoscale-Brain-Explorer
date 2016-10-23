@@ -59,8 +59,6 @@ class RoiItemModel(QAbstractListModel):
     self.rois = []
 
   def appendRoi(self, name):
-    print("IN appendRoi")
-    print(name)
     self.rois.append(name)
     row = len(self.rois) - 1
     self.dataChanged.emit(self.index(row), self.index(row))
@@ -100,16 +98,16 @@ class Widget(QWidget):
 
     # defaults
     # todo: this needs to vanish
-    anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
-                "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
-                "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
-    roi_names = anatomy_rois.keys()
-    roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
-    roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
-    roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
-    self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
-    self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
-                 self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+    # anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
+    #             "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
+    #             "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
+    # roi_names = anatomy_rois.keys()
+    # roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
+    # roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
+    # roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
+    # self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
+    # self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+    #              self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
     ###
     # check project
     if not project:
@@ -117,8 +115,10 @@ class Widget(QWidget):
     self.project = project
 
     # define widgets
+    self.headers = None
+    self.data = None
     self.view = MyGraphicsView(self.project)
-    self.table_widget = AutoROICoords(self.data, len(self.data[self.headers[0]]), 4)
+    self.table_widget = AutoROICoords(self.data, 0, 4)
     self.left = QFrame()
     self.right = QFrame()
     #self.open_dialogs = []
@@ -143,26 +143,27 @@ class Widget(QWidget):
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                     QItemSelection].connect(self.selected_roi_changed)
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
+
+    # Remove everything
+    self.roi_list.model().rois = []
+    for row in range(self.roi_list.model().rowCount(parent)):
+        self.roi_list.model().removeRow()
     for roi_name in roi_names:
-      if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
-    self.roi_list.setCurrentIndex(model.index(0, 0))
+    #self.roi_list.setCurrentIndex(model.index(0, 0))
 
-  def show_table(self):
-    locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
-               self.data[self.headers[2]], self.data[self.headers[3]])
-    model = AutoROICoords(self.data, len(list(locs)), 4)
-    model.itemChanged.connect(self.update_auto_rois)
-    model.show()
-    #self.open_dialogs.append(model)
+    # for roi_name in roi_names:
+    #   if roi_name not in self.roi_list.model().rois:
+    #     model.appendRoi(roi_name)
+    # self.roi_list.setCurrentIndex(model.index(0, 0))
 
-  def roi_item_edited(self, item):
-    new_name = item.text()
-    prev_name = item.data(Qt.UserRole)
-    # disconnect and reconnect signal
-    self.roi_list.itemChanged.disconnect()
-    item.setData(new_name, Qt.UserRole)
-    self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
+  # def roi_item_edited(self, item):
+  #   new_name = item.text()
+  #   prev_name = item.data(Qt.UserRole)
+  #   # disconnect and reconnect signal
+  #   self.roi_list.itemChanged.disconnect()
+  #   item.setData(new_name, Qt.UserRole)
+  #   self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -178,6 +179,10 @@ class Widget(QWidget):
     pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
     vbox.addWidget(self.table_widget)
+    self.table_widget.itemChanged.connect(self.update_auto_rois)
+    pb = QPushButton('Add these ROIs to project')
+    pb.clicked.connect(self.auto_ROI)
+    vbox.addWidget(pb)
     # vbox2 = QVBoxLayout()
     # w = QWidget()
     # w.setLayout(vbox2)
@@ -221,7 +226,6 @@ class Widget(QWidget):
       return
 
     self.remove_all_rois()
-
     # todo: re-explain how you can figure out to go from commented line to uncommented line
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole))
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
@@ -231,51 +235,6 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def update_project_roi(self, roi):
-    name = roi.name
-    if not name:
-      raise ValueError('ROI has no name')
-    if self.view.vb.drawROImode:
-      return
-
-    path = os.path.join(self.project.path, name + '.roi')
-    self.view.vb.saveROI(path)
-    # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
-    if path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
-      self.project.files.append({
-        'path': path,
-        'type': 'roi',
-        'source_video': self.video_path,
-        'name': name
-      })
-    else:
-      for i, file in enumerate(self.project.files):
-        if file['path'] == path:
-          self.project.files[i]['source_video'] = self.video_path
-    self.project.save()
-
-    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
-    for roi_name in roi_names:
-      if roi_name not in self.roi_list.model().rois:
-        print("IN update_project_roi")
-        print(roi_name)
-        self.roi_list.model().appendRoi(roi_name)
-
-  # def delete_roi(self):
-  #   rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-  #                    for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-  #   if rois_selected == None:
-  #     return
-  #   rois_dict = [self.project.files[x] for x in range(len(self.project.files))
-  #                if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
-  #   self.project.files = [self.project.files[x] for x in range(len(self.project.files))
-  #                         if self.project.files[x] not in rois_dict]
-  #   self.project.save()
-  #   self.view.vb.setCurrentROIindex(None)
-  #
-  #   for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
-  #     self.roi_list.model().removeRow(roi_to_remove)
-
   def load_ROI_table(self):
       text_file = QFileDialog.getOpenFileName(
           self, 'Load images', QSettings().value('last_load_text_path'),
@@ -284,7 +243,7 @@ class Widget(QWidget):
           return
       QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
 
-      roi_table = []#np.empty(shape=(4, ))
+      roi_table = [] # numpy way: np.empty(shape=(4, ))
       with open(text_file, 'rt', encoding='ascii') as csvfile:
          roi_table_it = csv.reader(csvfile, delimiter=',')
          for row in roi_table_it:
@@ -298,23 +257,10 @@ class Widget(QWidget):
       roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
       self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+      self.table_widget.clear()
+      self.table_widget.setRowCount(len(self.data[self.headers[0]]))
+      self.table_widget.update(self.data)
       self.auto_ROI()
-      self.show_table()
-
-  def update_auto_rois(self, item):
-    col = item.column()
-    row = item.row()
-    try:
-      val = float(item.text())
-    except:
-      val = str(item.text())
-    header = item.tableWidget().horizontalHeaderItem(col).text()
-    header = str(header)
-    col_to_change = self.data[header]
-    col_to_change[row] = val
-    self.data[header] = col_to_change
-    self.auto_ROI()
-
 
   def auto_ROI(self):
     locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
@@ -343,15 +289,85 @@ class Widget(QWidget):
       roi = self.view.vb.rois[0]
       self.update_project_roi(roi)
 
+  # def update_table(self):
+  #   locs = zip(self.data[self.headers[0]], self.data[self.headers[1]],
+  #              self.data[self.headers[2]], self.data[self.headers[3]])
+  #   model = AutoROICoords(self.data, len(list(locs)), 4)
+  #   model.show()
+  #   # self.open_dialogs.append(model)
+
+  # def delete_roi(self):
+  #   rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+  #                    for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+  #   if rois_selected == None:
+  #     return
+  #   rois_dict = [self.project.files[x] for x in range(len(self.project.files))
+  #                if (self.project.files[x]['type'] == 'roi' and self.project.files[x]['name'] in rois_selected)]
+  #   self.project.files = [self.project.files[x] for x in range(len(self.project.files))
+  #                         if self.project.files[x] not in rois_dict]
+  #   self.project.save()
+  #   self.view.vb.setCurrentROIindex(None)
+  #
+  #   for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
+  #     self.roi_list.model().removeRow(roi_to_remove)
+
+  def update_project_roi(self, roi):
+    name = roi.name
+    if not name:
+      raise ValueError('ROI has no name')
+    if self.view.vb.drawROImode:
+      return
+
+    path = os.path.join(self.project.path, name + '.roi')
+    self.view.vb.saveROI(path)
+    # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
+    if path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+      self.project.files.append({
+        'path': path,
+        'type': 'roi',
+        'source_video': self.video_path,
+        'name': name
+      })
+    else:
+      for i, file in enumerate(self.project.files):
+        if file['path'] == path:
+          self.project.files[i]['source_video'] = self.video_path
+    self.project.save()
+
+    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+    for roi_name in roi_names:
+      if roi_name not in self.roi_list.model().rois:
+        self.roi_list.model().appendRoi(roi_name)
+
+  #even tried deleting everything...
+  # roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+  # for roi_name in roi_names:
+  #     if roi_name not in self.roi_list.model().rois:
+  #         self.roi_list.model().appendRoi(roi_name)
+
+  def update_auto_rois(self, item):
+    col = item.column()
+    row = item.row()
+    try:
+      val = float(item.text())
+    except:
+      val = str(item.text())
+    if item.tableWidget().horizontalHeaderItem(col):
+        header = item.tableWidget().horizontalHeaderItem(col).text()
+        header = str(header)
+        col_to_change = self.data[header]
+        col_to_change[row] = val
+        self.data[header] = col_to_change
+        self.auto_ROI()
+
+
+
+
 class AutoROICoords(QTableWidget):
-  def __init__(self, data, *args):
+  def __init__(self, data=None, *args):
     QTableWidget.__init__(self, *args)
     self.data = data
-    self.resizeColumnsToContents()
-    self.resizeRowsToContents()
-    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-    self.verticalHeader().setResizeMode(QHeaderView.Stretch)
-    self.setmydata()
+    self.update(self.data)
 
   def setmydata(self):
     horHeaders = self.data.keys()
@@ -360,6 +376,15 @@ class AutoROICoords(QTableWidget):
         newitem = QTableWidgetItem(str(item))
         self.setItem(m, n, newitem)
     self.setHorizontalHeaderLabels(sorted(horHeaders))
+
+  def update(self, data):
+      self.data = data
+      self.resizeColumnsToContents()
+      self.resizeRowsToContents()
+      self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+      self.verticalHeader().setResizeMode(QHeaderView.Stretch)
+      if self.data is not None:
+        self.setmydata()
 
 
 class MyPlugin:

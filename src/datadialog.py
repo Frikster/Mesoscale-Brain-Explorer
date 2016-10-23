@@ -96,7 +96,7 @@ class DataDialog(QDialog):
 
     hbox = QHBoxLayout()
     self.table = FileTable()
-    self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+    self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.table.doubleClicked.connect(self.double_clicked)
     hbox.addWidget(self.table)
 
@@ -140,23 +140,23 @@ class DataDialog(QDialog):
     rows = self.table.selectionModel().selectedRows()
     if not rows:
       return
-    assert(len(rows) == 1)
-    fileinfo = self.table.model().get_entry(rows[0])
-    dialog = RemoveDialog(fileinfo, self)
-    dialog.exec_()
-    if not dialog.action:
-      return
-    if dialog.action == 'remove':
-      try:
-        os.remove(fileinfo['path'])
-      except:
-        qtutil.critical('Could not delete file.')
+    for row in rows:
+      fileinfo = self.table.model().get_entry(row)
+      dialog = RemoveDialog(fileinfo, self)
+      dialog.exec_()
+      if not dialog.action:
         return
-    # detach
-    self.project.files[:] = [
-      f for f in self.project.files
-      if f['path'] != fileinfo['path']
-    ]
+      if dialog.action == 'remove':
+        try:
+          os.remove(fileinfo['path'])
+        except:
+          qtutil.critical('Could not delete file.')
+          return
+      # detach
+      self.project.files[:] = [
+        f for f in self.project.files
+        if f['path'] != fileinfo['path']
+      ]
     self.project.save()
     self.reload_plugins.emit()
     self.update(self.project)
