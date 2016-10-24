@@ -9,6 +9,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import mse_ui_elements as mue
 
 sys.path.append('..')
 import qtutil
@@ -119,6 +120,43 @@ class ConnectivityDialog(QDialog):
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
+class RoiModel(QStandardItemModel):
+  def __init__(self, parent=None):
+    super(RoiModel, self).__init__(parent)
+
+  def supportedDropActions(self):
+    return Qt.MoveAction
+
+  def dropMimeData(self, data, action, row, column, parent):
+    return super(RoiModel, self).dropMimeData(data, action, row, column, parent)
+
+  def flags(self, index):
+    if not index.isValid() or index.row() >= self.rowCount() or index.model() != self:
+       return Qt.ItemIsDropEnabled # we allow drops outside the items
+    return super(RoiModel, self).flags(index) & (~Qt.ItemIsDropEnabled)
+
+  def removeRows(self, row, count, parent):
+    #print('remove', row, count)
+    return super(RoiModel, self).removeRows(row, count, parent)
+
+  def insertRows(self, row, count, parent):
+    #print('insert', row, count)
+    return super(RoiModel, self).insertRows(row, count, parent)
+
+  def get_plugin_names(self):
+    ret = []
+    for i in range(self.rowCount()):
+      index = self.index(i, 0)
+      value = str(self.data(index, Qt.UserRole))
+      ret.append(value)
+    return ret
+
+  def set_plugins(self, plugins):
+    for name, title in plugins:
+      item = QStandardItem(title)
+      item.setData(name, Qt.UserRole)
+      self.appendRow(item)
+
 class Widget(QWidget):
     def __init__(self, project, parent=None):
         super(Widget, self).__init__(parent)
@@ -143,7 +181,7 @@ class Widget(QWidget):
         self.video_list.selectionModel().selectionChanged[QItemSelection,
           QItemSelection].connect(self.selected_video_changed)
 
-        self.roi_list.setModel(QStandardItemModel())
+        self.roi_list.setModel(RoiModel())
         self.roi_list.selectionModel().selectionChanged[QItemSelection,
           QItemSelection].connect(self.selected_roi_changed)
 
@@ -156,7 +194,6 @@ class Widget(QWidget):
                 self.roi_list.model().appendRow(item)
 
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-        self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
     def setup_ui(self):
         vbox_view = QVBoxLayout()
@@ -170,8 +207,14 @@ class Widget(QWidget):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
         vbox.addWidget(qtutil.separator())
-        vbox.addWidget(QLabel('Select ROI:'))
+        vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder.'))
+        vbox.addWidget(QLabel('Select ROIs:'))
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.roi_list.setAcceptDrops(True)
+        self.roi_list.setDragEnabled(True)
+        self.roi_list.setDropIndicatorShown(True)
+        self.roi_list.setDragDropMode(QAbstractItemView.DragDrop)
+        self.roi_list.setDragDropOverwriteMode(False)
         vbox.addWidget(self.roi_list)
         pb = QPushButton('Connectivity &Diagram')
         pb.clicked.connect(self.connectivity_triggered)

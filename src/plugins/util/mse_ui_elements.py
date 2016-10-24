@@ -31,3 +31,25 @@ class Video_Selector:
                               + '.npy')
         frame = fileloader.load_reference_frame(self.shown_video_path)
         self.view.show(frame)
+
+
+class InfoWidget(QFrame):
+    def __init__(self, text, parent=None):
+        super(InfoWidget, self).__init__(parent)
+        self.setup_ui(text)
+
+    def setup_ui(self, text):
+        hbox = QHBoxLayout()
+        icon = QLabel()
+        image = QImage('pics/info.png')
+        icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
+        hbox.addWidget(icon)
+        self.label = QLabel(text)
+        self.label.setWordWrap(True)
+        hbox.addWidget(self.label)
+        hbox.addStretch()
+        self.setLayout(hbox)
+
+        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        self.setLineWidth(2)
+        self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
