@@ -17,6 +17,8 @@ import qtutil
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
+import uuid
+import csv
 import pyqtgraph as pg
 
 import itertools
@@ -39,7 +41,7 @@ class ConnectivityModel(QAbstractTableModel):
     def __init__(self, selected_videos, image, rois, parent=None):
         super(ConnectivityModel, self).__init__(parent)
         self.rois = rois
-
+        self.matrix_list = []
         avg_data = []
         tot_data = []
         dict_for_stdev = {}
@@ -49,6 +51,7 @@ class ConnectivityModel(QAbstractTableModel):
 
         for video_path in selected_videos:
             self._data = calc_connectivity(video_path, image, rois)
+            self.matrix_list = self.matrix_list + [self._data]
             if tot_data == []:
                 tot_data = self._data
             if avg_data == []:
@@ -111,8 +114,8 @@ class ConnectivityDialog(QDialog):
         super(ConnectivityDialog, self).__init__(parent)
         self.setWindowTitle('Connectivity Diagram')
         self.setup_ui()
-
-        self.table.setModel(ConnectivityModel(selected_videos, image, rois))
+        self.model = ConnectivityModel(selected_videos, image, rois)
+        self.table.setModel(self.model)
 
     def setup_ui(self):
         vbox = QVBoxLayout()
@@ -136,26 +139,10 @@ class RoiModel(QStandardItemModel):
     return super(RoiModel, self).flags(index) & (~Qt.ItemIsDropEnabled)
 
   def removeRows(self, row, count, parent):
-    #print('remove', row, count)
     return super(RoiModel, self).removeRows(row, count, parent)
 
   def insertRows(self, row, count, parent):
-    #print('insert', row, count)
     return super(RoiModel, self).insertRows(row, count, parent)
-
-  def get_plugin_names(self):
-    ret = []
-    for i in range(self.rowCount()):
-      index = self.index(i, 0)
-      value = str(self.data(index, Qt.UserRole))
-      ret.append(value)
-    return ret
-
-  def set_plugins(self, plugins):
-    for name, title in plugins:
-      item = QStandardItem(title)
-      item.setData(name, Qt.UserRole)
-      self.appendRow(item)
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
@@ -219,6 +206,9 @@ class Widget(QWidget):
         pb = QPushButton('Connectivity &Diagram')
         pb.clicked.connect(self.connectivity_triggered)
         vbox.addWidget(pb)
+        pb = QPushButton('Save all open matrices to csv')
+        pb.clicked.connect(self.save_open_dialogs_to_csv)
+        vbox.addWidget(pb)
         self.right.setLayout(vbox)
 
         splitter = QSplitter(Qt.Horizontal)
@@ -278,7 +268,54 @@ class Widget(QWidget):
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
                                    rois, self)
             win.show()
+            #win.setWindowFlags(Qt.Window)
             self.open_dialogs.append(win)
+
+    def save_open_dialogs_to_csv(self):
+        #todo: For each matrix save individual values in addition to averages + stdev
+        for dialog in self.open_dialogs:
+            rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
+            # add roi names to first column
+            avg_matrix = [dialog.model._data[row][x][0] for row in range(len(dialog.model._data))
+                          for x in range(len(rois_names))]
+            with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(rois_names)
+                for row_ind in range(len(dialog.model._data)):
+                    row = dialog.model._data[row_ind]
+                    row = [row[x][0] for x in range(len(row))]
+                    writer.writerow(row)
+                    print(str(row))
+                # for row_ind in range(len(dialog.model._data)):
+                #     row = dialog.model._data[row_ind]
+                #     row = [row[x][0] for x in range(len(row))]
+                #     writer.writerow(row)
+                #     print(str(row))
+
+            #     for x in range(len(rois_names)):
+            #             row = dialog.model._data[row][x][0]
+            #
+            # avg_matrix = [[rois_names[x]] + dialog.model._data[x] for x in range(len(dialog.model._data))]
+            # # empty space in top left
+            # rois_names = [''] + rois_names
+            # avg_matrix = [rois_names] + avg_matrix
+            # #todo: get rid of TEST
+            #
+            # with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
+            #     writer = csv.writer(csvfile, delimiter=',')
+            #     for row in avg_matrix:
+            #         writer.writerow(row)
+            #         print(str(row))
+
+
+            # matrix_list = dialog.model.matrix_list
+            # unique_id_avg = str(uuid.uuid4())
+            # path = os.path.join(self.project.path, unique_id_avg)
+
+
+
+
+
 
 class MyPlugin:
     def __init__(self, project):
