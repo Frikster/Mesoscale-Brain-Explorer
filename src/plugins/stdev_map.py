@@ -79,6 +79,14 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
+
+    # define ui components and global data
+    self.left = QFrame()
+    self.right = QFrame()
+    self.view = MyGraphicsView(self.project)
+    self.video_list = MyListView()
+    self.max_stdev = QDoubleSpinBox(decimals=4)
+
     self.setup_ui()
 
     self.video_path = None
@@ -93,26 +101,29 @@ class Widget(QWidget):
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-    self.view = MyGraphicsView(self.project) 
-    hbox.addWidget(self.view)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.video_list = MyListView()
     vbox.addWidget(self.video_list)
-    self.max_stdev = QDoubleSpinBox(decimals=4)
     self.max_stdev.setMinimum(0.0000)
     self.max_stdev.setValue(1.0000)
     vbox.addWidget(self.max_stdev)
     pb = QPushButton('Generate Std. Dev. Map')
     pb.clicked.connect(self.go)
     vbox.addWidget(pb)
-    
-    hbox.addLayout(vbox)    
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox)
+    self.right.setLayout(vbox)
+
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
   def selected_video_changed(self, selection):
     if not selection.indexes():

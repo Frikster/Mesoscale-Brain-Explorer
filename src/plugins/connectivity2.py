@@ -118,6 +118,14 @@ class Widget(QWidget):
         if not project:
             return
         self.project = project
+
+        # define ui components and global data
+        self.left = QFrame()
+        self.right = QFrame()
+        self.view = MyGraphicsView(self.project)
+        self.video_list = QListView()
+        self.roi_list = QListView()
+
         self.setup_ui()
 
         self.open_dialogs = []
@@ -143,38 +151,36 @@ class Widget(QWidget):
         self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-
-        self.view = MyGraphicsView(self.project)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
         self.view.vb.crosshair_visible = False
-        hbox.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Select video:'))
-        self.video_list = QListView()
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-
         # pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
         # pb.clicked.connect(self.load_ROI_table)
         # vbox.addWidget(pb)
-
         vbox.addWidget(qtutil.separator())
-
         vbox.addWidget(QLabel('Select ROI:'))
-        self.roi_list = QListView()
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         vbox.addWidget(self.roi_list)
-
         pb = QPushButton('Connectivity &Diagram')
         pb.clicked.connect(self.connectivity_triggered)
         vbox.addWidget(pb)
+        self.right.setLayout(vbox)
 
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

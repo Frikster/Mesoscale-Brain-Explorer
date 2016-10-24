@@ -23,6 +23,14 @@ class Widget(QWidget):
         if not project:
             return
         self.project = project
+
+        # define widgets and data
+        self.left = QFrame()
+        self.right = QFrame()
+        self.view = MyGraphicsView(self.project)
+        self.video_list = MyListView()
+        self.ref_no = QSpinBox()
+
         self.setup_ui()
 
         self.open_dialogs = []
@@ -34,37 +42,42 @@ class Widget(QWidget):
 
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-        self.view = MyGraphicsView(self.project)
-        hbox.addWidget(self.view)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
-        self.video_list = MyListView()
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-
         max_cut_off = 5000
         vbox.addWidget(QLabel('Choose frame used for reference averaged across all selected  files'))
-        self.ref_no = QSpinBox()
         self.ref_no.setMinimum(0)
         self.ref_no.setMaximum(max_cut_off)
         self.ref_no.setValue(400)
         vbox.addWidget(self.ref_no)
-
         pb = QPushButton('&Compute Reference Frame')
         pb.clicked.connect(self.compute_ref_frame)
         vbox.addWidget(pb)
-
         pb = QPushButton('&Align')
         pb.clicked.connect(self.align_clicked)
         vbox.addWidget(pb)
+        self.right.setLayout(vbox)
 
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
+
+        # hbox.addLayout(vbox)
+        # hbox.setStretch(0, 1)
+        # hbox.setStretch(1, 0)
+        # self.setLayout(hbox)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

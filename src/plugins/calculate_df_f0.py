@@ -22,6 +22,15 @@ class Widget(QWidget):
         if not project:
             return
         self.project = project
+
+        # define ui components and global data
+        self.left = QFrame()
+        self.right = QFrame()
+        self.view = MyGraphicsView(self.project)
+        self.listview = QListView()
+        self.df_d0_pb = QPushButton('&Compute df over f0')
+        self.temp_filter_pb = QPushButton('&Apply Filter')
+
         self.setup_ui()
         self.selected_videos = []
 
@@ -37,26 +46,26 @@ class Widget(QWidget):
 
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-
-        self.view = MyGraphicsView(self.project)
-        hbox.addWidget(self.view)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview = QListView()
         self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.listview)
-
-        self.df_d0_pb = QPushButton('&Compute df over f0')
         vbox.addWidget(self.df_d0_pb)
+        self.right.setLayout(vbox)
 
-        vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

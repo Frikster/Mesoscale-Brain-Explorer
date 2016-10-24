@@ -24,6 +24,15 @@ class Widget(QWidget):
         if not project:
             return
         self.project = project
+
+        # define ui components and global data
+        self.view = MyGraphicsView(self.project)
+        self.video_list = MyListView()
+        self.left = QFrame()
+        self.right = QFrame()
+        self.left_cut_off = QSpinBox()
+        self.right_cut_off = QSpinBox()
+
         self.setup_ui()
 
         self.open_dialogs = []
@@ -38,39 +47,39 @@ class Widget(QWidget):
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-        self.view = MyGraphicsView(self.project)
-        hbox.addWidget(self.view)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
-        self.video_list = MyListView()
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-
         max_cut_off = 5000
         vbox.addWidget(QLabel('Cut off from start'))
-        self.left_cut_off = QSpinBox()
         self.left_cut_off.setMinimum(0)
         self.left_cut_off.setMaximum(max_cut_off)
         self.left_cut_off.setValue(0)
         vbox.addWidget(self.left_cut_off)
         vbox.addWidget(QLabel('Cut off from end'))
-        self.right_cut_off = QSpinBox()
         self.right_cut_off.setMinimum(0)
         self.right_cut_off.setMaximum(max_cut_off)
         self.right_cut_off.setValue(0)
         vbox.addWidget(self.right_cut_off)
-
         pb = QPushButton('Cut off frames')
         pb.clicked.connect(self.cut_off)
         vbox.addWidget(pb)
+        self.right.setLayout(vbox)
 
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
 
     # def selected_video_changed(self, selection):
     #     if not selection.indexes():

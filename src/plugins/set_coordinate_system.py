@@ -24,6 +24,12 @@ class Widget(QWidget):
 
     self.project = project
 
+    # define ui components and global data
+    self.view = MyGraphicsView(self.project)
+    self.listview = QListView()
+    self.origin_label = QLabel('Origin:')
+    self.left = QFrame()
+    self.right = QFrame()
     self.setup_ui()
 
     self.selected_videos = []
@@ -39,23 +45,18 @@ class Widget(QWidget):
     # self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-    self.view = MyGraphicsView(self.project)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
     self.view.vb.setCursor(Qt.CrossCursor)
-    hbox.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     self.view.vb.clicked.connect(self.vbc_clicked)
-
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview = QListView()
     self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
-
-    self.origin_label = QLabel('Origin:')
     vbox.addWidget(self.origin_label)
-
     hhbox = QHBoxLayout()
     hhbox.addWidget(QLabel('mm/pixel:'))
     sb = QDoubleSpinBox()
@@ -64,17 +65,21 @@ class Widget(QWidget):
     sb.setValue(self.project['mmpixel'])
     sb.valueChanged[float].connect(self.set_mmpixel)
     hhbox.addWidget(sb)
-
     pb = QPushButton('&Average origin from selected files\' origins')
     pb.clicked.connect(self.avg_origin)
     vbox.addWidget(pb)
-
     vbox.addLayout(hhbox)
     vbox.addStretch()
-    
-    hbox.addLayout(vbox)
-    self.setLayout(hbox)
+    self.right.setLayout(vbox)
 
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
     self.setEnabled(False)
 
   def selected_video_changed(self, selected, deselected):

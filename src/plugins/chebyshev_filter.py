@@ -86,6 +86,16 @@ class Widget(QWidget):
             #         'manipulations': ['chebyshev']
             #     })
 
+        # define ui components and global data
+        self.left = QFrame()
+        self.right = QFrame()
+        self.view = MyGraphicsView(self.project)
+        self.listview = QListView()
+        self.f_low = QDoubleSpinBox()
+        self.f_high = QDoubleSpinBox()
+        self.frame_rate = QSpinBox()
+        self.temp_filter_pb = QPushButton('&Apply Filter')
+
         self.setup_ui()
         self.selected_videos = []
         self.listview.setModel(QStandardItemModel())
@@ -105,44 +115,39 @@ class Widget(QWidget):
 
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-
-        self.view = MyGraphicsView(self.project)
-        hbox.addWidget(self.view)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview = QListView()
         self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.listview)
-
         vbox.addWidget(QLabel('Low Bandpass (Hz)'))
-        self.f_low = QDoubleSpinBox()
         self.f_low.setMinimum(0.0)
         self.f_low.setValue(0.3)
         vbox.addWidget(self.f_low)
         vbox.addWidget(QLabel('High Bandpass (Hz)'))
-        self.f_high = QDoubleSpinBox()
         self.f_high.setMinimum(0.0)
         self.f_high.setValue(3.0)
         vbox.addWidget(self.f_high)
-
         vbox.addWidget(QLabel('Frame Rate (Hz)'))
-        self.frame_rate = QSpinBox()
         self.frame_rate.setMinimum(0.0)
         self.frame_rate.setMaximum(1000)
         self.frame_rate.setValue(30)
         vbox.addWidget(self.frame_rate)
-
-        self.temp_filter_pb = QPushButton('&Apply Filter')
         vbox.addWidget(self.temp_filter_pb)
 
-        vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        self.right.setLayout(vbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

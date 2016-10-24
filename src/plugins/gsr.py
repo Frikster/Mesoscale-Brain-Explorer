@@ -19,8 +19,14 @@ class Widget(QWidget):
 
     if not project:
       return
-
     self.project = project
+
+    # define ui components and global data
+    self.view = MyGraphicsView(self.project)
+    self.listview = QListView()
+    self.left = QFrame()
+    self.right = QFrame()
+
     self.setup_ui()
     self.selected_videos = []
 
@@ -56,27 +62,32 @@ class Widget(QWidget):
     self.view.show(frame)
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-    self.view = MyGraphicsView(self.project)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
     self.view.vb.setCursor(Qt.CrossCursor)
-    hbox.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview = QListView()
     self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
-
     hhbox = QHBoxLayout()
     butt_gsr = QPushButton('Global Signal Regression')
     hhbox.addWidget(butt_gsr)
     vbox.addLayout(hhbox)
     vbox.addStretch()
     butt_gsr.clicked.connect(self.gsr_clicked)
+    self.right.setLayout(vbox)
 
-    hbox.addLayout(vbox)
-    self.setLayout(hbox)
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
   def gsr_clicked(self):
       progress = QProgressDialog('Computing gsr for selection', 'Abort', 0, 100, self)

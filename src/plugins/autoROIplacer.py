@@ -14,7 +14,7 @@ from PyQt4 import QtGui
 
 from .util.mygraphicsview import MyGraphicsView
 
-sys.path.append('..')
+#sys.path.append('..')
 import qtutil
 import uuid
 from .util import fileloader
@@ -143,19 +143,9 @@ class Widget(QWidget):
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                     QItemSelection].connect(self.selected_roi_changed)
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
-
-    # Remove everything
-    self.roi_list.model().rois = []
-    for row in range(self.roi_list.model().rowCount(parent)):
-        self.roi_list.model().removeRow()
     for roi_name in roi_names:
+      if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
-    #self.roi_list.setCurrentIndex(model.index(0, 0))
-
-    # for roi_name in roi_names:
-    #   if roi_name not in self.roi_list.model().rois:
-    #     model.appendRoi(roi_name)
-    # self.roi_list.setCurrentIndex(model.index(0, 0))
 
   # def roi_item_edited(self, item):
   #   new_name = item.text()

@@ -11,6 +11,7 @@
     "chebyshev_filter",
     "calculate_df_f0",
     "gsr",
+    "auto_seed_placer",
     "spc_map",
     "stdev_map",
     "autoROIplacer",

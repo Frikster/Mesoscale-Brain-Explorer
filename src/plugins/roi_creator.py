@@ -71,6 +71,14 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
+
+   # define ui components and global data
+    self.view = MyGraphicsView(self.project)
+    self.listview = QListView()
+    self.roi_list = QListView()
+    self.left = QFrame()
+    self.right = QFrame()
+
     self.setup_ui()
 
     self.selected_videos = []
@@ -107,18 +115,16 @@ class Widget(QWidget):
     self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-  
-    self.view = MyGraphicsView(self.project)
-    hbox.addWidget(self.view)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.view.vb.setCursor(Qt.CrossCursor)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview = QListView()
     self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
-
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
     vbox.addWidget(pb)
@@ -128,23 +134,29 @@ class Widget(QWidget):
     pb = QPushButton('Delete selected ROIs')
     pb.clicked.connect(self.delete_roi)
     vbox.addWidget(pb)
-
     vbox.addWidget(qtutil.separator())
-
     vbox2 = QVBoxLayout()
     w = QWidget()
     w.setLayout(vbox2)
     vbox.addWidget(w)
-
     vbox.addWidget(qtutil.separator())
     vbox.addWidget(QLabel('ROIs'))
-    self.roi_list = QListView()
     vbox.addWidget(self.roi_list)
+    self.right.setLayout(vbox)
 
-    hbox.addLayout(vbox)
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox)
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
+
+    # hbox.addLayout(vbox)
+    # hbox.setStretch(0, 1)
+    # hbox.setStretch(1, 0)
+    # self.setLayout(hbox)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
