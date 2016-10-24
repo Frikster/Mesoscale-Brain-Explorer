@@ -19,7 +19,7 @@ def tif2npy(filename_from, filename_to, progress_callback):
       fp[i] = page.asarray()
 
 def raw2npy(filename_from, filename_to, dtype, width, height,
-  num_channels, progress_callback):
+  num_channels, channel, progress_callback):
     fp = np.memmap(filename_from, dtype, 'r')
     frame_size = width * height * num_channels
     if len(fp) % frame_size:
@@ -31,5 +31,5 @@ def raw2npy(filename_from, filename_to, dtype, width, height,
     fp_to = np.load(filename_to, mmap_mode='r+')
     for i, frame in enumerate(fp):
       progress_callback(i / float(len(fp)-1))
-      fp_to[i] = frame[:,:,1]
+      fp_to[i] = frame[:,:,channel-1]
 

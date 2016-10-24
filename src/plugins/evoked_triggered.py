@@ -9,7 +9,7 @@ from PyQt4.QtCore import *
 
 from .util import fileloader
 from .util.qt import FileTable, FileTableModel, qtutil
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
@@ -60,8 +60,8 @@ class Widget(QWidget):
             frames_to_avg = np.concatenate(frames_to_avg)
             avg = np.mean(frames_to_avg, axis=0)
             trig_avg[frame_set_index] = avg
-        pfs.save_project_video(os.path.join(self.project.path, str(uuid.uuid4())
-                                            , self.project, trig_avg, 'trigger-avg'))
+        pfs.save_project(os.path.join(self.project.path, str(uuid.uuid4())
+                                      , self.project, trig_avg, 'trigger-avg'),'video')
 
         self.update_tables()
 

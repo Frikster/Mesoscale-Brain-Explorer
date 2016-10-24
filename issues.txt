@@ -17,6 +17,7 @@ User-interface
 Data management
 ---------------
 * Manage 'manipulations' correctly
+* The source field tells you what video was in view for bulk processing, not which video it is from
 
 alignment + concat
 ------------------

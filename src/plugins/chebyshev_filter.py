@@ -3,7 +3,7 @@
 import os, sys
 import numpy as np
 from scipy import signal
-from .util import project_file_saver as pfs
+from .util import project_functions as pfs
 
 import PyQt4
 from PyQt4.QtGui import *
@@ -11,14 +11,14 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
-from .util import project_file_saver as pfs
-
+from .util import project_functions as pfs
 
 #import numba as nb
 #from numba import cuda
 import uuid
 import psutil
 
+import parmap
 
 # def temporal_filter_beams(frames):
 #     frame_rate = 30
@@ -86,7 +86,18 @@ class Widget(QWidget):
             #         'manipulations': ['chebyshev']
             #     })
 
+        # define ui components and global data
+        self.left = QFrame()
+        self.right = QFrame()
+        self.view = MyGraphicsView(self.project)
+        self.listview = QListView()
+        self.f_low = QDoubleSpinBox()
+        self.f_high = QDoubleSpinBox()
+        self.frame_rate = QSpinBox()
+        self.temp_filter_pb = QPushButton('&Apply Filter')
+
         self.setup_ui()
+        self.selected_videos = []
         self.listview.setModel(QStandardItemModel())
         self.listview.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_video_changed)
@@ -100,75 +111,100 @@ class Widget(QWidget):
             for f in filenames:
                 self.listview.model().appendRow(QStandardItem(f))
         self.listview.setCurrentIndex(self.listview.model().index(0, 0))
-        self.temp_filter_pb.clicked.connect(self.temporal_filter)
+        self.temp_filter_pb.clicked.connect(self.filter_clicked)
 
 
     def setup_ui(self):
-        hbox = QHBoxLayout()
-
-        self.view = MyGraphicsView(self.project)
-        hbox.addWidget(self.view)
+        vbox_view = QVBoxLayout()
+        vbox_view.addWidget(self.view)
+        self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview = QListView()
+        self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.listview)
-
         vbox.addWidget(QLabel('Low Bandpass (Hz)'))
-        self.f_low = QDoubleSpinBox()
         self.f_low.setMinimum(0.0)
         self.f_low.setValue(0.3)
         vbox.addWidget(self.f_low)
         vbox.addWidget(QLabel('High Bandpass (Hz)'))
-        self.f_high = QDoubleSpinBox()
         self.f_high.setMinimum(0.0)
         self.f_high.setValue(3.0)
         vbox.addWidget(self.f_high)
-
         vbox.addWidget(QLabel('Frame Rate (Hz)'))
-        self.frame_rate = QSpinBox()
         self.frame_rate.setMinimum(0.0)
         self.frame_rate.setMaximum(1000)
         self.frame_rate.setValue(30)
         vbox.addWidget(self.frame_rate)
-
-        self.temp_filter_pb = QPushButton('&Apply Filter')
         vbox.addWidget(self.temp_filter_pb)
 
-        vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        hbox.addLayout(vbox)
-        hbox.setStretch(0, 1)
-        hbox.setStretch(1, 0)
-        self.setLayout(hbox)
+        self.right.setLayout(vbox)
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(3)
+        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        splitter.addWidget(self.left)
+        splitter.addWidget(self.right)
+        hbox_global = QHBoxLayout()
+        hbox_global.addWidget(splitter)
+        self.setLayout(hbox_global)
 
-    def selected_video_changed(self, selection):
-        if not selection.indexes():
+    def selected_video_changed(self, selected, deselected):
+        if not selected.indexes():
             return
-        self.video_path = str(os.path.join(self.project.path,
-                                           selection.indexes()[0].data(Qt.DisplayRole))
+
+        for index in deselected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
                               + '.npy')
-        frame = fileloader.load_reference_frame(self.video_path)
+            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+        for index in selected.indexes():
+            vidpath = str(os.path.join(self.project.path,
+                                     index.data(Qt.DisplayRole))
+                              + '.npy')
+        if vidpath not in self.selected_videos and vidpath != 'None':
+            self.selected_videos = self.selected_videos + [vidpath]
+
+        self.shown_video_path = str(os.path.join(self.project.path,
+                                           selected.indexes()[0].data(Qt.DisplayRole))
+                              + '.npy')
+        frame = fileloader.load_reference_frame(self.shown_video_path)
         self.view.show(frame)
+
+    def filter_clicked(self):
+        progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+
+        self.temporal_filter(callback)
+
+
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0
         low_limit = low_limit / nyq
         high_limit = high_limit / nyq
         order = 4
-        rp = 0.1 #Ripple in the passband. Maximum allowable ripple
+        rp = 0.1 # Ripple in the passband. Maximum allowable ripple
         Wn = [low_limit, high_limit]
 
         b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
         print("Filtering...")
         frames = signal.filtfilt(b, a, frames, axis=0)
+        # non-working parallized version
+        # def filt(pixel, b, a):
+        #     return signal.filtfilt(b, a, pixel)
         # frames = parmap.map(filt, frames.T, b, a)
         # for i in range(frames.shape[-1]):
         #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
         print("Done!")
         return frames
 
-    def temporal_filter(self):
+    def temporal_filter(self, progress_callback):
         assert(self.f_low.value() < self.f_high.value())
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
@@ -179,22 +215,25 @@ class Widget(QWidget):
         #temporal_filter_beams_nb(out, frames_mmap)
         #frames = np.array(frames_mmap)
 
-        frames = fileloader.load_file(self.video_path)
-        avg_frames = np.mean(frames, axis=0)
-        frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
-        frames += avg_frames
+        for i, video_path in enumerate(self.selected_videos):
+            progress_callback(i / len(self.selected_videos))
+            frames = fileloader.load_file(video_path)
+            avg_frames = np.mean(frames, axis=0)
+            frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+            frames += avg_frames
 
-        if not self.project:
-            filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
-                                                               str(QSettings().value('last_load_data_path')),
-                                                               filter='*.npy')
-            np.save(str(filename), frames)
-            msgBox = PyQt4.QtGui.QMessageBox()
-            msgBox.setText(str(filename)+" saved")
-            msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
-            msgBox.exec_()
-        else:
-            pfs.save_project_video(self.video_path, self.project, frames, 'cheby')
+            if not self.project:
+                filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
+                                                                   str(QSettings().value('last_load_data_path')),
+                                                                   filter='*.npy')
+                np.save(str(filename), frames)
+                msgBox = PyQt4.QtGui.QMessageBox()
+                msgBox.setText(str(filename)+" saved")
+                msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
+                msgBox.exec_()
+            else:
+                pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
+        progress_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):
