@@ -95,20 +95,6 @@ class RoiItemModel(QAbstractListModel):
 class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
-
-    # defaults
-    # todo: this needs to vanish
-    # anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
-    #             "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
-    #             "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
-    # roi_names = anatomy_rois.keys()
-    # roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
-    # roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
-    # roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
-    # self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
-    # self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
-    #              self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
-    ###
     # check project
     if not project:
       return
@@ -121,7 +107,6 @@ class Widget(QWidget):
     self.table_widget = AutoROICoords(self.data, 0, 4)
     self.left = QFrame()
     self.right = QFrame()
-    #self.open_dialogs = []
 
     self.setup_ui()
 
@@ -146,6 +131,40 @@ class Widget(QWidget):
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
+
+      # setup roi table
+      if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+          self.data = None
+          self.headers = None
+      else:
+          text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+                            if self.project.files[x]['type'] == 'roi_table']
+          assert (len(text_file_path) == 1)
+          text_file_path = text_file_path[0]
+          roi_table = []  # numpy way: np.empty(shape=(4, ))
+          with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+              roi_table_it = csv.reader(csvfile, delimiter=',')
+              for row in roi_table_it:
+                  roi_table = roi_table + [row]
+          roi_table = np.array(roi_table)
+          self.headers = [str.strip(x) for x in roi_table[0,]]
+          roi_table_range = range(len(roi_table))[1:]
+          roi_names = [roi_table[x, 0] for x in roi_table_range]
+          roi_sizes = [int(roi_table[x, 1]) for x in roi_table_range]
+          roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+          roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
+          self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
+                       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+          if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+              self.project.files.append({
+                  'path': text_file_path,
+                  'type': 'roi_table',
+                  'source_video': self.video_path,
+                  'name': os.path.basename(text_file_path)
+              })
+          self.table_widget.clear()
+          self.table_widget.setRowCount(len(self.data[self.headers[0]]))
+          self.table_widget.update(self.data)
 
   # def roi_item_edited(self, item):
   #   new_name = item.text()
@@ -226,15 +245,15 @@ class Widget(QWidget):
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
   def load_ROI_table(self):
-      text_file = QFileDialog.getOpenFileName(
+      text_file_path = QFileDialog.getOpenFileName(
           self, 'Load images', QSettings().value('last_load_text_path'),
           'Video files (*.csv *.txt)')
-      if not text_file:
+      if not text_file_path:
           return
-      QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
+      QSettings().setValue('last_load_text_path', os.path.dirname(text_file_path))
 
       roi_table = [] # numpy way: np.empty(shape=(4, ))
-      with open(text_file, 'rt', encoding='ascii') as csvfile:
+      with open(text_file_path, 'rt', encoding='ascii') as csvfile:
          roi_table_it = csv.reader(csvfile, delimiter=',')
          for row in roi_table_it:
            roi_table = roi_table + [row]
@@ -247,6 +266,15 @@ class Widget(QWidget):
       roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
       self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
+      # for now only support having one roi_table associated per project
+      if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+        if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+          self.project.files.append({
+            'path': text_file_path,
+            'type': 'roi_table',
+            'source_video': self.video_path,
+            'name': os.path.basename(text_file_path)
+          })
       self.table_widget.clear()
       self.table_widget.setRowCount(len(self.data[self.headers[0]]))
       self.table_widget.update(self.data)
