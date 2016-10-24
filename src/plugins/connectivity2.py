@@ -40,6 +40,7 @@ class ConnectivityModel(QAbstractTableModel):
         self.rois = rois
 
         avg_data = []
+        tot_data = []
         dict_for_stdev = {}
 
         for key in [i for i in list(itertools.product(xrange(len(rois)), xrange(len(rois))))]:
@@ -47,14 +48,21 @@ class ConnectivityModel(QAbstractTableModel):
 
         for video_path in selected_videos:
             self._data = calc_connectivity(video_path, image, rois)
+            if tot_data == []:
+                tot_data = self._data
             if avg_data == []:
                 avg_data = self._data
-            for i in xrange(len(avg_data)):
-                for j in xrange(len(avg_data)):
+            for i in xrange(len(tot_data)):
+                for j in xrange(len(tot_data)):
                     dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
                     if video_path != selected_videos[0]:
-                        avg_data[i][j] = (avg_data[i][j] + self._data[i][j]) / len(selected_videos)
+                        tot_data[i][j] = tot_data[i][j] + self._data[i][j]
+        # Finally compute averages
+        for i in xrange(len(tot_data)):
+            for j in xrange(len(tot_data)):
+                avg_data[i][j] = tot_data[i][j] / len(selected_videos)
         stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
+        assert(stdev_dict[(0, 0)] == 0)
 
         # combine stddev and avg data
         for i in xrange(len(avg_data)):
@@ -161,9 +169,6 @@ class Widget(QWidget):
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-        # pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
-        # pb.clicked.connect(self.load_ROI_table)
-        # vbox.addWidget(pb)
         vbox.addWidget(qtutil.separator())
         vbox.addWidget(QLabel('Select ROI:'))
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -214,15 +219,6 @@ class Widget(QWidget):
             roiname = str(index.data(Qt.DisplayRole))
             roipath = str(index.data(Qt.UserRole))
             self.view.vb.addRoi(roipath, roiname)
-
-    # def load_ROI_table(self):
-    #     text_file = QFileDialog.getOpenFileName(
-    #         self, 'Load images', QSettings().value('last_load_text_path'),
-    #         'Video files (*.txt)')
-    #     if not text_file:
-    #         return
-    #     QSettings().setValue('last_load_text_path', os.path.dirname(text_file))
-
 
     def connectivity_triggered(self):
         indexes = self.roi_list.selectionModel().selectedIndexes()
