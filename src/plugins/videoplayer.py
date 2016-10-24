@@ -1,14 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util.qt import FileTable, FileTableModel
-
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import FileTable, FileTableModel
 
 class PlayerDialog(QDialog):
   def __init__(self, project, filename, parent=None):

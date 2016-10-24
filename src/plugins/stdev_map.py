@@ -1,15 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util import filter_jeff
-from util.mygraphicsview import MyGraphicsView
-from util.qt import MyListView, MyProgressDialog
-from util.gradient import GradientLegend
+from .util import filter_jeff
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import MyListView, MyProgressDialog
+from .util.gradient import GradientLegend
 
-from util import fileloader
+from .util import fileloader
 
+import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -19,7 +20,7 @@ def calc_stddev(video_path, progress):
   progress.setValue(0)
   frames = fileloader.load_file(video_path)
   #stddev = filter_jeff.standard_deviation(frames, progress)
-  stddev = filter_jeff.standard_deviation(frames)
+  stddev = np.std(frames, axis=0)
   progress.setValue(100)
 
   return stddev
@@ -78,6 +79,14 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
+
+    # define ui components and global data
+    self.left = QFrame()
+    self.right = QFrame()
+    self.view = MyGraphicsView(self.project)
+    self.video_list = MyListView()
+    self.max_stdev = QDoubleSpinBox(decimals=4)
+
     self.setup_ui()
 
     self.video_path = None
@@ -88,35 +97,40 @@ class Widget(QWidget):
     for f in project.files:
       if f['type'] != 'video':
         continue
-      self.video_list.model().appendRow(QStandardItem(f['path']))
+      self.video_list.model().appendRow(QStandardItem(f['name']))
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-    self.view = MyGraphicsView(self.project) 
-    hbox.addWidget(self.view)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.video_list = MyListView()
     vbox.addWidget(self.video_list)
-    self.max_stdev = QDoubleSpinBox(decimals=4)
     self.max_stdev.setMinimum(0.0000)
     self.max_stdev.setValue(1.0000)
     vbox.addWidget(self.max_stdev)
     pb = QPushButton('Generate Std. Dev. Map')
     pb.clicked.connect(self.go)
     vbox.addWidget(pb)
-    
-    hbox.addLayout(vbox)    
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox)
+    self.right.setLayout(vbox)
+
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
   def selected_video_changed(self, selection):
     if not selection.indexes():
       return
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 

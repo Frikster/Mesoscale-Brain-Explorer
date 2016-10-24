@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
+from .chebyshev_filter import *
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -8,8 +8,9 @@ import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
+from .util import project_functions as pfs
 
 sys.path.append('..')
 import qtutil
@@ -39,11 +40,11 @@ class RoiItemModel(QAbstractListModel):
     def data(self, index, role):
         if role == Qt.DisplayRole:
             return self.rois[index.row()]
-        return QVariant()
+        return
 
     def setData(self, index, value, role):
       if role == Qt.EditRole:
-        value = str(value.toString())
+        value = str(value)
         if value in self.rois[index.row()]:
           pass
         elif value in self.rois:
@@ -70,7 +71,17 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
+
+   # define ui components and global data
+    self.view = MyGraphicsView(self.project)
+    self.listview = QListView()
+    self.roi_list = QListView()
+    self.left = QFrame()
+    self.right = QFrame()
+
     self.setup_ui()
+
+    self.selected_videos = []
 
     self.listview.setModel(QStandardItemModel())
     self.listview.selectionModel().selectionChanged[QItemSelection,
@@ -78,7 +89,7 @@ class Widget(QWidget):
     for f in project.files:
       if f['type'] != 'video':
         continue
-      self.listview.model().appendRow(QStandardItem(f['path']))
+      self.listview.model().appendRow(QStandardItem(f['name']))
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel() 
@@ -92,7 +103,7 @@ class Widget(QWidget):
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       model.appendRoi(roi_name)
-    self.roi_list.setCurrentIndex(model.index(0, 0))
+    #self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_project_roi)
 
   def roi_item_edited(self, item):
@@ -104,43 +115,48 @@ class Widget(QWidget):
     self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-  
-    self.view = MyGraphicsView(self.project)
-    hbox.addWidget(self.view)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.view.vb.setCursor(Qt.CrossCursor)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview = QListView()
+    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
-
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
     vbox.addWidget(pb)
-    pb = QPushButton('Crop poly ROI')
-    pb.clicked.connect(self.crop_ROI)
+    pb = QPushButton('Crop to poly ROI for selected files')
+    pb.clicked.connect(self.crop_clicked)
     vbox.addWidget(pb)
     pb = QPushButton('Delete selected ROIs')
     pb.clicked.connect(self.delete_roi)
     vbox.addWidget(pb)
-
     vbox.addWidget(qtutil.separator())
-
     vbox2 = QVBoxLayout()
     w = QWidget()
     w.setLayout(vbox2)
     vbox.addWidget(w)
-
     vbox.addWidget(qtutil.separator())
     vbox.addWidget(QLabel('ROIs'))
-    self.roi_list = QListView()
     vbox.addWidget(self.roi_list)
+    self.right.setLayout(vbox)
 
-    hbox.addLayout(vbox)
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox)
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
+
+    # hbox.addLayout(vbox)
+    # hbox.setStretch(0, 1)
+    # hbox.setStretch(1, 0)
+    # self.setLayout(hbox)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
@@ -149,12 +165,26 @@ class Widget(QWidget):
         self.view.vb.selectROI(roi)
       self.view.vb.removeROI()
 
-  def selected_video_changed(self, selection):
-    if not selection.indexes():
+  def selected_video_changed(self, selected, deselected):
+    if not selected.indexes():
       return
-    # todo: Is this terrible practice? Having self.video_path defined here? This function always runs through init so it works
-    self.video_path = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    frame = fileloader.load_reference_frame(self.video_path)
+
+    for index in deselected.indexes():
+      vidpath = str(os.path.join(self.project.path,
+                                 index.data(Qt.DisplayRole))
+                    + '.npy')
+      self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+    for index in selected.indexes():
+      vidpath = str(os.path.join(self.project.path,
+                                 index.data(Qt.DisplayRole))
+                    + '.npy')
+    if vidpath not in self.selected_videos and vidpath != 'None':
+      self.selected_videos = self.selected_videos + [vidpath]
+
+    self.shown_video_path = str(os.path.join(self.project.path,
+                                             selected.indexes()[0].data(Qt.DisplayRole))
+                                + '.npy')
+    frame = fileloader.load_reference_frame(self.shown_video_path)
     self.view.show(frame)
 
   def selected_roi_changed(self, selection):
@@ -167,7 +197,7 @@ class Widget(QWidget):
 
     # todo: re-explain how you can figure out to go from commented line to uncommented line
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
@@ -207,13 +237,13 @@ class Widget(QWidget):
       self.project.files.append({
         'path': path,
         'type': 'roi',
-        'source_video': self.video_path,
+        'source_video': self.shown_video_path,
         'name': name
       })
     else:
       for i, file in enumerate(self.project.files):
         if file['path'] == path:
-          self.project.files[i]['source_video'] = self.video_path
+          self.project.files[i]['source_video'] = self.shown_video_path
     self.project.save()
 
     roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
@@ -225,7 +255,7 @@ class Widget(QWidget):
     self.view.vb.addPolyRoiRequest()
 
   def delete_roi(self):
-    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole).toString())
+    rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
     if rois_selected == None:
       return
@@ -239,48 +269,54 @@ class Widget(QWidget):
     for roi_to_remove in [rois_dict[x]['name'] for x in range(len(rois_dict))]:
       self.roi_list.model().removeRow(roi_to_remove)
 
-  def crop_ROI(self):
-    frames = fileloader.load_file(self.video_path)
-    # Return if there is no image or rois in view
-    if self.view.vb.img == None or len(self.view.vb.rois) == 0:
-      print("there is no image or rois in view ")
-      return
+  def crop_clicked(self):
+      progress = QProgressDialog('Cropping for selection', 'Abort', 0, 100, self)
+      progress.setAutoClose(True)
+      progress.setMinimumDuration(0)
 
-    # swap axis for aligned_frames
-    frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-    # Collect ROI's and combine
-    numROIs = len(self.view.vb.rois)
-    arrRegion_masks = []
-    for i in xrange(numROIs):
-      roi = self.view.vb.rois[i]
-      arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
-      arrRegion_masks.append(arrRegion_mask)
+      def callback(x):
+          progress.setValue(x * 100)
+          QApplication.processEvents()
 
-    combined_mask = np.sum(arrRegion_masks, axis=0)
-    # Make all rows with all zeros na
-    # todo: figure out where zeros are converted to na. In BMD it isn't here...
-    # combined_mask[(combined_mask == 0)] = None
-    self.mask = combined_mask
-    # TODO: save mask as well
-    # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
-    # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
+      self.crop_ROI(callback)
 
-    # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
-    # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
-    # Dont forget to set Endian value and set to 64 bit
-    roi_frames = (frames * combined_mask[np.newaxis, :, :])
+  def crop_ROI(self, progress_callback):
+    for i, video_path in enumerate(self.selected_videos):
+      progress_callback(i / len(self.selected_videos))
+      frames = fileloader.load_file(video_path)
+      # Return if there is no image or rois in view
+      if self.view.vb.img == None or len(self.view.vb.rois) == 0:
+        print("there is no image or rois in view ")
+        return
 
-    # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
-    # path = os.path.join(self.project.path, 'roi' + '.npy')
-    path = self.video_path + 'roi' + '.npy'
-    np.save(path, roi_frames)
-    self.project.files.append({
-      'path': path,
-      'type': 'video',
-      'source_video': self.video_path,
-      'manipulations': ['crop']
-    })
-    self.project.save()
+      # swap axis for aligned_frames
+      frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+      # Collect ROI's and combine
+      numROIs = len(self.view.vb.rois)
+      arrRegion_masks = []
+      for i in xrange(numROIs):
+        roi = self.view.vb.rois[i]
+        arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
+        arrRegion_masks.append(arrRegion_mask)
+
+      combined_mask = np.sum(arrRegion_masks, axis=0)
+      # Make all rows with all zeros na
+      # todo: figure out where zeros are converted to na. In BMD it isn't here...
+      # combined_mask[(combined_mask == 0)] = None
+      self.mask = combined_mask
+      # TODO: save mask as well
+      # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
+      # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
+
+      # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
+      # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
+      # Dont forget to set Endian value and set to 64 bit
+      roi_frames = (frames * combined_mask[np.newaxis, :, :])
+
+      # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
+      # path = os.path.join(self.project.path, 'roi' + '.npy')
+      progress_callback(1)
+      pfs.save_project(video_path, self.project, roi_frames, 'crop', 'video')
 
 class MyPlugin:
   def __init__(self, project=None):

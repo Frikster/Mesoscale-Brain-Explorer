@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from PyQt4.QtCore import pyqtRemoveInputHook, pyqtRestoreInputHook
 from pdb import set_trace

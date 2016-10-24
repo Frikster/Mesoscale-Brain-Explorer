@@ -728,7 +728,7 @@ class MetaArray(object):
         
         """
         ## decide which read function to use
-        with open(filename, 'rb') as fd:
+        with open(filename, 'r') as fd:
             magic = fd.read(8)
             if magic == '\x89HDF\r\n\x1a\n':
                 fd.close()
@@ -1202,7 +1202,7 @@ class MetaArray(object):
         
         ## write data to file
         if appendAxis is None or newFile:
-            fd = open(fileName, 'wb')
+            fd = open(fileName, 'w')
             fd.write(str(meta) + '\n\n')
             for ax in axstrs:
                 fd.write(ax)

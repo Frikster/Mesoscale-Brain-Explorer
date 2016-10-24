@@ -1,13 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 import pandas as pd
 import time
+import os
+import numpy as np
+import imreg_dft as ird
 
-import util.displacement_jeff as djeff
-from util.qt import PandasModel, FileTableModel
+from .util import fileloader
+from .util import displacement_jeff as djeff
+from .util.qt import PandasModel, FileTableModel
 
 class TableView(QTableView):
   def __init__(self, parent=None):
@@ -67,12 +71,15 @@ class Widget(QWidget):
       QApplication.processEvents()
       #time.sleep(0.01)
 
-    filenames = djeff.align_videos(filenames, callback)
+    reference_frame = np.load(filenames[0])[400]
+    filenames = self.align_videos(filenames, reference_frame, callback)
 
     for filename in filenames:
       if filename in [f['path'] for f in self.project.files]:
         continue
+      name, ext = os.path.splitext(os.path.basename(filename))
       f = {
+        'name': name,
         'path': filename,
         'type': 'video',
         'manipulations': 'align'
@@ -80,6 +87,38 @@ class Widget(QWidget):
       self.project.files.append(f)
     self.project.save()
     self.update_tables()
+
+  def compute_shifts(self, template_frame, frames, progress_callback):
+    results = []
+    for i, frame in enumerate(frames):
+      progress_callback(i / float(len(frames) - 1))
+      results = results + [ird.translation(template_frame, frame)]
+    return results
+
+  def apply_shifts(self, frames, shifts, progress_callback):
+    shifted_frames = []
+    for frame_no, shift in enumerate(shifts):
+      tvec = shift["tvec"]
+      progress_callback(frame_no / float(len(shifts) - 1))
+      frame = frames[frame_no]
+      shifted_frames.append(ird.transform_img(frame, tvec=tvec))
+    return shifted_frames
+
+  def align_videos(self, filenames, reference_frame, progress_callback):
+    """Return filenames of generated videos"""
+    progress_callback(0)
+    ret_filenames = []
+    reference_frame
+    for filename in filenames:
+      frames = np.load(filename)
+      shifts = self.compute_shifts(reference_frame, frames, progress_callback)
+      shifted_frames = self.apply_shifts(frames, shifts, progress_callback)
+      path = os.path.join(os.path.dirname(filename), 'aligned_' + \
+                          os.path.basename(filename))
+      np.save(path, shifted_frames)
+      ret_filenames.append(path)
+    progress_callback(1)
+    return ret_filenames
 
 class MyPlugin:
   def __init__(self, project):

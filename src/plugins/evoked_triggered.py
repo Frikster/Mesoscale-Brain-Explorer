@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import numpy as np
@@ -7,9 +7,9 @@ import uuid
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util import fileloader
-from util.qt import FileTable, FileTableModel, qtutil
-
+from .util import fileloader
+from .util.qt import FileTable, FileTableModel, qtutil
+from .util import project_functions as pfs
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):
@@ -50,30 +50,25 @@ class Widget(QWidget):
         lens = [len(frames[x]) for x in range(len(frames))]
         min_lens = np.min(lens)
 
-        trig_avg = []
+        length = frames[0].shape[1]
+        breadth = frames[0].shape[2]
+
+        trig_avg = np.empty([min_lens, length, breadth])
         for frame_set_index in range(min_lens):
             frames_to_avg = [frames[frame_index][frame_set_index]
                              for frame_index in range(len(frames))]
             frames_to_avg = np.concatenate(frames_to_avg)
             avg = np.mean(frames_to_avg, axis=0)
-            trig_avg.append(avg)
-        #frames = np.concatenate(frames)
+            trig_avg[frame_set_index] = avg
+        pfs.save_project(os.path.join(self.project.path, str(uuid.uuid4())
+                                      , self.project, trig_avg, 'trigger-avg'),'video')
 
-        path = os.path.join(self.project.path, str(uuid.uuid4()) + 'trigger-avg.npy')
-        np.save(path, trig_avg)
-        self.project.files.append({
-            'path': path,
-            'type': 'video',
-            'manipulations': 'trigger-avg',
-            'source': filenames
-        })
-        self.project.save()
         self.update_tables()
 
 
 class MyPlugin:
     def __init__(self, project):
-        self.name = 'Concat videos'
+        self.name = 'Evoked triggered'
         self.widget = Widget(project)
 
     def run(self):

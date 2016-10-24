@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore,QtGui
 import numpy as np
-from roi import ROI,RectROIcustom, PolyLineROIcustom
-from custom_items import QActionCustom, QMenuCustom, ImageExporterCustom
+from .roi import ROI,RectROIcustom, PolyLineROIcustom
+from .custom_items import QActionCustom, QMenuCustom, ImageExporterCustom
 import matplotlib
 import pickle
 import pyqtgraph.functions as fn
@@ -572,9 +572,6 @@ class MultiRoiViewBox(pg.ViewBox):
             fileNames = QtGui.QFileDialog.getOpenFileNames(None, self.tr("Load ROI"),
                                                            QtCore.QDir.currentPath(),
                                                            self.tr("ROI (*.roi)"))
-        # Fix for PyQt/PySide compatibility. PyQt returns a QString,
-        # whereas PySide returns a tuple (first entry is filename as string)
-        if isinstance(fileNames, types.TupleType): fileNames = fileNames[0]
         if hasattr(QtCore, 'QStringList') and \
                 isinstance(fileNames, QtCore.QStringList): fileNames = [str(i) for i in fileNames]
         if len(fileNames) > 0:
@@ -617,11 +614,11 @@ class MultiRoiViewBox(pg.ViewBox):
       self.img.setRect(QtCore.QRectF(x1, y1, x2, y2))
        
     def showImage(self, arr):
-        if arr is None: 
+        arr = arr.astype("float64")
+        if arr is None:
             self.img = None
             return
         if self.img==None:
-            #arr = arr.astype("float64")
             self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
             self.addItem(self.img)
         # Add/readd crosshair

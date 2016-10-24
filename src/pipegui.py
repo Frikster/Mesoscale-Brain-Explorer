@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -41,7 +41,7 @@ class PipelineView(QListView):
 
   def currentChanged(self, current, previous):
     super(PipelineView, self).currentChanged(current, previous)
-    plugin_name = str(current.data(Qt.UserRole).toString())
+    plugin_name = str(current.data(Qt.UserRole))
     self.active_plugin_changed.emit(plugin_name)
 
 class ToolButton(QToolButton):
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
     self.sidebar.pl_list.setModel(self.pipeline_model)
     self.pipeconf.pipeline_list.setModel(self.pipeline_model)
 
-    last = str(QSettings().value('path_of_last_project').toString())
+    last = str(QSettings().value('path_of_last_project'))
     if last:
       self.open_project(last)
 
@@ -158,8 +158,8 @@ class MainWindow(QMainWindow):
     splitter.addWidget(self.sidebar)
     splitter.addWidget(self.pl_frame)
 
-    splitter.setStretchFactor(0, 0)
-    splitter.setStretchFactor(1, 1)
+    #splitter.setStretchFactor(0, 0)
+    #splitter.setStretchFactor(1, 1)
 
     self.setCentralWidget(splitter)
 
@@ -199,8 +199,8 @@ class MainWindow(QMainWindow):
     self.project_menu = m
 
     settings_menu = self.menu.addMenu('&Settings')
-    a = QAction('&Pipeline Automation', self)
-    a.setEnabled(False)
+    #a = QAction('&Pipeline Automation', self)
+    #a.setEnabled(False)
     #a.setStatusTip('Create new project')
     #a.triggered.connect(self.create_project)
     settings_menu.addAction(a)
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
   app = QApplication(sys.argv)
   app.setApplicationName(APPNAME)
-  app.setOrganizationName('The SPC Corporation')
+  app.setOrganizationName('University of British Columbia')
   app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()

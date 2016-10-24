@@ -1,11 +1,12 @@
+#!/usr/bin/env python3
+
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.stats.stats import pearsonr
 from scipy import ndimage
-import parmap
-import image_registration
-from PIL import Image
+#import parmap
+from multiprocessing import Pool
 from numpy import *
 import tifffile as tiff
 
@@ -15,7 +16,7 @@ from PyQt4.QtCore import *
 def load_raw(filename, width, height, dat_type):
     dat_type = np.dtype(dat_type)
 
-    with open(filename, "rb") as file:
+    with open(filename, "r") as file:
         frames = np.fromfile(file, dtype=dat_type)
     try:
         total_number_of_frames = int(np.size(frames) / (width * height * 3))
@@ -27,10 +28,7 @@ def load_raw(filename, width, height, dat_type):
         total_number_of_frames = int(np.size(frames)/(width*height))
         print("n_frames: "+str(total_number_of_frames))
         frames = np.reshape(frames, (total_number_of_frames, width, height))
-    #todo: note that you got rid of starting_frame!
-    # frames = frames[starting_frame:, :, :, 1]
     frames = np.asarray(frames, dtype=dat_type)
-
     return frames
 
 def load_tiff(filename):
@@ -52,48 +50,46 @@ def load_frames(filename, width, height, dat_type):
     else:
         print("unsupported file type")
 
-def get_frames(rgb_file, width, height, dat_type):
+# def get_frames(rgb_file, width, height, dat_type):
+#
+#     if(rgb_file.endswith(".tif")):
+#         imarray = tiff.imread(rgb_file)
+#         return imarray
+#
+#     if (rgb_file.endswith(".raw")):
+#         dat_type = np.dtype(dat_type)
+#         with open(rgb_file, "rb") as file:
+#             frames = np.fromfile(file, dtype=dat_type)
+#             total_number_of_frames = int(np.size(frames) / (width * height * 3))
+#             print("n_frames: " + str(total_number_of_frames))
+#             frames = np.reshape(frames, (total_number_of_frames, width, height, 3))
+#             frames = frames[:, :, :, 1]
+#             frames = np.asarray(frames, dtype=dat_type)
+#             return frames
+#
+#     if (rgb_file.endswith(".npy")):
+#         frames = np.load(rgb_file)
+#         frames[isnan(frames)] = 0
+#         return frames
 
-    if(rgb_file.endswith(".tif")):
-        imarray = tiff.imread(rgb_file)
-        return imarray
-
-    if (rgb_file.endswith(".raw")):
-        dat_type = np.dtype(dat_type)
-        with open(rgb_file, "rb") as file:
-            frames = np.fromfile(file, dtype=dat_type)
-            total_number_of_frames = int(np.size(frames) / (width * height * 3))
-            print("n_frames: " + str(total_number_of_frames))
-            frames = np.reshape(frames, (total_number_of_frames, width, height, 3))
-            #todo: note that you got rid of starting_frame!
-            # frames = frames[starting_frame:, :, :, 1]
-            frames = frames[:, :, :, 1]
-            frames = np.asarray(frames, dtype=dat_type)
-            return frames
-
-    if (rgb_file.endswith(".npy")):
-        frames = np.load(rgb_file)
-        frames[isnan(frames)] = 0
-        return frames
-
-def get_green_frames(g_file, width, height, dat_type):
-    if(g_file.endswith(".tif")):
-        imarray = tiff.imread(g_file)
-        return imarray
-
-    if (g_file.endswith(".raw")):
-        dat_type = np.dtype(dat_type)
-        with open(g_file, "rb") as file:
-            frames = np.fromfile(file, dtype=dat_type)
-            total_number_of_frames = int(np.size(frames)/(width*height))
-            print("n_frames: "+str(total_number_of_frames))
-            frames = np.reshape(frames, (total_number_of_frames, width, height))
-            frames = np.asarray(frames, dtype=dat_type)
-        return frames
-
-    if (g_file.endswith(".npy")):
-        frames = np.load(g_file)
-        return frames
+# def get_green_frames(g_file, width, height, dat_type):
+#     if(g_file.endswith(".tif")):
+#         imarray = tiff.imread(g_file)
+#         return imarray
+#
+#     if (g_file.endswith(".raw")):
+#         dat_type = np.dtype(dat_type)
+#         with open(g_file, "rb") as file:
+#             frames = np.fromfile(file, dtype=dat_type)
+#             total_number_of_frames = int(np.size(frames)/(width*height))
+#             print("n_frames: "+str(total_number_of_frames))
+#             frames = np.reshape(frames, (total_number_of_frames, width, height))
+#             frames = np.asarray(frames, dtype=dat_type)
+#         return frames
+#
+#     if (g_file.endswith(".npy")):
+#         frames = np.load(g_file)
+#         return frames
 
         # ########
         # # Cat method
@@ -115,50 +111,35 @@ def get_green_frames(g_file, width, height, dat_type):
 
 
 
-def get_processed_frames(rgb_file,width,height):
-    with open(rgb_file, "rb") as file:
-        frames = np.fromfile(file, dtype=np.float32)
-        total_number_of_frames = int(np.size(frames)/(width*height))
-        print(total_number_of_frames)
-        frames = np.reshape(frames, (total_number_of_frames, width, height))
-        frames = np.asarray(frames, dtype=np.float32)
-        total_number_of_frames = frames.shape[0]
-    return frames
+# def get_processed_frames(rgb_file,width,height):
+#     with open(rgb_file, "rb") as file:
+#         frames = np.fromfile(file, dtype=np.float32)
+#         total_number_of_frames = int(np.size(frames)/(width*height))
+#         print(total_number_of_frames)
+#         frames = np.reshape(frames, (total_number_of_frames, width, height))
+#         frames = np.asarray(frames, dtype=np.float32)
+#         total_number_of_frames = frames.shape[0]
+#     return frames
 
-def filt(pixel, b, a):
-    return signal.filtfilt(b, a, pixel)
-
-def cheby_filter(frames, low_limit, high_limit,frame_rate):
-    nyq = frame_rate/2.0
-    low_limit = low_limit/nyq
-    high_limit = high_limit/nyq
-    order = 4
-    rp = 0.1
-    Wn = [low_limit, high_limit]
-
-    b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-    print("Filtering...")
-    frames = signal.filtfilt(b, a, frames, axis=0)
-    #frames = parmap.map(filt, frames.T, b, a)
-    #for i in range(frames.shape[-1]):
-    #    frames[:, i] = signal.filtfilt(b, a, frames[:, i])
-    print("Done!")
-    return frames
-
-def calculate_avg(frames):
-    return np.mean(frames, axis=0)
-
-def calculate_df_f0(frames):
-    print(frames.shape)
-    baseline = np.mean(frames, axis=0)
-    frames = np.divide(np.subtract(frames, baseline), baseline)
-    where_are_NaNs = isnan(frames)
-    frames[where_are_NaNs] = 0
-    return frames
-
-def save_to_file(dir, filename, frames, dtype):
-    with open(dir+filename, "wb") as file:
-        frames.astype(dtype).tofile(file)
+# def filt(pixel, b, a):
+#     return signal.filtfilt(b, a, pixel)
+#
+# def cheby_filter(frames, low_limit, high_limit,frame_rate):
+#     nyq = frame_rate/2.0
+#     low_limit = low_limit/nyq
+#     high_limit = high_limit/nyq
+#     order = 4
+#     rp = 0.1
+#     Wn = [low_limit, high_limit]
+#
+#     b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
+#     print("Filtering...")
+#     frames = signal.filtfilt(b, a, frames, axis=0)
+#     #frames = parmap.map(filt, frames.T, b, a)
+#     #for i in range(frames.shape[-1]):
+#     #    frames[:, i] = signal.filtfilt(b, a, frames[:, i])
+#     print("Done!")
+#     return frames
 
 
 def gsr(frames, width, height):
@@ -214,9 +195,6 @@ def masked_gsr(frames, mask_filename,width,height):
     frames = frames - global_signal
     frames = np.reshape(frames, (frames.shape[0], width, height))
     return frames
-
-def standard_deviation(frames):
-    return np.std(frames, axis=0)
 
 def generate_mean_filter_kernel(size):
     kernel = 1.0/(size * size) * np.array([[1]*size]*size)
@@ -305,27 +283,27 @@ class CorrelationMapDisplayer:
         #for i in range(frames.shape[-1]):
         #    correlation_map.append(pearsonr(frames[:, i], seed_pixel)[0])
         # Todo: NaN's generated via this line. Why?
-        correlation_map = parmap.map(corr, frames.T, seed_pixel)
-        #correlation_map = map(corr, frames.T, seed_pixel)
+        #correlation_map = parmap.map(corr, frames.T, seed_pixel)
+        correlation_map = map(corr, frames.T, seed_pixel)
         correlation_map = np.asarray(correlation_map, dtype=np.float32)
         correlation_map = np.reshape(correlation_map, (width, height))
         print(np.shape(correlation_map))
 
         return correlation_map
 
-def display_image(image, c_map, low_end_limit, high_end_limit, frames):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    imgplot = ax.imshow(image)
-
-    imgplot.set_cmap(c_map)
-    imgplot.set_clim(low_end_limit, high_end_limit)
-    fig.colorbar(imgplot)
-
-    displayer = CorrelationMapDisplayer(fig, image, frames)
-
-    plt.show()
+# def display_image(image, c_map, low_end_limit, high_end_limit, frames):
+#     fig = plt.figure()
+#     ax = fig.add_subplot(111)
+#
+#     imgplot = ax.imshow(image)
+#
+#     imgplot.set_cmap(c_map)
+#     imgplot.set_clim(low_end_limit, high_end_limit)
+#     fig.colorbar(imgplot)
+#
+#     displayer = CorrelationMapDisplayer(fig, image, frames)
+#
+#     plt.show()
 
 def correlation_map(seed_x, seed_y, frames, progress):
     seed_pixel = np.asarray(frames[:, seed_x, seed_y])
@@ -339,10 +317,15 @@ def correlation_map(seed_x, seed_y, frames, progress):
 
     total = float(width * height - 1)
     cmap = []
-    for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
-        progress.setValue(100 * i / total)
-        QApplication.processEvents()
-        cmap.append(value)
+    with Pool() as pool:
+        #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+        for i, value in enumerate(pool.starmap(corr,
+                                               zip(frames.T,
+                                                   [seed_pixel for i in range(frames.T.shape[0])]
+                                                   ))):
+            progress.setValue(100 * i / total)
+            QApplication.processEvents()
+            cmap.append(value)
 
     cmap = np.reshape(cmap, (width, height))
     return cmap

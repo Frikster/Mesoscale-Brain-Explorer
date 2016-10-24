@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -34,7 +34,7 @@ class PipelineModel(QStandardItemModel):
     ret = []
     for i in range(self.rowCount()):
       index = self.index(i, 0)
-      value = str(self.data(index, Qt.UserRole).toString())
+      value = str(self.data(index, Qt.UserRole))
       ret.append(value)
     return ret      
 

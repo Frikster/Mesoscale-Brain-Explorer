@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import numpy as np
@@ -10,9 +10,10 @@ from pyqtgraph.graphicsItems.UIGraphicsItem import *
 import matplotlib.pyplot as plt
 
 class GradientLegend(UIGraphicsItem):
-  def __init__(self, min_label, max_label):
+  def __init__(self, min_label, max_label, cm_type):
     super(GradientLegend, self).__init__(self)
     self.labels = {max_label: 1, min_label: 0}
+    self.cm_type = cm_type
 
   def maximumLabelSize(self, p):
     width, height = 0, 0
@@ -53,7 +54,7 @@ class GradientLegend(UIGraphicsItem):
     gradient = QtGui.QLinearGradient()
     i = 0.0
     while i < 1:
-      color = plt.cm.jet(i)
+      color = plt.get_cmap(self.cm_type)(i)
       color = [x * 255 for x in color]
       gradient.setColorAt(i, QtGui.QColor(*color))
       i += 0.1

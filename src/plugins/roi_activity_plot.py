@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -6,9 +6,9 @@ import sys
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util.mygraphicsview import MyGraphicsView
-from util import fileloader
-import util.pyqtgraph as pg
+from .util.mygraphicsview import MyGraphicsView
+from .util import fileloader
+import pyqtgraph as pg
 
 import numpy as np
 
@@ -66,6 +66,14 @@ class Widget(QWidget):
     if not project:
       return
     self.project = project
+
+    # Define UI components and global data
+    self.view = MyGraphicsView(self.project)
+    self.video_list = QListView()
+    self.roi_list = QListView()
+    self.left = QFrame()
+    self.right = QFrame()
+
     self.setup_ui()
 
     self.open_dialogs = []
@@ -80,7 +88,7 @@ class Widget(QWidget):
 
     for f in project.files:
       if f['type'] == 'video':
-        self.video_list.model().appendRow(QStandardItem(f['path']))
+        self.video_list.model().appendRow(QStandardItem(f['name']))
       elif f['type'] == 'roi':
         item = QStandardItem(f['name'])
         item.setData(f['path'], Qt.UserRole)
@@ -90,46 +98,53 @@ class Widget(QWidget):
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
   def setup_ui(self):
-    hbox = QHBoxLayout()
-  
-    self.view = MyGraphicsView(self.project)
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
     self.view.vb.crosshair_visible = False
-    hbox.addWidget(self.view)
+    self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Select video:'))
-    self.video_list = QListView()
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.video_list)
-
     vbox.addWidget(QLabel('Select ROI:'))
-    self.roi_list = QListView()
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     vbox.addWidget(self.roi_list)
-
     pb = QPushButton('Plot &activity')
     pb.clicked.connect(self.plot_triggered)
     vbox.addWidget(pb)
+    self.right.setLayout(vbox)
 
-    hbox.addLayout(vbox)
-    hbox.setStretch(0, 1)
-    hbox.setStretch(1, 0)
-    self.setLayout(hbox) 
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
-  def selected_video_changed(self, selected, deselected):
-    if not selected.indexes():
+    # hbox.addLayout(vbox)
+    # hbox.setStretch(0, 1)
+    # hbox.setStretch(1, 0)
+    # self.setLayout(hbox)
+
+  def selected_video_changed(self, selection):
+    if not selection.indexes():
       return
-    self.video_path = str(selected.indexes()[0].data(Qt.DisplayRole).toString())
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
     frame = fileloader.load_reference_frame(self.video_path)
     self.view.show(frame)
 
   def selected_roi_changed(self, selected, deselected):
     for index in deselected.indexes():
-      roiname = str(index.data(Qt.DisplayRole).toString())
+      roiname = str(index.data(Qt.DisplayRole))
       self.view.vb.removeRoi(roiname)
     for index in selected.indexes():
-      roiname = str(index.data(Qt.DisplayRole).toString())
-      roipath = str(index.data(Qt.UserRole).toString())
+      roiname = str(index.data(Qt.DisplayRole))
+      roipath = str(index.data(Qt.UserRole))
       self.view.vb.addRoi(roipath, roiname)
 
   def plot_triggered(self):

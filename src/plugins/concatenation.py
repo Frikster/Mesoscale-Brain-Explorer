@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import numpy as np
@@ -7,8 +7,8 @@ import uuid
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from util import fileloader
-from util.qt import FileTable, FileTableModel, qtutil
+from .util import fileloader
+from .util.qt import FileTable, FileTableModel, qtutil
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):

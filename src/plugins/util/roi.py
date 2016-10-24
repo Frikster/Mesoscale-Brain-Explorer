@@ -2,7 +2,7 @@ from pyqtgraph.Qt import QtCore, QtGui, USE_PYSIDE
 import pyqtgraph.graphicsItems.ROI as pgROI
 import pyqtgraph.functions as fn
 from pyqtgraph.Point import Point
-from custom_items import QMenuCustom
+from .custom_items import QMenuCustom
 import numpy as np
 import matplotlib.pylab as plt
 import uuid
@@ -560,7 +560,8 @@ def imageToArray(img):
         arr = np.frombuffer(ptr, dtype=np.ubyte)
     else:   
         ptr.setsize(img.byteCount())
-        buf = buffer(ptr, 0, img.byteCount())
+        #buf = buffer(ptr, 0, img.byteCount())
+        buf = memoryview(ptr)
         arr = np.frombuffer(buf, dtype=np.ubyte)  
     if fmt == img.Format_RGB32:
         arr = arr.reshape(img.height(), img.width(), 3)

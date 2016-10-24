@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 
@@ -30,7 +30,7 @@ def load_reference_frame_npy(filename, offset):
     frame = frame[:, ::-1, :]
   return frame
 
-def load_reference_frame(filename, offset=400):
+def load_reference_frame(filename, offset=0):
   if filename.endswith('.npy'):
     frame = load_reference_frame_npy(filename, offset)
   else:
