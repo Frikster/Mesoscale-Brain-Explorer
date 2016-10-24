@@ -96,19 +96,6 @@ class Widget(QWidget):
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 
-    # defaults
-    # todo: this needs to vanish
-    # anatomy_rois = {"M1": [3, (1.0, 2.5)], "M2": [3, (1.5, 1.75)],
-    #             "AC": [3, (0.5, 0.0)], "HL": [3, (2.0, 0.0)],
-    #             "BC": [3, (3.5, -1.0)], "RS": [3, (0.5, -2.5)], "V1": [3, (2.5, -2.5)]}
-    # roi_names = anatomy_rois.keys()
-    # roi_sizes = [anatomy_rois[x][0] for x in anatomy_rois.keys()]
-    # roi_coord_x = [anatomy_rois[x][1][0] for x in anatomy_rois.keys()]
-    # roi_coord_y = [anatomy_rois[x][1][1] for x in anatomy_rois.keys()]
-    # self.headers = ["1) ROI Name", "2) Length", "3) X Coordinate", "4) Y Coordinate"]
-    # self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
-    #              self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
-    ###
     # check project
     if not project:
       return

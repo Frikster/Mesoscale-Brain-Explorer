@@ -206,7 +206,7 @@ class Widget(QWidget):
 
     def selected_roi_changed(self, selected, deselected):
         #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
-        #todo: what's the point of the forloops?
+        # what's the point of the forloops?
         for index in deselected.indexes():
             roiname = str(index.data(Qt.DisplayRole))
             self.view.vb.removeRoi(roiname)
@@ -233,9 +233,9 @@ class Widget(QWidget):
         elif not rois:
             qtutil.critical('Select Roi(s).')
         else:
-            #todo:
+            # todo:
 
-            #pg.ImageItem(arr, autoRange=False, autoLevels=False)
+            # pg.ImageItem(arr, autoRange=False, autoLevels=False)
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
                                    rois, self)
             win.show()

@@ -143,7 +143,6 @@ class SPCMapDialog(QDialog):
     def colorize_spc(self, spc_map):
         spc_map_with_nan = np.copy(spc_map)
         spc_map[np.isnan(spc_map)] = 0
-        #todo: http://stackoverflow.com/questions/22548813/python-color-map-but-with-all-zero-values-mapped-to-black
         gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
         spc_map = np.ma.masked_where(spc_map == 0, spc_map)
         cmap = matplotlib.cm.ScalarMappable(
