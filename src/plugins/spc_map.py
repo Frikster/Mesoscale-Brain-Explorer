@@ -9,6 +9,7 @@ from .util import filter_jeff
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog, InfoWidget
 from .util.gradient import GradientLegend
+from .util import mse_ui_elements as mue
 
 from .util import fileloader
 
@@ -88,27 +89,6 @@ class SeedItemModel(QAbstractListModel):
             if seed == seed_to_remove:
                 del seed
                 break
-
-class InfoWidget(QFrame):
-    def __init__(self, text, parent=None):
-        super(InfoWidget, self).__init__(parent)
-        self.setup_ui(text)
-  
-    def setup_ui(self, text):
-        hbox = QHBoxLayout()
-        icon = QLabel()
-        image = QImage('pics/info.png')
-        icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
-        hbox.addWidget(icon)
-        self.label = QLabel(text)
-        self.label.setWordWrap(True)
-        hbox.addWidget(self.label)
-        hbox.addStretch()
-        self.setLayout(hbox)
-
-        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
-        self.setLineWidth(2)
-        self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
 class SPCMapDialog(QDialog):
     def __init__(self, project, video_path, spcmap, cm_type, parent=None):
@@ -244,7 +224,7 @@ class Widget(QWidget):
         pb.clicked.connect(self.spc_bulk_clicked)
         vbox.addWidget(pb)
         vbox.addStretch()
-        vbox.addWidget(InfoWidget('Click on the image to generate custom SPC map.'))
+        vbox.addWidget(mue.InfoWidget('Click on the image to generate custom SPC map.'))
         self.right.setLayout(vbox)
 
         splitter = QSplitter(Qt.Horizontal)
