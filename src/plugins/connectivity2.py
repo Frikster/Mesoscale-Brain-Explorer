@@ -68,7 +68,11 @@ class ConnectivityModel(QAbstractTableModel):
             for j in xrange(len(tot_data)):
                 if progress_callback:
                     progress_callback((i*j) / (len(tot_data)*len(tot_data)))
-                avg_data[i][j] = tot_data[i][j] / len(selected_videos)
+                # ignore half of graph
+                if i < j:
+                    avg_data[i][j] = 0
+                else:
+                    avg_data[i][j] = tot_data[i][j] / len(selected_videos)
         stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
         assert(stdev_dict[(0, 0)] == 0)
 
