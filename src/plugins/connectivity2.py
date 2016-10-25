@@ -38,7 +38,7 @@ def calc_connectivity(video_path, image, rois):
 
 # todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
-    def __init__(self, selected_videos, image, rois, parent=None):
+    def __init__(self, selected_videos, image, rois, parent=None, progress_callback=None):
         super(ConnectivityModel, self).__init__(parent)
         self.rois = rois
         self.matrix_list = []
@@ -49,7 +49,9 @@ class ConnectivityModel(QAbstractTableModel):
         for key in [i for i in list(itertools.product(xrange(len(rois)), xrange(len(rois))))]:
             dict_for_stdev[key] = []
 
-        for video_path in selected_videos:
+        for i, video_path in enumerate(selected_videos):
+            if progress_callback:
+                progress_callback(i / len(selected_videos))
             self._data = calc_connectivity(video_path, image, rois)
             self.matrix_list = self.matrix_list + [self._data]
             if tot_data == []:
@@ -64,6 +66,8 @@ class ConnectivityModel(QAbstractTableModel):
         # Finally compute averages
         for i in xrange(len(tot_data)):
             for j in xrange(len(tot_data)):
+                if progress_callback:
+                    progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                 avg_data[i][j] = tot_data[i][j] / len(selected_videos)
         stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
         assert(stdev_dict[(0, 0)] == 0)
@@ -71,6 +75,8 @@ class ConnectivityModel(QAbstractTableModel):
         # combine stddev and avg data
         for i in xrange(len(avg_data)):
             for j in xrange(len(avg_data)):
+                if progress_callback:
+                    progress_callback((i*j) / (len(avg_data) * len(avg_data)))
                 avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
 
         self._data = avg_data
@@ -110,11 +116,11 @@ class ConnectivityTable(QTableView):
         self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
-    def __init__(self, selected_videos, image, rois, parent=None):
+    def __init__(self, selected_videos, image, rois, parent=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__(parent)
         self.setWindowTitle('Connectivity Diagram')
         self.setup_ui()
-        self.model = ConnectivityModel(selected_videos, image, rois)
+        self.model = ConnectivityModel(selected_videos, image, rois, None, progress_callback)
         self.table.setModel(self.model)
 
     def setup_ui(self):
@@ -254,6 +260,14 @@ class Widget(QWidget):
             self.view.vb.addRoi(roipath, roiname)
 
     def connectivity_triggered(self):
+        progress = QProgressDialog('Generating Connectivity Diagrams...', 'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+
         indexes = self.roi_list.selectionModel().selectedIndexes()
         roinames = [index.data(Qt.DisplayRole) for index in indexes]
         rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
@@ -262,30 +276,46 @@ class Widget(QWidget):
         elif not rois:
             qtutil.critical('Select Roi(s).')
         else:
-            #todo:
-
-            #pg.ImageItem(arr, autoRange=False, autoLevels=False)
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
-                                   rois, self)
+                                   rois, self, callback)
+            callback(1)
             win.show()
-            #win.setWindowFlags(Qt.Window)
             self.open_dialogs.append(win)
 
     def save_open_dialogs_to_csv(self):
-        #todo: For each matrix save individual values in addition to averages + stdev
-        for dialog in self.open_dialogs:
+        progress = QProgressDialog('Generating csv files...',
+                                   'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+
+        for i, dialog in enumerate(self.open_dialogs):
+            callback(i / len(self.open_dialogs))
             rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
-            # add roi names to first column
-            avg_matrix = [dialog.model._data[row][x][0] for row in range(len(dialog.model._data))
-                          for x in range(len(rois_names))]
-            with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
+            unique_id = str(uuid.uuid4())
+            file_name_avg = self.project.name + '_averaged_connectivity_matrix_' + unique_id + '.csv'
+            file_name_stdev = self.project.name + '_stdev_connectivity_matrix_' + unique_id + '.csv'
+
+            with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
                 writer.writerow(rois_names)
                 for row_ind in range(len(dialog.model._data)):
                     row = dialog.model._data[row_ind]
                     row = [row[x][0] for x in range(len(row))]
                     writer.writerow(row)
-                    print(str(row))
+            # Do the standard deviation
+            with open(os.path.join(self.project.path, file_name_stdev), 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(rois_names)
+                for row_ind in range(len(dialog.model._data)):
+                    row = dialog.model._data[row_ind]
+                    row = [row[x][1] for x in range(len(row))]
+                    writer.writerow(row)
+        callback(1)
+        qtutil.info("All matrices saved to project directory")
                 # for row_ind in range(len(dialog.model._data)):
                 #     row = dialog.model._data[row_ind]
                 #     row = [row[x][0] for x in range(len(row))]
