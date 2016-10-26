@@ -310,6 +310,7 @@ class Widget(QWidget):
                     row = dialog.model._data[row_ind]
                     row = [row[x][0] for x in range(len(row))]
                     writer.writerow(row)
+                writer.writerow(['Selected videos:']+self.selected_videos)
             # Do the standard deviation
             with open(os.path.join(self.project.path, file_name_stdev), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
@@ -318,6 +319,7 @@ class Widget(QWidget):
                     row = dialog.model._data[row_ind]
                     row = [row[x][1] for x in range(len(row))]
                     writer.writerow(row)
+                writer.writerow(['Selected videos:'] + self.selected_videos)
         callback(1)
         qtutil.info("All matrices saved to project directory")
                 # for row_ind in range(len(dialog.model._data)):
