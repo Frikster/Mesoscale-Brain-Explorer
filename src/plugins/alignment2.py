@@ -124,12 +124,16 @@ class Widget(QWidget):
         pfs.refresh_all_list(self.project, self.video_list)
 
     def align_clicked(self):
-        if self.selected_videos[0][-13:] != 'ref_frame.npy':
+        filenames = self.selected_videos
+        reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+        if len(reference_frame_file) == 0:
             qCritical("No reference frame selected")
             return
-
-        filenames = self.selected_videos
-
+        if len(reference_frame_file) > 1:
+            qCritical("Multiple reference frames selected. Please only pick one")
+            return
+        assert(len(reference_frame_file) == 1)
+        reference_frame_file = reference_frame_file[0]
         progress = QProgressDialog('Aligning file...', 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)
@@ -139,8 +143,10 @@ class Widget(QWidget):
             QApplication.processEvents()
             # time.sleep(0.01)
 
-        reference_frame = np.load(filenames[0])[0]
-        self.align_videos(filenames, reference_frame, callback)
+        assert ('ref_frame' in reference_frame_file)
+        reference_frame = np.load(reference_frame_file)[0]
+        not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
+        self.align_videos(not_reference_frames, reference_frame, callback)
 
 
         # for filename in filenames:
@@ -176,7 +182,7 @@ class Widget(QWidget):
         """Return filenames of generated videos"""
         progress_callback(0)
         ret_filenames = []
-        reference_frame
+
         for filename in filenames:
             frames = np.load(filename)
             shifts = self.compute_shifts(reference_frame, frames, progress_callback)
