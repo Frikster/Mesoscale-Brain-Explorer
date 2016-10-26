@@ -316,16 +316,12 @@ class Widget(QWidget):
             return
 
         for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
+            vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
             self.selected_videos = [x for x in self.selected_videos if x != vidpath]
         for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-        if vidpath not in self.selected_videos and vidpath != 'None':
-            self.selected_videos = self.selected_videos + [vidpath]
+            vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+            if vidpath not in self.selected_videos and vidpath != 'None':
+                self.selected_videos = self.selected_videos + [vidpath]
 
         self.shown_video_path = str(os.path.join(self.project.path,
                                            selected.indexes()[0].data(Qt.DisplayRole))
