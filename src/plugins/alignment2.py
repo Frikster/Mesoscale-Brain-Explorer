@@ -143,20 +143,21 @@ class Widget(QWidget):
             # time.sleep(0.01)
 
         reference_frame = np.load(filenames[0])[0]
-        filenames = self.align_videos(filenames, reference_frame, callback)
+        self.align_videos(filenames, reference_frame, callback)
 
-        for filename in filenames:
-            if filename in [f['path'] for f in self.project.files]:
-                continue
-            name, ext = os.path.splitext(os.path.basename(filename))
-            f = {
-                'name': name,
-                'path': filename,
-                'type': 'video',
-                'manipulations': 'align'
-            }
-            self.project.files.append(f)
-        self.project.save()
+
+        # for filename in filenames:
+        #     if filename in [f['path'] for f in self.project.files]:
+        #         continue
+        #     name, ext = os.path.splitext(os.path.basename(filename))
+        #     f = {
+        #         'name': name,
+        #         'path': filename,
+        #         'type': 'video',
+        #         'manipulations': 'align'
+        #     }
+        #     self.project.files.append(f)
+        # self.project.save()
 
     def compute_shifts(self, template_frame, frames, progress_callback):
         results = []
@@ -183,10 +184,11 @@ class Widget(QWidget):
             frames = np.load(filename)
             shifts = self.compute_shifts(reference_frame, frames, progress_callback)
             shifted_frames = self.apply_shifts(frames, shifts, progress_callback)
-            path = os.path.join(os.path.dirname(filename), 'aligned_' + \
-                                os.path.basename(filename))
-            np.save(path, shifted_frames)
-            ret_filenames.append(path)
+            pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
+            # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
+            #                     os.path.basename(filename))
+            # np.save(path, shifted_frames)
+            # ret_filenames.append(path)
         progress_callback(1)
         return ret_filenames
 

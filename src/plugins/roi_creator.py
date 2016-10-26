@@ -282,7 +282,7 @@ class Widget(QWidget):
 
   def crop_ROI(self, progress_callback):
     for i, video_path in enumerate(self.selected_videos):
-      progress_callback(i / len(self.selected_videos))
+      progress_callback(i / (2*len(self.selected_videos)))
       frames = fileloader.load_file(video_path)
       # Return if there is no image or rois in view
       if self.view.vb.img == None or len(self.view.vb.rois) == 0:
@@ -315,8 +315,9 @@ class Widget(QWidget):
 
       # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
       # path = os.path.join(self.project.path, 'roi' + '.npy')
-      progress_callback(1)
+      progress_callback(0.8)
       pfs.save_project(video_path, self.project, roi_frames, 'crop', 'video')
+      progress_callback(1)
 
 class MyPlugin:
   def __init__(self, project=None):
