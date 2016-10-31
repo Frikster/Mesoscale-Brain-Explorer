@@ -15,6 +15,8 @@ from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
 from project import ProjectManager
 
+import qtutil
+
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
 
@@ -102,7 +104,10 @@ class MainWindow(QMainWindow):
 
     last = str(QSettings().value('path_of_last_project'))
     if last:
-      self.open_project(last)
+      try:
+        self.open_project(last)
+      except:
+        qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
 
   def load_plugins(self):
     plugins = collections.OrderedDict()
