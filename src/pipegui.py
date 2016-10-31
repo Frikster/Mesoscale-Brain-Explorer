@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
       if not hasattr(m, 'MyPlugin'):
         return None
       p = m.MyPlugin(self.project)
-      #p.run()
+      # p.run()
     except:
       print('Failed to import \'{}\'.'.format(module))
       raise

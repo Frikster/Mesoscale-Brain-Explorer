@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 import numpy as np
+from shutil import copyfile
 import matplotlib.pyplot as plt
 
 from PyQt4.QtGui import *
@@ -220,6 +221,14 @@ class Widget(QWidget):
         raise NotConvertedError()
       else:
         filename = new_filename
+    else:
+      new_filename = os.path.basename(filename)
+      new_filename = os.path.join(self.project.path, new_filename)
+      if filename != new_filename:
+          qtutil.info('Copying .npy from '+ filename + ' to ' + new_filename +
+                      '. You can do this manually for large files to see a progress bar')
+          copyfile(filename, new_filename)
+      filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
       raise FileAlreadyInProjectError(filename)      

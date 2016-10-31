@@ -30,6 +30,7 @@ class Widget(QWidget):
     self.origin_label = QLabel('Origin:')
     self.left = QFrame()
     self.right = QFrame()
+    self.combo_box = QComboBox(self)
     self.setup_ui()
 
     self.selected_videos = []
@@ -57,21 +58,26 @@ class Widget(QWidget):
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.listview)
     vbox.addWidget(self.origin_label)
-    hhbox = QHBoxLayout()
-    hhbox.addWidget(QLabel('mm/pixel:'))
-    sb = QDoubleSpinBox()
-    sb.setRange(0.001, 9999.0)
-    sb.setSingleStep(0.01)
-    sb.setValue(self.project['mmpixel'])
-    sb.valueChanged[float].connect(self.set_mmpixel)
-    hhbox.addWidget(sb)
     pb = QPushButton('&Average origin from selected files\' origins')
     pb.clicked.connect(self.avg_origin)
     vbox.addWidget(pb)
+    vbox.addWidget(QLabel('pixel width x'))
+    comboBox = self.combo_box
+    comboBox.addItem("microns")
+    comboBox.addItem("mm")
+    vbox.addWidget(comboBox)
+    comboBox.activated[str].connect(self.set_pixel_width_magnitude)
+    hhbox = QHBoxLayout()
+    hhbox.addWidget(QLabel('x/pixel:'))
+    sb = QSpinBox()
+    sb.setRange(1, 1000)
+    sb.setSingleStep(1)
+    sb.setValue(self.project['unit_per_pixel'])
+    sb.valueChanged[int].connect(self.set_unit_per_pixel)
+    hhbox.addWidget(sb)
     vbox.addLayout(hhbox)
     vbox.addStretch()
     self.right.setLayout(vbox)
-
     splitter = QSplitter(Qt.Horizontal)
     splitter.setHandleWidth(3)
     splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
@@ -81,6 +87,15 @@ class Widget(QWidget):
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
     self.setEnabled(False)
+
+  def set_pixel_width_magnitude(self, mag):
+      self.view.unit_per_pixel = mag
+      self.view.update()
+      assert(mag == 'microns' or mag == 'mm')
+      if mag == 'microns':
+          print('microns')
+      else:
+          print('mm')
 
   def selected_video_changed(self, selected, deselected):
       if not selected.indexes():
@@ -107,7 +122,7 @@ class Widget(QWidget):
       except KeyError:
         self.origin_label.setText('Origin:')
       else:
-        (x , y) = ast.literal_eval(project_file['origin'])
+        (x, y) = ast.literal_eval(project_file['origin'])
         self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
       # shown_video_path = str(os.path.join(self.project.path,
       #                                          selected.indexes()[0].data(Qt.DisplayRole))
@@ -157,14 +172,15 @@ class Widget(QWidget):
       return
     frame = fileloader.load_reference_frame(videos[0]['path'])
     self.view.show(frame)
-    #self.set_origin_label()
+    # self.set_origin_label()
     self.setEnabled(True)
 
   def save(self):
     self.project.save()
 
-  def set_mmpixel(self, value):
-    self.project['mmpixel'] = value
+  def set_unit_per_pixel(self, value):
+    self.view.unit_per_pixel = self.combo_box.currentText()
+    self.project['unit_per_pixel'] = value
     self.view.update()
     self.save()
 

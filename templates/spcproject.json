@@ -1,6 +1,6 @@
 {
   "files": [],
-  "mmpixel": 0.04,
+  "unit_per_pixel": 1,
   "pipeline": [
     "fileimporter",
     "videoplayer",

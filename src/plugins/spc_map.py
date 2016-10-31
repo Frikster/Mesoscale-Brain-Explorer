@@ -20,7 +20,6 @@ import numpy as np
 import qtutil
 import csv
 import scipy.misc
-import png
 import math
 import multiprocessing
 
@@ -339,13 +338,17 @@ class Widget(QWidget):
 
     def spc_to_file(self, x, y, name, vid_path):
         assert self.selected_videos
+        #define base name
+        vid_name = vid_name = os.path.basename(vid_path)
+        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+        # compute spc
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         spc = calc_spc(vid_path, x, y, progress)
+        # save to npy
+        np.save(path_without_ext + '.npy', spc)
         dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_type, self)
         spc_col = dialog_object.colorized_spc
         #Save as png and jpeg
-        vid_name = vid_name = os.path.basename(vid_path)
-        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
         scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
         #not working
         #png.from_array(spc_col, 'L').save(path_without_ext+".png")
