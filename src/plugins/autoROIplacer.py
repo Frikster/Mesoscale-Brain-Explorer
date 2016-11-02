@@ -120,6 +120,7 @@ class Widget(QWidget):
     self.listview.setCurrentIndex(self.listview.model().index(0, 0))
 
     model = RoiItemModel()
+    # todo: this wont update that specific changed value
     model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -275,6 +276,16 @@ class Widget(QWidget):
             'source_video': self.video_path,
             'name': os.path.basename(text_file_path)
           })
+        else:
+          # Replace old values if the same file with different values is given
+          for i, item in enumerate(self.project.files):
+              if item['path'] == text_file_path:
+                  self.project.files[i] = {
+                  'path': text_file_path,
+                  'type': 'roi_table',
+                  'source_video': self.video_path,
+                  'name': os.path.basename(text_file_path)
+              }
       self.table_widget.clear()
       self.table_widget.setRowCount(len(self.data[self.headers[0]]))
       self.table_widget.update(self.data)

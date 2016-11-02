@@ -126,6 +126,7 @@ class Widget(QWidget):
 
         # setup ROI and seed list widgets
         model = SeedItemModel()
+        # todo: this wont update that specific changed value
         model.textChanged.connect(self.update_project_seed)
         self.seed_list.setModel(model)
         self.seed_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
