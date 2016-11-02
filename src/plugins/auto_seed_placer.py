@@ -286,7 +286,7 @@ class Widget(QWidget):
 
         # Warning: size must always be the second column
         for quad in list(locs):
-            half_length = self.project['mmpixel']
+            half_length = self.project['unit_per_pixel']
             self.remove_all_seeds()
             x1 = (quad[1] - half_length)
             x2 = (quad[1] - half_length)
