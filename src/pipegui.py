@@ -9,7 +9,9 @@ import traceback
 import multiprocessing
 
 from PyQt4.QtGui import *
+import PyQt4.QtGui as QtGui
 from PyQt4.QtCore import *
+from PyQt4.QtGui import QApplication
 
 from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
@@ -187,7 +189,7 @@ class MainWindow(QMainWindow):
     a.setShortcut("Ctrl+Q")
     a.setStatusTip('Leave The App')
     a.setIcon(QIcon('pics/quit.png'))
-    a.triggered.connect(qApp.quit)
+    a.triggered.connect(self.close)
     m.addAction(a)
 
     about_action = QAction('&About ' + APPNAME, self)
@@ -318,10 +320,11 @@ if __name__ == '__main__':
   app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()
-  w.resize(1060,660)
+  w.resize(1060, 660)
   w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
   app.exec_()
   app.deleteLater()
+  del w
   sys.exit()

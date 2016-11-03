@@ -31,5 +31,5 @@ def raw2npy(filename_from, filename_to, dtype, width, height,
     fp_to = np.load(filename_to, mmap_mode='r+')
     for i, frame in enumerate(fp):
       progress_callback(i / float(len(fp)-1))
-      fp_to[i] = frame[:,:,channel-1]
+      fp_to[i] = frame[:, :, channel-1]
 

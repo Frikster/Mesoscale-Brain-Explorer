@@ -114,12 +114,41 @@ class Widget(QWidget):
         if not self.selected_videos:
             return
 
-        for video_path in self.selected_videos:
+        progress_global = QProgressDialog('Creating cut offs...', 'Abort', 0, 100, self)
+        progress_global.setAutoClose(True)
+        progress_global.setMinimumDuration(0)
+
+        def global_callback(x):
+            progress_global.setValue(x * 100)
+            QApplication.processEvents()
+
+        for global_i, video_path in enumerate(self.selected_videos):
+            global_callback(global_i / float(len(self.selected_videos)))
             frames_mmap = np.load(video_path, mmap_mode='c')
             cut_off_start = self.left_cut_off.value()
             cut_off_end = self.right_cut_off.value()
-            frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project(video_path, self.project, frames, 'cut_off', 'video')
+
+            progress = QProgressDialog('Creating cut off for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
+
+            num_frames = len(frames_mmap)-cut_off_end-cut_off_start
+            name_before, ext = os.path.splitext(os.path.basename(video_path))
+            name_after = str(name_before + '_' + 'cut_off')
+            path = str(os.path.join(self.project.path, name_after) + '.npy')
+            np.save(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
+            frames = np.load(path, mmap_mode='r+')
+            for i, frame in enumerate(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end]):
+                callback(i / float(len(frames_mmap)))
+                frames[i] = frame[:, :]
+            callback(1)
+            #frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
+            pfs.save_project(video_path, self.project, None, 'cut_off', 'video')
+        global_callback(1)
 
 
 class MyPlugin:

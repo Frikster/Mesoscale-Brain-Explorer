@@ -53,3 +53,9 @@ class InfoWidget(QFrame):
         self.setFrameStyle(QFrame.Panel | QFrame.Raised)
         self.setLineWidth(2)
         self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
+
+class PanelElements:
+    def __init__(self, project, view):
+        self.project = project
+        self.view = view
+

@@ -184,7 +184,7 @@ class Widget(QWidget):
         ret_filenames = []
 
         for filename in filenames:
-            frames = np.load(filename)
+            frames = fileloader.load_file(filename)
             shifts = self.compute_shifts(reference_frame, frames, progress_callback)
             shifted_frames = self.apply_shifts(frames, shifts, progress_callback)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')

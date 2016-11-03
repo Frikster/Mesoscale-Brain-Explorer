@@ -14,7 +14,8 @@ def save_project(video_path, project, frames, manip, file_type):
 
     name_after = str(name_before + '_' + manip)
     path = str(os.path.join(project.path, name_after) + '.npy')
-    np.save(path, frames)
+    if frames is not None:
+        np.save(path, frames)
     if not file_before['manipulations'] == []:
         project.files.append({
             'path': path,
