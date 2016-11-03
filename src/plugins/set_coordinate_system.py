@@ -34,6 +34,7 @@ class Widget(QWidget):
     self.setup_ui()
 
     self.selected_videos = []
+    self.shown_video_path = None
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
@@ -106,24 +107,34 @@ class Widget(QWidget):
           print('mm')
 
   def selected_video_changed(self, selected, deselected):
-      if not selected.indexes():
+      if not self.video_list.selectedIndexes():
           return
+      self.selected_videos = []
+      for index in self.video_list.selectedIndexes():
+          vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+          if vidpath not in self.selected_videos and vidpath != 'None':
+              self.selected_videos = self.selected_videos + [vidpath]
+              self.shown_video_path = str(os.path.join(self.project.path,
+                                                       self.video_list.currentIndex().data(Qt.DisplayRole))
+                                            + '.npy')
 
-      for index in deselected.indexes():
-          vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                        + '.npy')
-          self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-      for index in selected.indexes():
-          vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                        + '.npy')
-      if vidpath not in self.selected_videos and vidpath != 'None':
-          self.selected_videos = self.selected_videos + [vidpath]
+      # if not selected.indexes():
+      #     return
+      # for index in deselected.indexes():
+      #     vidpath = str(os.path.join(self.project.path,
+      #                                index.data(Qt.DisplayRole))
+      #                   + '.npy')
+      #     self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+      # for index in selected.indexes():
+      #     vidpath = str(os.path.join(self.project.path,
+      #                                index.data(Qt.DisplayRole))
+      #                   + '.npy')
+      # if vidpath not in self.selected_videos and vidpath != 'None':
+      #     self.selected_videos = self.selected_videos + [vidpath]
 
       project_file = pfs.get_project_file_from_key_item(self.project,
                                                         'path',
-                                                        self.selected_videos[0])
+                                                        self.shown_video_path)
       # Check if origin exists
       try:
         (x, y) = ast.literal_eval(project_file['origin'])
@@ -132,10 +143,7 @@ class Widget(QWidget):
       else:
         (x, y) = ast.literal_eval(project_file['origin'])
         self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
-      # shown_video_path = str(os.path.join(self.project.path,
-      #                                          selected.indexes()[0].data(Qt.DisplayRole))
-      #                             + '.npy')
-      frame = fileloader.load_reference_frame(self.selected_videos[0])
+      frame = fileloader.load_reference_frame(self.shown_video_path)
       self.view.show(frame)
 
   def avg_origin(self):

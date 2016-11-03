@@ -115,7 +115,7 @@ class Widget(QWidget):
       shifted_frames = self.apply_shifts(frames, shifts, progress_callback)
       path = os.path.join(os.path.dirname(filename), 'aligned_' + \
                           os.path.basename(filename))
-      np.save(path, shifted_frames)
+      fileloader.save_file(path, shifted_frames)
       ret_filenames.append(path)
     progress_callback(1)
     return ret_filenames

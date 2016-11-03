@@ -17,6 +17,8 @@ def save_project(video_path, project, frames, manip, file_type):
     name_after = str(name_before + '_' + manip)
     path = str(os.path.join(project.path, name_after) + '.npy')
     if frames is not None:
+        if os.path.isfile(path):
+            os.remove(path)
         np.save(path, frames)
     if not file_before['manipulations'] == []:
         project.files.append({
@@ -131,12 +133,9 @@ def selected_video_changed_multi(widget, selected, deselected):
     for index in widget.video_list.selectedIndexes():
         vidpath = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
         if vidpath not in widget.selected_videos and vidpath != 'None':
-            try:
-                widget.selected_videos = widget.selected_videos + [vidpath]
-                widget.shown_video_path = str(os.path.join(widget.project.path,
-                                                           widget.video_list.currentIndex().data(Qt.DisplayRole))
-                                        + '.npy')
-            except:
-                print('here')
+            widget.selected_videos = widget.selected_videos + [vidpath]
+            widget.shown_video_path = str(os.path.join(widget.project.path,
+                                                       widget.video_list.currentIndex().data(Qt.DisplayRole))
+                                    + '.npy')
     frame = load_reference_frame(widget.shown_video_path)
     widget.view.show(frame)

@@ -131,8 +131,9 @@ class Widget(QWidget):
             progress_global.setValue(x * 100)
             QApplication.processEvents()
 
+        total = len(self.selected_videos)
         for global_i, video_path in enumerate(self.selected_videos):
-            global_callback(global_i / float(len(self.selected_videos)))
+            global_callback(global_i / total)
             frames_mmap = np.load(video_path, mmap_mode='c')
             cut_off_start = self.left_cut_off.value()
             cut_off_end = self.right_cut_off.value()
@@ -149,7 +150,7 @@ class Widget(QWidget):
             name_before, ext = os.path.splitext(os.path.basename(video_path))
             name_after = str(name_before + '_' + 'cut_off')
             path = str(os.path.join(self.project.path, name_after) + '.npy')
-            np.save(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
+            fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
             frames = np.load(path, mmap_mode='r+')
             for i, frame in enumerate(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end]):
                 callback(i / float(len(frames_mmap)))

@@ -13,6 +13,11 @@ def load_npy(filename):
   # frames[np.isnan(frames)] = 0
   return frames
 
+def save_file(path, data):
+  if os.path.isfile(path):
+    os.remove(path)
+  np.save(path, data)
+
 def load_file(filename):
   file_size = os.path.getsize(filename)
   [total, available, percent, used, free] = list(psutil.virtual_memory())
