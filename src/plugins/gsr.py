@@ -39,26 +39,6 @@ class Widget(QWidget):
       self.video_list.model().appendRow(QStandardItem(f['name']))
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
-  def selected_video_changed(self, selected, deselected):
-    if not selected.indexes():
-      return
-
-    for index in deselected.indexes():
-      vidpath = str(os.path.join(self.project.path,
-                                 index.data(Qt.DisplayRole))
-                    + '.npy')
-      self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-    for index in selected.indexes():
-      vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-      if vidpath not in self.selected_videos and vidpath != 'None':
-        self.selected_videos = self.selected_videos + [vidpath]
-
-    self.shown_video_path = str(os.path.join(self.project.path,
-                                             selected.indexes()[0].data(Qt.DisplayRole))
-                                + '.npy')
-    frame = fileloader.load_reference_frame(self.shown_video_path)
-    self.view.show(frame)
-
   def setup_ui(self):
     vbox_view = QVBoxLayout()
     vbox_view.addWidget(self.view)
@@ -96,6 +76,26 @@ class Widget(QWidget):
 
   def selected_video_changed(self, selected, deselected):
     pfs.selected_video_changed_multi(self, selected, deselected)
+
+  # def selected_video_changed(self, selected, deselected):
+  #   if not selected.indexes():
+  #     return
+  #
+  #   for index in deselected.indexes():
+  #     vidpath = str(os.path.join(self.project.path,
+  #                                index.data(Qt.DisplayRole))
+  #                   + '.npy')
+  #     self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+  #   for index in selected.indexes():
+  #     vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+  #     if vidpath not in self.selected_videos and vidpath != 'None':
+  #       self.selected_videos = self.selected_videos + [vidpath]
+  #
+  #   self.shown_video_path = str(os.path.join(self.project.path,
+  #                                            selected.indexes()[0].data(Qt.DisplayRole))
+  #                               + '.npy')
+  #   frame = fileloader.load_reference_frame(self.shown_video_path)
+  #   self.view.show(frame)
 
   def gsr_clicked(self):
       progress = QProgressDialog('Computing gsr for selection', 'Abort', 0, 100, self)

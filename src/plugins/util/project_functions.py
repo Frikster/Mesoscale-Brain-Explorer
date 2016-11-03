@@ -112,19 +112,23 @@ def get_list_of_project_manips(project):
 
 
 def selected_video_changed_multi(widget, selected, deselected):
-    if not selected.indexes():
+    if not widget.video_list.selectedIndexes():
         return
-    for index in deselected.indexes():
-        vidpath = str(os.path.join(widget.project.path,
-                                   index.data(Qt.DisplayRole))
-                      + '.npy')
-        widget.selected_videos = [x for x in widget.selected_videos if x != vidpath]
-    for index in selected.indexes():
+    # for index in deselected.indexes():
+    #     vidpath = str(os.path.join(widget.project.path,
+    #                                index.data(Qt.DisplayRole))
+    #                   + '.npy')
+    #     widget.selected_videos = [x for x in widget.selected_videos if x != vidpath]
+    widget.selected_videos = []
+    for index in widget.video_list.selectedIndexes():
         vidpath = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
         if vidpath not in widget.selected_videos and vidpath != 'None':
-            widget.selected_videos = widget.selected_videos + [vidpath]
-
-            widget.shown_video_path = str(os.path.join(widget.project.path, selected.indexes()[0].data(Qt.DisplayRole))
-                                    + '.npy')
+            try:
+                widget.selected_videos = widget.selected_videos + [vidpath]
+                widget.shown_video_path = str(os.path.join(widget.project.path,
+                                                           widget.video_list.currentIndex().data(Qt.DisplayRole))
+                                        + '.npy')
+            except:
+                print('here')
     frame = load_reference_frame(widget.shown_video_path)
     widget.view.show(frame)

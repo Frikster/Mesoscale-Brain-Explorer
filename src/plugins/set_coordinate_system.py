@@ -96,9 +96,6 @@ class Widget(QWidget):
   def refresh_video_list_via_combo_box(self, trigger_item=None):
       pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-  def selected_video_changed(self, selected, deselected):
-      pfs.selected_video_changed_multi(self, selected, deselected)
-
   def set_pixel_width_magnitude(self, mag):
       self.view.unit_per_pixel = mag
       self.view.update()

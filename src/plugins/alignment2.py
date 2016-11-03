@@ -91,7 +91,6 @@ class Widget(QWidget):
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
-
     def compute_ref_frame(self):
         if not self.selected_videos:
             qCritical("No files selected")
@@ -128,20 +127,12 @@ class Widget(QWidget):
             return
         assert(len(reference_frame_file) == 1)
         reference_frame_file = reference_frame_file[0]
-        progress = QProgressDialog('Aligning file...', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
-            # time.sleep(0.01)
 
         assert ('ref_frame' in reference_frame_file)
         reference_frame = np.load(reference_frame_file)[0]
         not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
-        self.align_videos(not_reference_frames, reference_frame, callback)
-
+        self.align_videos(not_reference_frames, reference_frame)
+        pfs.refresh_all_list(self.project, self.video_list)
 
         # for filename in filenames:
         #     if filename in [f['path'] for f in self.project.files]:
@@ -161,6 +152,7 @@ class Widget(QWidget):
         for i, frame in enumerate(frames):
             progress_callback(i / float(len(frames)))
             results = results + [ird.translation(template_frame, frame)]
+        progress_callback(1)
         return results
 
     def apply_shifts(self, frames, shifts, progress_callback):
@@ -170,23 +162,44 @@ class Widget(QWidget):
             progress_callback(frame_no / float(len(shifts)))
             frame = frames[frame_no]
             shifted_frames.append(ird.transform_img(frame, tvec=tvec))
+        progress_callback(1)
         return shifted_frames
 
-    def align_videos(self, filenames, reference_frame, progress_callback):
+    def align_videos(self, filenames, reference_frame):
         """Return filenames of generated videos"""
-        progress_callback(0)
+        progress_global = QProgressDialog('Total progress aligning all files', 'Abort', 0, 100, self)
+        progress_global.setAutoClose(True)
+        progress_global.setMinimumDuration(0)
+        def callback_global(x):
+            progress_global.setValue(x * 100)
+            QApplication.processEvents()
+
+        callback_global(0)
         ret_filenames = []
 
-        for filename in filenames:
+        for i, filename in enumerate(filenames):
+            callback_global(i / float(len(filenames)))
+            progress_shifts = QProgressDialog('Finding best shifts for ' + filename, 'Abort', 0, 100, self)
+            progress_shifts.setAutoClose(True)
+            progress_shifts.setMinimumDuration(0)
+            def callback_shifts(x):
+                progress_shifts.setValue(x * 100)
+                QApplication.processEvents()
+            progress_apply = QProgressDialog('Applying shifts for ' + filename, 'Abort', 0, 100, self)
+            progress_apply.setAutoClose(True)
+            progress_apply.setMinimumDuration(0)
+            def callback_apply(x):
+                progress_apply.setValue(x * 100)
+                QApplication.processEvents()
             frames = fileloader.load_file(filename)
-            shifts = self.compute_shifts(reference_frame, frames, progress_callback)
-            shifted_frames = self.apply_shifts(frames, shifts, progress_callback)
+            shifts = self.compute_shifts(reference_frame, frames, callback_shifts)
+            shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)
             # ret_filenames.append(path)
-        progress_callback(1)
+        callback_global(1)
         return ret_filenames
 
 

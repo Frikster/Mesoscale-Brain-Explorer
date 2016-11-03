@@ -243,9 +243,6 @@ class Widget(QWidget):
     def refresh_video_list_via_combo_box(self, trigger_item=None):
         pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
-
     def selected_seed_changed(self, selection):
         if self.selected_seed_changed_flag == 0:
             self.selected_seed_changed_flag = self.selected_seed_changed_flag + 1
