@@ -72,7 +72,7 @@ class Widget(QWidget):
     self.channel.setValue(2)
     grid.addWidget(self.channel, 3, 1)
 
-    grid.addWidget(QLabel('Set paramaters for  all imported raws'), 4, 0)
+    grid.addWidget(QLabel('Set paramaters for all imported raws'), 4, 0)
     grid.addWidget(QLabel('All raws will be rescaled and specified channel imported upon conversion'), 5, 0)
 
     grid.addWidget(QLabel('Width:'), 6, 0)
@@ -115,7 +115,7 @@ class Widget(QWidget):
 
     hbox = QVBoxLayout()
     hbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
-                                     'We advise you only import files no larger than 1/4 of your memory'))
+                                     ' We advise you only import files no larger than 1/4 of your memory'))
     pb = QPushButton('New Video')
     pb.clicked.connect(self.new_video)
     hbox.addWidget(pb)

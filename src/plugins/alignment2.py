@@ -9,10 +9,12 @@ from .util.qt import MyListView, MyProgressDialog
 from .util.gradient import GradientLegend
 from .util import project_functions as pfs
 from .util import fileloader
+from .util import mse_ui_elements as mue
 
 import os
 import numpy as np
 import imreg_dft as ird
+import itertools
 import matplotlib
 import matplotlib.pyplot as plt
 import math
@@ -47,6 +49,10 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, 'Select Data Categories to Display in List', list_of_manips)
+        self.toolbutton.triggered.connect(self.refresh_video_list)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
@@ -78,6 +84,10 @@ class Widget(QWidget):
         # hbox.setStretch(0, 1)
         # hbox.setStretch(1, 0)
         # self.setLayout(hbox)
+
+    def refresh_video_list(self, last_manips_to_display):
+        self.toolbutton.itemText(1)
+        pfs.refresh_video_list(self.project, self.video_list, [last_manips_to_display.text()])
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

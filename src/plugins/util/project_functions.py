@@ -55,12 +55,16 @@ def refresh_all_list(project, video_list):
         video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
-def refresh_video_list(project, video_list):
+def refresh_video_list(project, video_list, last_manips_to_display):
     video_list.model().clear()
     for f in project.files:
         if f['type'] != 'video':
             continue
-        video_list.model().appendRow(QStandardItem(f['name']))
+        if 'All' in last_manips_to_display:
+            video_list.model().appendRow(QStandardItem(f['name']))
+        elif f['manipulations'] != []:
+            if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+                video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
 def get_project_file_from_key_item(project, key, item):
@@ -69,3 +73,32 @@ def get_project_file_from_key_item(project, key, item):
         return
     assert (len(file) == 1)
     return file[0]
+
+def add_combo_dropdown(widget, title, items):
+    widget.toolbutton = QToolButton(widget)
+    widget.toolbutton.setText(title)
+    widget.toolmenu = QMenu(widget)
+    action = widget.toolmenu.addAction('All')
+    action.setCheckable(True)
+    for text in items:
+        action = widget.toolmenu.addAction(text)
+        action.setCheckable(True)
+    widget.toolbutton.setMenu(widget.toolmenu)
+    widget.toolbutton.setPopupMode(QToolButton.InstantPopup)
+    return widget.toolbutton
+
+from collections import Iterable
+def flatten(foo):
+    for x in foo:
+        if hasattr(x, '__iter__') and not isinstance(x, str):
+            for y in flatten(x):
+                yield y
+        else:
+            yield x
+
+def get_list_of_project_manips(project):
+    vid_files = [f for f in project.files if f['type'] == 'video']
+    list_of_manips = [x['manipulations'] for x in vid_files if x['manipulations'] != []]
+    list_of_manips = [ast.literal_eval(l) for l in list_of_manips]
+    list_of_manips = list(flatten(list_of_manips))
+    return list(set(list_of_manips))
