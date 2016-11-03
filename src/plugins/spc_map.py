@@ -143,9 +143,9 @@ class SPCMapDialog(QDialog):
 
     def vbc_hovering(self, x, y):
         x_origin, y_origin = self.project['origin']
-        mmpixel = self.project['mmpixel']
-        x = x / mmpixel
-        y = y / mmpixel
+        unit_per_pixel = self.project['unit_per_pixel']
+        x = x / unit_per_pixel
+        y = y / unit_per_pixel
         spc = self.spc.swapaxes(0, 1)
         spc = spc[:, ::-1]
         try:
@@ -266,15 +266,21 @@ class Widget(QWidget):
             self.view.vb.removeROI()
 
     def spc_bulk_clicked(self):
-        progress = QProgressDialog('Saving all requested maps to project dir', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
+        global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            global_progress.setValue(x * 100)
             QApplication.processEvents()
 
         for selected_vid_no, video_path in enumerate(self.selected_videos):
+            global_callback(selected_vid_no / (len(self.selected_videos)))
+            progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
             # setup seed table
             if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
                 qtutil.critical("There's no seed table associated with this project")
@@ -295,20 +301,21 @@ class Widget(QWidget):
             seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
             seed_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in seed_coord_x]
             seed_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in seed_coord_y]
-            for ind in range(len(seed_names)):
-                callback((selected_vid_no*ind) / (len(seed_names)*len(self.selected_videos)))
+            for i, ind in enumerate(range(len(seed_names))):
+                callback(i / len(seed_names))
                 x = seed_coord_x[ind]
                 y = seed_coord_y[ind]
                 seed_name = seed_names[ind]
                 self.spc_to_file(x, y, seed_name, video_path)
-        callback(1)
+            callback(1)
+        global_callback(1)
 
     def convert_coord_to_numpy_reference(self, coord, dim):
         assert(dim == 'x' or dim == 'y')
         if not self.project['origin']:
             qtutil.critical("No origin set for project")
             return
-        pix_per_mm = 1 / self.project['mmpixel']
+        pix_per_mm = 1 / self.project['unit_per_pixel']
         coord_pix = coord * pix_per_mm
         if dim == 'x':
             return self.project['origin'][0] + coord_pix

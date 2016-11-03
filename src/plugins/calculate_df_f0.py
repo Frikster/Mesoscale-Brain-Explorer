@@ -43,7 +43,7 @@ class Widget(QWidget):
                 continue
             self.video_list.model().appendRow(QStandardItem(f['name']))
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-        self.df_d0_pb.clicked.connect(self.df_f0_clicked)
+        self.df_d0_pb.clicked.connect(self.calculate_df_f0)
 
 
     def setup_ui(self):
@@ -97,29 +97,34 @@ class Widget(QWidget):
     #                           + '.npy')
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
-
-    def df_f0_clicked(self):
-        progress = QProgressDialog('Computing df/f0 for selection', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
+    def calculate_df_f0(self):
+        global_progress = QProgressDialog('Total Progress Computing df/f0 for Selection', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            global_progress.setValue(x * 100)
             QApplication.processEvents()
 
-        self.calculate_df_f0(callback)
-
-    def calculate_df_f0(self, progress_callback):
         for i, video_path in enumerate(self.selected_videos):
-            progress_callback(i / float(len(self.selected_videos)))
+            global_callback(i / float(len(self.selected_videos)))
+            progress = QProgressDialog('Total Progress Computing df/f0 for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
             frames = fileloader.load_file(video_path)
+            callback(0.3)
             baseline = np.mean(frames, axis=0)
+            callback(0.6)
             frames = np.divide(np.subtract(frames, baseline), baseline)
+            callback(0.9)
             where_are_NaNs = np.isnan(frames)
             frames[where_are_NaNs] = 0
             pfs.save_project(video_path, self.project, frames, 'df_d0', 'video')
             pfs.refresh_all_list(self.project, self.video_list)
-        progress_callback(1)
+            callback(1)
+        global_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):

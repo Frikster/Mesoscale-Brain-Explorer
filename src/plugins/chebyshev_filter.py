@@ -180,17 +180,15 @@ class Widget(QWidget):
     #     self.view.show(frame)
 
     def filter_clicked(self):
-        progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
-
-        self.temporal_filter(callback)
-
-
+        # todo: butterworth could go here
+        # progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
+        # progress.setAutoClose(True)
+        # progress.setMinimumDuration(0)
+        #
+        # def callback(x):
+        #     progress.setValue(x * 100)
+        #     QApplication.processEvents()
+        self.temporal_filter()
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0
@@ -212,24 +210,39 @@ class Widget(QWidget):
         print("Done!")
         return frames
 
-    def temporal_filter(self, progress_callback):
+    def temporal_filter(self):
+        global_progress = QProgressDialog('Total Progress Filtering Selection', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+
+        def global_callback(x):
+            global_progress.setValue(x * 100)
+            QApplication.processEvents()
         assert(self.f_low.value() < self.f_high.value())
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
         f_high = self.f_high.value()
-
         #frames_mmap = np.load(self.video_path, mmap_mode='c')
         #out = np.empty([frames_mmap.shape[1], frames_mmap.shape[2]])
         #temporal_filter_beams_nb(out, frames_mmap)
         #frames = np.array(frames_mmap)
 
         for i, video_path in enumerate(self.selected_videos):
-            progress_callback(i / len(self.selected_videos))
+            global_callback(i / len(self.selected_videos))
+            progress = QProgressDialog('Total Progress filtering for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
+            callback(0.01)
             frames = fileloader.load_file(video_path)
+            callback(0.1)
             avg_frames = np.mean(frames, axis=0)
+            callback(0.2)
             frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+            callback(0.9)
             frames += avg_frames
-
             if not self.project:
                 filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
                                                                    str(QSettings().value('last_load_data_path')),
@@ -242,7 +255,8 @@ class Widget(QWidget):
             else:
                 pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
                 pfs.refresh_all_list(self.project, self.video_list)
-        progress_callback(1)
+            callback(1)
+        global_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):

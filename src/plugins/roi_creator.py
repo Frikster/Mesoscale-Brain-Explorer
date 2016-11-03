@@ -278,20 +278,32 @@ class Widget(QWidget):
       self.roi_list.model().removeRow(roi_to_remove)
 
   def crop_clicked(self):
-      progress = QProgressDialog('Cropping for selection', 'Abort', 0, 100, self)
+      # progress = QProgressDialog('Cropping for selection', 'Abort', 0, 100, self)
+      # progress.setAutoClose(True)
+      # progress.setMinimumDuration(0)
+      #
+      # def callback(x):
+      #     progress.setValue(x * 100)
+      #     QApplication.processEvents()
+      self.crop_ROI()
+
+  def crop_ROI(self):
+    global_progress = QProgressDialog('Total Progress Cropping to ROIs for Selection', 'Abort', 0, 100, self)
+    global_progress.setAutoClose(True)
+    global_progress.setMinimumDuration(0)
+    def global_callback(x):
+        global_progress.setValue(x * 100)
+        QApplication.processEvents()
+    for i, video_path in enumerate(self.selected_videos):
+      global_callback(i / (len(self.selected_videos)))
+      progress = QProgressDialog('Cropping to ROIs for ' + video_path, 'Abort', 0, 100, self)
       progress.setAutoClose(True)
       progress.setMinimumDuration(0)
-
       def callback(x):
           progress.setValue(x * 100)
           QApplication.processEvents()
-
-      self.crop_ROI(callback)
-
-  def crop_ROI(self, progress_callback):
-    for i, video_path in enumerate(self.selected_videos):
-      progress_callback(i / (2*len(self.selected_videos)))
       frames = fileloader.load_file(video_path)
+      callback(0.2)
       # Return if there is no image or rois in view
       if self.view.vb.img == None or len(self.view.vb.rois) == 0:
         print("there is no image or rois in view ")
@@ -299,6 +311,7 @@ class Widget(QWidget):
 
       # swap axis for aligned_frames
       frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+      callback(0.4)
       # Collect ROI's and combine
       numROIs = len(self.view.vb.rois)
       arrRegion_masks = []
@@ -306,8 +319,9 @@ class Widget(QWidget):
         roi = self.view.vb.rois[i]
         arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
         arrRegion_masks.append(arrRegion_mask)
-
+      callback(0.6)
       combined_mask = np.sum(arrRegion_masks, axis=0)
+      callback(0.8)
       # Make all rows with all zeros na
       # todo: figure out where zeros are converted to na. In BMD it isn't here...
       # combined_mask[(combined_mask == 0)] = None
@@ -320,13 +334,12 @@ class Widget(QWidget):
       # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
       # Dont forget to set Endian value and set to 64 bit
       roi_frames = (frames * combined_mask[np.newaxis, :, :])
-
+      callback(0.95)
       # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
       # path = os.path.join(self.project.path, 'roi' + '.npy')
-      progress_callback(0.8)
       pfs.save_project(video_path, self.project, roi_frames, 'crop', 'video')
       pfs.refresh_all_list(self.project, self.video_list)
-      progress_callback(1)
+    global_callback(1)
 
 class MyPlugin:
   def __init__(self, project=None):

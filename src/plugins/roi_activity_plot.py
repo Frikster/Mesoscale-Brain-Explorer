@@ -37,7 +37,7 @@ kelly_colors = [
   Color('dark_olive_green', (35, 44, 22))
 ]
 
-def plot_roi_activities(video_path, rois, image):
+def plot_roi_activities(video_path, rois, image, progress_callback):
   win = pg.GraphicsWindow(title="Activity across frames")
   win.resize(1000, 600)
   win.setWindowTitle('Activity across frames')
@@ -50,6 +50,7 @@ def plot_roi_activities(video_path, rois, image):
   #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
 
   for i, roi in enumerate(rois):
+    progress_callback(i / len(rois))
     mask = roi.getROIMask(frames, image, axes=(1, 2))
     size = np.count_nonzero(mask)
     roi_frames = frames * mask[np.newaxis, :, :]
@@ -57,6 +58,7 @@ def plot_roi_activities(video_path, rois, image):
     p = roi_frames / size
     color = kelly_colors[i].rgb
     plot.plot(p, pen=color, name=roi.name)
+  progress_callback(1)
 
   return win
 
@@ -159,10 +161,17 @@ class Widget(QWidget):
       self.view.vb.addRoi(roipath, roiname)
 
   def plot_triggered(self):
+    progress = QProgressDialog('Generating Activity Plots of Selected ROIs', 'Abort', 0, 100, self)
+    progress.setAutoClose(True)
+    progress.setMinimumDuration(0)
+    def callback(x):
+        progress.setValue(x * 100)
+        QApplication.processEvents()
+    callback(0.01)
     indexes = self.roi_list.selectionModel().selectedIndexes()
     roinames = [index.data(Qt.DisplayRole) for index in indexes]
     rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
-    win = plot_roi_activities(self.video_path, rois, self.view.vb.img)
+    win = plot_roi_activities(self.video_path, rois, self.view.vb.img, callback)
     self.open_dialogs.append(win)
 
 class MyPlugin:

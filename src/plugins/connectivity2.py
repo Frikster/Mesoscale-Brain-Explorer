@@ -273,10 +273,9 @@ class Widget(QWidget):
             self.view.vb.addRoi(roipath, roiname)
 
     def connectivity_triggered(self):
-        progress = QProgressDialog('Generating Connectivity Diagrams...', 'Abort', 0, 100, self)
+        progress = QProgressDialog('Generating Connectivity Diagram...', 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)
-
         def callback(x):
             progress.setValue(x * 100)
             QApplication.processEvents()

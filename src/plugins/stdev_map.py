@@ -63,9 +63,9 @@ class StdDevDialog(QDialog):
 
   def vbc_hovering(self, x, y):
     x_origin, y_origin = self.project['origin']
-    mmpixel = self.project['mmpixel']
-    x = x / mmpixel
-    y = y / mmpixel
+    unit_per_pixel = self.project['unit_per_pixel']
+    x = x / unit_per_pixel
+    y = y / unit_per_pixel
     stddev = self.stddev.swapaxes(0, 1)
     stddev = stddev[:, ::-1]
     try:

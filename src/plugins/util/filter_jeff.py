@@ -142,28 +142,26 @@ def load_frames(filename, width, height, dat_type):
 #     return frames
 
 
-def gsr(frames, width, height):
-
+def gsr(frames, width, height, progress_callback):
     frames[isnan(frames)] = 0
-
+    progress_callback(0.2)
     # Reshape into time and space
     frames = np.reshape(frames, (frames.shape[0], width*height))
+    progress_callback(0.3)
     mean_g = np.mean(frames, axis=1)
+    progress_callback(0.4)
     g_plus = np.squeeze(np.linalg.pinv([mean_g]))
-
+    progress_callback(0.5)
     beta_g = np.dot(g_plus, frames)
-
-    print(np.shape(mean_g))
-
-    print(np.shape(beta_g))
-
+    progress_callback(0.6)
+    # print('mean_g = '+str(np.shape(mean_g)))
+    # print('beta_g = '+str(np.shape(beta_g)))
     global_signal = np.dot(np.asarray([mean_g]).T, [beta_g])
-
-    #save_to_file(file_to_save, global_signal, np.float32)
-
+    progress_callback(0.7)
     frames = frames - global_signal
-
+    progress_callback(0.8)
     frames = np.reshape(frames, (frames.shape[0], width, height))
+    progress_callback(0.9)
     return frames
 
 def masked_gsr(frames, mask_filename,width,height):

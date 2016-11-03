@@ -98,28 +98,33 @@ class Widget(QWidget):
   #   self.view.show(frame)
 
   def gsr_clicked(self):
-      progress = QProgressDialog('Computing gsr for selection', 'Abort', 0, 100, self)
-      progress.setAutoClose(True)
-      progress.setMinimumDuration(0)
+      self.gsr()
 
-      def callback(x):
-          progress.setValue(x * 100)
-          QApplication.processEvents()
-
-      self.gsr(callback)
-
-  def gsr(self, progress_callback):
+  def gsr(self):
+    global_progress = QProgressDialog('Total Progress for Computing GSR for Selection', 'Abort', 0, 100, self)
+    global_progress.setAutoClose(True)
+    global_progress.setMinimumDuration(0)
+    def global_callback(x):
+        global_progress.setValue(x * 100)
+        QApplication.processEvents()
     for i, video_path in enumerate(self.selected_videos):
-        progress_callback(i / len(self.selected_videos))
+        global_callback(i / len(self.selected_videos))
+        progress = QProgressDialog('Computing GSR for ' + video_path, 'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+        callback(0.01)
         frames = fileloader.load_file(video_path)
-
+        callback(0.1)
         width = frames.shape[1]
         height = frames.shape[2]
-        frames = fj.gsr(frames, width, height)
-
+        frames = fj.gsr(frames, width, height, callback)
         pfs.save_project(video_path, self.project, frames, 'gsr', 'video')
         pfs.refresh_all_list(self.project, self.video_list)
-    progress_callback(1)
+        callback(1)
+    global_callback(1)
 
 class MyPlugin:
   def __init__(self, project):
