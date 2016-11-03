@@ -132,7 +132,6 @@ class Widget(QWidget):
         reference_frame = np.load(reference_frame_file)[0]
         not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
         self.align_videos(not_reference_frames, reference_frame)
-        pfs.refresh_all_list(self.project, self.video_list)
 
         # for filename in filenames:
         #     if filename in [f['path'] for f in self.project.files]:
@@ -173,7 +172,6 @@ class Widget(QWidget):
         def callback_global(x):
             progress_global.setValue(x * 100)
             QApplication.processEvents()
-
         callback_global(0)
         ret_filenames = []
 
@@ -195,6 +193,7 @@ class Widget(QWidget):
             shifts = self.compute_shifts(reference_frame, frames, callback_shifts)
             shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
+            pfs.refresh_all_list(self.project, self.video_list)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)

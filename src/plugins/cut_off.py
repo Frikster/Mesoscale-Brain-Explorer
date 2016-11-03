@@ -157,6 +157,7 @@ class Widget(QWidget):
             callback(1)
             #frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
             pfs.save_project(video_path, self.project, None, 'cut_off', 'video')
+            pfs.refresh_all_list(self.project, self.video_list)
         global_callback(1)
 
 

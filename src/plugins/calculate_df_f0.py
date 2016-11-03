@@ -118,6 +118,7 @@ class Widget(QWidget):
             where_are_NaNs = np.isnan(frames)
             frames[where_are_NaNs] = 0
             pfs.save_project(video_path, self.project, frames, 'df_d0', 'video')
+            pfs.refresh_all_list(self.project, self.video_list)
         progress_callback(1)
 
 class MyPlugin:

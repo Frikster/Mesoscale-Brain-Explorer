@@ -325,6 +325,7 @@ class Widget(QWidget):
       # path = os.path.join(self.project.path, 'roi' + '.npy')
       progress_callback(0.8)
       pfs.save_project(video_path, self.project, roi_frames, 'crop', 'video')
+      pfs.refresh_all_list(self.project, self.video_list)
       progress_callback(1)
 
 class MyPlugin:

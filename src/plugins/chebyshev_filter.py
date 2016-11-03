@@ -241,6 +241,7 @@ class Widget(QWidget):
                 msgBox.exec_()
             else:
                 pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
+                pfs.refresh_all_list(self.project, self.video_list)
         progress_callback(1)
 
 class MyPlugin:

@@ -118,6 +118,7 @@ class Widget(QWidget):
         frames = fj.gsr(frames, width, height)
 
         pfs.save_project(video_path, self.project, frames, 'gsr', 'video')
+        pfs.refresh_all_list(self.project, self.video_list)
     progress_callback(1)
 
 class MyPlugin:
