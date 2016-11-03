@@ -51,7 +51,8 @@ class Widget(QWidget):
         vbox = QVBoxLayout()
         list_of_manips = pfs.get_list_of_project_manips(self.project)
         self.toolbutton = pfs.add_combo_dropdown(self, 'Select Data Categories to Display in List', list_of_manips)
-        self.toolbutton.triggered.connect(self.refresh_video_list)
+        self.toolbutton.activated.connect(self.refresh_video_list)
+        #self.toolbutton.triggered.connect(self.refresh_video_list)
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -85,9 +86,12 @@ class Widget(QWidget):
         # hbox.setStretch(1, 0)
         # self.setLayout(hbox)
 
-    def refresh_video_list(self, last_manips_to_display):
-        self.toolbutton.itemText(1)
-        pfs.refresh_video_list(self.project, self.video_list, [last_manips_to_display.text()])
+    def refresh_video_list(self, trigger_item=None):
+        last_manips_to_display = []
+        for i in range(self.toolbutton.count()):
+            if self.toolbutton.model().item(i, 0).checkState() != 0:
+                last_manips_to_display = last_manips_to_display + [self.toolbutton.itemText(i)]
+        pfs.refresh_video_list(self.project, self.video_list, last_manips_to_display)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

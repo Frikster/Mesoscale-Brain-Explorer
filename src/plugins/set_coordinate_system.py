@@ -39,6 +39,7 @@ class Widget(QWidget):
       QItemSelection].connect(self.selected_video_changed)
 
     pfs.refresh_video_list(self.project, self.listview)
+
     # for f in project.files:
     #   if f['type'] != 'video':
     #     continue

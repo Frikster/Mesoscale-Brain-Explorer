@@ -5,6 +5,7 @@ import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import ast
+from .mse_ui_elements import CheckableComboBox
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -55,7 +56,7 @@ def refresh_all_list(project, video_list):
         video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
-def refresh_video_list(project, video_list, last_manips_to_display):
+def refresh_video_list(project, video_list, last_manips_to_display=['All']):
     video_list.model().clear()
     for f in project.files:
         if f['type'] != 'video':
@@ -75,17 +76,21 @@ def get_project_file_from_key_item(project, key, item):
     return file[0]
 
 def add_combo_dropdown(widget, title, items):
-    widget.toolbutton = QToolButton(widget)
-    widget.toolbutton.setText(title)
-    widget.toolmenu = QMenu(widget)
-    action = widget.toolmenu.addAction('All')
-    action.setCheckable(True)
-    for text in items:
-        action = widget.toolmenu.addAction(text)
-        action.setCheckable(True)
-    widget.toolbutton.setMenu(widget.toolmenu)
-    widget.toolbutton.setPopupMode(QToolButton.InstantPopup)
-    return widget.toolbutton
+    # widget.toolbutton = QToolButton(widget)
+    # widget.toolbutton.setText(title)
+    # widget.toolmenu = QMenu(widget)
+    widget.ComboBox = CheckableComboBox()
+    widget.ComboBox.addItem('All')
+    item = widget.ComboBox.model().item(0, 0)
+    item.setCheckState(Qt.Checked)
+    for i, text in enumerate(items):
+        widget.ComboBox.addItem(text)
+        item = widget.ComboBox.model().item(i+1, 0)
+        item.setCheckState(Qt.Unchecked)
+
+    # widget.toolbutton.setMenu(widget.toolmenu)
+    # widget.toolbutton.setPopupMode(QToolButton.InstantPopup)
+    return widget.ComboBox
 
 from collections import Iterable
 def flatten(foo):
