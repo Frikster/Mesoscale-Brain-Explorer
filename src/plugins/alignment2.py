@@ -86,7 +86,7 @@ class Widget(QWidget):
         # self.setLayout(hbox)
 
     def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+        pfs.refresh_video_list_via_combo_box(self, trigger_item, ref_version=True)
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)

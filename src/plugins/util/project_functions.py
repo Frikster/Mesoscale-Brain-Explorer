@@ -45,7 +45,7 @@ def change_origin(project, video_path, origin):
     project.save()
 
 # Always ensure all reference_frames come first in the list
-def refresh_all_list(project, video_list):
+def refresh_all_list(project, video_list, last_manips_to_display=['All']):
     video_list.model().clear()
     for f in project.files:
         if f['type'] != 'ref_frame':
@@ -54,7 +54,11 @@ def refresh_all_list(project, video_list):
     for f in project.files:
         if f['type'] != 'video':
             continue
-        video_list.model().appendRow(QStandardItem(f['name']))
+        if 'All' in last_manips_to_display:
+            video_list.model().appendRow(QStandardItem(f['name']))
+        elif f['manipulations'] != []:
+            if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+                video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
 def refresh_video_list(project, video_list, last_manips_to_display=['All']):
@@ -69,12 +73,16 @@ def refresh_video_list(project, video_list, last_manips_to_display=['All']):
                 video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
-def refresh_video_list_via_combo_box(widget, trigger_item=None):
+def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=False):
     last_manips_to_display = []
     for i in range(widget.toolbutton.count()):
         if widget.toolbutton.model().item(i, 0).checkState() != 0:
             last_manips_to_display = last_manips_to_display + [widget.toolbutton.itemText(i)]
-    refresh_video_list(widget.project, widget.video_list, last_manips_to_display)
+    if not ref_version:
+        refresh_video_list(widget.project, widget.video_list, last_manips_to_display)
+    else:
+        refresh_all_list(widget.project, widget.video_list, last_manips_to_display)
+
 
 def get_project_file_from_key_item(project, key, item):
     file = [files for files in project.files if files[key] == item]
