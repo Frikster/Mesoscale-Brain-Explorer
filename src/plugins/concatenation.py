@@ -8,6 +8,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
 from .util import fileloader
+from .util import project_functions as pfs
 from .util.qt import FileTable, FileTableModel, qtutil
 
 class Widget(QWidget):

@@ -9,6 +9,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import project_functions as pfs
 
 import uuid
 import psutil

@@ -10,6 +10,7 @@ from PyQt4.QtCore import *
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
 from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
 
 sys.path.append('..')
 import qtutil

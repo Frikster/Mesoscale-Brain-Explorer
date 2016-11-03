@@ -11,8 +11,8 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 
-
 from .util.mygraphicsview import MyGraphicsView
+from .util import project_functions as pfs
 
 #sys.path.append('..')
 import qtutil
@@ -181,6 +181,10 @@ class Widget(QWidget):
     self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
+    list_of_manips = pfs.get_list_of_project_manips(self.project)
+    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')

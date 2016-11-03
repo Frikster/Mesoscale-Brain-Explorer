@@ -90,7 +90,7 @@ class Widget(QWidget):
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
-        
+
 
     def compute_ref_frame(self):
         if not self.selected_videos:

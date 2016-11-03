@@ -9,6 +9,7 @@ from .util.qt import MyListView, MyProgressDialog
 from .util.gradient import GradientLegend
 
 from .util import fileloader
+from .util import project_functions as pfs
 
 import os
 import numpy as np

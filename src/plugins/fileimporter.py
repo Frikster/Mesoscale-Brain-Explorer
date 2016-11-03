@@ -16,6 +16,7 @@ import tifffile as tiff
 
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
 
 class NotConvertedError(Exception):
   pass

@@ -10,6 +10,7 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog, InfoWidget
 from .util.gradient import GradientLegend
 from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
 
 from .util import fileloader
 
