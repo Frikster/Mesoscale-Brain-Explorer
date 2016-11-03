@@ -54,6 +54,27 @@ class InfoWidget(QFrame):
         self.setLineWidth(2)
         self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
+class WarningWidget(QFrame):
+    def __init__(self, text, parent=None):
+        super(WarningWidget, self).__init__(parent)
+        self.setup_ui(text)
+
+    def setup_ui(self, text):
+        hbox = QHBoxLayout()
+        icon = QLabel()
+        image = QImage('pics/delete.png')
+        icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
+        hbox.addWidget(icon)
+        self.label = QLabel(text)
+        self.label.setWordWrap(True)
+        hbox.addWidget(self.label)
+        hbox.addStretch()
+        self.setLayout(hbox)
+
+        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        self.setLineWidth(2)
+        self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
+
 class PanelElements:
     def __init__(self, project, view):
         self.project = project

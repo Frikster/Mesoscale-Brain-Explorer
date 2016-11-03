@@ -15,6 +15,7 @@ import qtutil
 import tifffile as tiff
 
 from .util import fileloader, fileconverter
+from .util import mse_ui_elements as mue
 
 class NotConvertedError(Exception):
   pass
@@ -113,6 +114,8 @@ class Widget(QWidget):
     vbox.addWidget(self.listview)
 
     hbox = QVBoxLayout()
+    hbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
+                                     'We advise you only import files no larger than 1/4 of your memory'))
     pb = QPushButton('New Video')
     pb.clicked.connect(self.new_video)
     hbox.addWidget(pb)
