@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import psutil
+import os
+import qtutil
 
 class UnknownFileFormatError(Exception):
   pass
@@ -11,6 +14,18 @@ def load_npy(filename):
   return frames
 
 def load_file(filename):
+  file_size = os.path.getsize(filename)
+  [total, available, percent, used, free] = list(psutil.virtual_memory())
+
+  if file_size > available:
+    qtutil.critical('Not enough memory. File is of size '+str(file_size) +
+                    ' and available memory is: ' + str(available))
+    raise MemoryError('Not enough memory. File is of size '+str(file_size) +
+                    ' and available memory is: ' + str(available))
+
+  if percent > 95:
+      qtutil.warning('Your memory appears to be getting low.')
+
   if filename.endswith('.npy'):
     frames = load_npy(filename)
   else:
