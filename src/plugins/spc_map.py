@@ -347,7 +347,7 @@ class Widget(QWidget):
         assert self.selected_videos
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         spc = calc_spc(self.selected_videos[0], x, y, progress)
-        dialog = SPCMapDialog(self.project, self.selected_videos[0], spc, self.cm_type, self)
+        dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_type, self)
         dialog.show()
         self.open_dialogs.append(dialog)
 

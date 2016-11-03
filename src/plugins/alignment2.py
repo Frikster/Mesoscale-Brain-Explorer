@@ -37,6 +37,7 @@ class Widget(QWidget):
 
         self.open_dialogs = []
         self.selected_videos = []
+        self.shown_video_path = None
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
@@ -99,7 +100,7 @@ class Widget(QWidget):
         ref_no = self.ref_no.value()
 
         # find size, assuming all files in project have the same size
-        frames_mmap = np.load(self.selected_videos[0], mmap_mode='c')
+        frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
         frame_no, h, w = frames_mmap.shape
 
         summed_reference_frame = np.zeros((h, w))

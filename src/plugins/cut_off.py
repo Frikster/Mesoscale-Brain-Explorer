@@ -37,6 +37,7 @@ class Widget(QWidget):
 
         self.open_dialogs = []
         self.selected_videos = []
+        self.shown_video_path = None
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)

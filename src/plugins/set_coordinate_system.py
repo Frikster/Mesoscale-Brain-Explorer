@@ -201,7 +201,7 @@ class Widget(QWidget):
     self.save()
 
   def vbc_clicked(self, x, y):
-    pfs.change_origin(self.project, self.selected_videos[0], (x, y))
+    pfs.change_origin(self.project, self.shown_video_path, (x, y))
     self.set_origin_label(x, y)
     self.view.update()
 
