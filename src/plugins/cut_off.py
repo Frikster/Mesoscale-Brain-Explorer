@@ -52,6 +52,10 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
@@ -89,6 +93,11 @@ class Widget(QWidget):
     #                           + '.npy')
     #     frame = fileloader.load_reference_frame(self.video_path)
     #     self.view.show(frame)
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+    def selected_video_changed(self, selected, deselected):
+        pfs.selected_video_changed_multi(self, selected, deselected)
 
     def selected_video_changed(self, selected, deselected):
         if not selected.indexes():

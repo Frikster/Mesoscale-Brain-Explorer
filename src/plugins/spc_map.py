@@ -206,6 +206,10 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         vbox.addWidget(self.video_list)
         vbox.addWidget(QLabel('Choose colormap:'))
@@ -235,6 +239,12 @@ class Widget(QWidget):
         hbox_global = QHBoxLayout()
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
+
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+    def selected_video_changed(self, selected, deselected):
+        pfs.selected_video_changed_multi(self, selected, deselected)
 
     def selected_seed_changed(self, selection):
         if self.selected_seed_changed_flag == 0:

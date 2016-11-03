@@ -26,7 +26,7 @@ class Widget(QWidget):
 
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
-    self.listview = QListView()
+    self.video_list = QListView()
     self.origin_label = QLabel('Origin:')
     self.left = QFrame()
     self.right = QFrame()
@@ -34,11 +34,11 @@ class Widget(QWidget):
     self.setup_ui()
 
     self.selected_videos = []
-    self.listview.setModel(QStandardItemModel())
-    self.listview.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_video_changed)
+    self.video_list.setModel(QStandardItemModel())
+    self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_video_changed)
 
-    pfs.refresh_video_list(self.project, self.listview)
+    pfs.refresh_video_list(self.project, self.video_list)
 
     # for f in project.files:
     #   if f['type'] != 'video':
@@ -54,10 +54,14 @@ class Widget(QWidget):
 
     self.view.vb.clicked.connect(self.vbc_clicked)
     vbox = QVBoxLayout()
+    list_of_manips = pfs.get_list_of_project_manips(self.project)
+    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    self.listview.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.listview)
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.video_list)
     vbox.addWidget(self.origin_label)
     pb = QPushButton('&Average origin from selected files\' origins')
     pb.clicked.connect(self.avg_origin)
@@ -88,6 +92,12 @@ class Widget(QWidget):
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
     self.setEnabled(False)
+
+  def refresh_video_list_via_combo_box(self, trigger_item=None):
+      pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+  def selected_video_changed(self, selected, deselected):
+      pfs.selected_video_changed_multi(self, selected, deselected)
 
   def set_pixel_width_magnitude(self, mag):
       self.view.unit_per_pixel = mag

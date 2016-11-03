@@ -74,7 +74,7 @@ class Widget(QWidget):
 
    # define ui components and global data
     self.view = MyGraphicsView(self.project)
-    self.listview = QListView()
+    self.video_list = QListView()
     self.roi_list = QListView()
     self.left = QFrame()
     self.right = QFrame()
@@ -83,14 +83,14 @@ class Widget(QWidget):
 
     self.selected_videos = []
 
-    self.listview.setModel(QStandardItemModel())
-    self.listview.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_video_changed)
+    self.video_list.setModel(QStandardItemModel())
+    self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_video_changed)
     for f in project.files:
       if f['type'] != 'video':
         continue
-      self.listview.model().appendRow(QStandardItem(f['name']))
-    self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+      self.video_list.model().appendRow(QStandardItem(f['name']))
+    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
     model = RoiItemModel() 
     model.textChanged.connect(self.roi_item_changed)
@@ -121,10 +121,14 @@ class Widget(QWidget):
     self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
+    list_of_manips = pfs.get_list_of_project_manips(self.project)
+    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    self.listview.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.listview)
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    vbox.addWidget(self.video_list)
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
     vbox.addWidget(pb)
@@ -157,6 +161,12 @@ class Widget(QWidget):
     # hbox.setStretch(0, 1)
     # hbox.setStretch(1, 0)
     # self.setLayout(hbox)
+
+  def refresh_video_list_via_combo_box(self, trigger_item=None):
+      pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+  def selected_video_changed(self, selected, deselected):
+      pfs.selected_video_changed_multi(self, selected, deselected)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
