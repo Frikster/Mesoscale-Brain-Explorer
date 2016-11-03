@@ -6,6 +6,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import ast
 from .mse_ui_elements import CheckableComboBox
+from .fileloader import load_reference_frame
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -68,6 +69,13 @@ def refresh_video_list(project, video_list, last_manips_to_display=['All']):
                 video_list.model().appendRow(QStandardItem(f['name']))
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
+def refresh_video_list_via_combo_box(widget, trigger_item=None):
+    last_manips_to_display = []
+    for i in range(widget.toolbutton.count()):
+        if widget.toolbutton.model().item(i, 0).checkState() != 0:
+            last_manips_to_display = last_manips_to_display + [widget.toolbutton.itemText(i)]
+    refresh_video_list(widget.project, widget.video_list, last_manips_to_display)
+
 def get_project_file_from_key_item(project, key, item):
     file = [files for files in project.files if files[key] == item]
     if not file:
@@ -75,10 +83,7 @@ def get_project_file_from_key_item(project, key, item):
     assert (len(file) == 1)
     return file[0]
 
-def add_combo_dropdown(widget, title, items):
-    # widget.toolbutton = QToolButton(widget)
-    # widget.toolbutton.setText(title)
-    # widget.toolmenu = QMenu(widget)
+def add_combo_dropdown(widget, items):
     widget.ComboBox = CheckableComboBox()
     widget.ComboBox.addItem('All')
     item = widget.ComboBox.model().item(0, 0)
@@ -87,9 +92,6 @@ def add_combo_dropdown(widget, title, items):
         widget.ComboBox.addItem(text)
         item = widget.ComboBox.model().item(i+1, 0)
         item.setCheckState(Qt.Unchecked)
-
-    # widget.toolbutton.setMenu(widget.toolmenu)
-    # widget.toolbutton.setPopupMode(QToolButton.InstantPopup)
     return widget.ComboBox
 
 from collections import Iterable
@@ -107,3 +109,22 @@ def get_list_of_project_manips(project):
     list_of_manips = [ast.literal_eval(l) for l in list_of_manips]
     list_of_manips = list(flatten(list_of_manips))
     return list(set(list_of_manips))
+
+
+def selected_video_changed_multi(widget, selected, deselected):
+    if not selected.indexes():
+        return
+    for index in deselected.indexes():
+        vidpath = str(os.path.join(widget.project.path,
+                                   index.data(Qt.DisplayRole))
+                      + '.npy')
+        widget.selected_videos = [x for x in widget.selected_videos if x != vidpath]
+    for index in selected.indexes():
+        vidpath = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
+        if vidpath not in widget.selected_videos and vidpath != 'None':
+            widget.selected_videos = widget.selected_videos + [vidpath]
+
+            widget.shown_video_path = str(os.path.join(widget.project.path, selected.indexes()[0].data(Qt.DisplayRole))
+                                    + '.npy')
+    frame = load_reference_frame(widget.shown_video_path)
+    widget.view.show(frame)

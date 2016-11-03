@@ -50,13 +50,12 @@ class Widget(QWidget):
 
         vbox = QVBoxLayout()
         list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, 'Select Data Categories to Display in List', list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list)
-        #self.toolbutton.triggered.connect(self.refresh_video_list)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
         max_cut_off = 5000
         vbox.addWidget(QLabel('Choose frame used for reference averaged across all selected  files'))
@@ -86,31 +85,12 @@ class Widget(QWidget):
         # hbox.setStretch(1, 0)
         # self.setLayout(hbox)
 
-    def refresh_video_list(self, trigger_item=None):
-        last_manips_to_display = []
-        for i in range(self.toolbutton.count()):
-            if self.toolbutton.model().item(i, 0).checkState() != 0:
-                last_manips_to_display = last_manips_to_display + [self.toolbutton.itemText(i)]
-        pfs.refresh_video_list(self.project, self.video_list, last_manips_to_display)
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
     def selected_video_changed(self, selected, deselected):
-        if not selected.indexes():
-            return
-
-        for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-        for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-            if vidpath not in self.selected_videos and vidpath != 'None':
-                self.selected_videos = self.selected_videos + [vidpath]
-
-            self.shown_video_path = str(os.path.join(self.project.path, selected.indexes()[0].data(Qt.DisplayRole))
-                                        + '.npy')
-        frame = fileloader.load_reference_frame(self.shown_video_path)
-        self.view.show(frame)
+        pfs.selected_video_changed_multi(self, selected, deselected)
+        
 
     def compute_ref_frame(self):
         if not self.selected_videos:
