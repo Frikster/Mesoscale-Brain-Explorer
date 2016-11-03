@@ -107,8 +107,9 @@ class Widget(QWidget):
     def global_callback(x):
         global_progress.setValue(x * 100)
         QApplication.processEvents()
+    total = len(self.selected_videos)
     for i, video_path in enumerate(self.selected_videos):
-        global_callback(i / len(self.selected_videos))
+        global_callback(i / total)
         progress = QProgressDialog('Computing GSR for ' + video_path, 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)

@@ -227,8 +227,9 @@ class Widget(QWidget):
         #temporal_filter_beams_nb(out, frames_mmap)
         #frames = np.array(frames_mmap)
 
+        total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
-            global_callback(i / len(self.selected_videos))
+            global_callback(i / total)
             progress = QProgressDialog('Total Progress filtering for ' + video_path, 'Abort', 0, 100, self)
             progress.setAutoClose(True)
             progress.setMinimumDuration(0)

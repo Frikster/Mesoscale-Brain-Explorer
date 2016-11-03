@@ -294,8 +294,9 @@ class Widget(QWidget):
     def global_callback(x):
         global_progress.setValue(x * 100)
         QApplication.processEvents()
+    total = len(self.selected_videos)
     for i, video_path in enumerate(self.selected_videos):
-      global_callback(i / (len(self.selected_videos)))
+      global_callback(i / total)
       progress = QProgressDialog('Cropping to ROIs for ' + video_path, 'Abort', 0, 100, self)
       progress.setAutoClose(True)
       progress.setMinimumDuration(0)
@@ -334,7 +335,7 @@ class Widget(QWidget):
       # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
       # Dont forget to set Endian value and set to 64 bit
       roi_frames = (frames * combined_mask[np.newaxis, :, :])
-      callback(0.95)
+      callback(1)
       # todo: solve issue where rerunning this will overwrite any previous 'roi.npy'
       # path = os.path.join(self.project.path, 'roi' + '.npy')
       pfs.save_project(video_path, self.project, roi_frames, 'crop', 'video')

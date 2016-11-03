@@ -105,8 +105,9 @@ class Widget(QWidget):
             global_progress.setValue(x * 100)
             QApplication.processEvents()
 
+        total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
-            global_callback(i / float(len(self.selected_videos)))
+            global_callback(i / total)
             progress = QProgressDialog('Total Progress Computing df/f0 for ' + video_path, 'Abort', 0, 100, self)
             progress.setAutoClose(True)
             progress.setMinimumDuration(0)

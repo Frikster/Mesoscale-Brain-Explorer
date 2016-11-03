@@ -243,6 +243,9 @@ class Widget(QWidget):
     def refresh_video_list_via_combo_box(self, trigger_item=None):
         pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
+    def selected_video_changed(self, selected, deselected):
+        pfs.selected_video_changed_multi(self, selected, deselected)
+
     def selected_seed_changed(self, selection):
         if self.selected_seed_changed_flag == 0:
             self.selected_seed_changed_flag = self.selected_seed_changed_flag + 1
@@ -272,9 +275,9 @@ class Widget(QWidget):
         def global_callback(x):
             global_progress.setValue(x * 100)
             QApplication.processEvents()
-
+        total = len(self.selected_videos)
         for selected_vid_no, video_path in enumerate(self.selected_videos):
-            global_callback(selected_vid_no / (len(self.selected_videos)))
+            global_callback(selected_vid_no / total)
             progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
             progress.setAutoClose(True)
             progress.setMinimumDuration(0)
@@ -325,23 +328,23 @@ class Widget(QWidget):
     def cm_choice(self, cm_choice):
         self.cm_type = cm_choice
 
-    def selected_video_changed(self, selected, deselected):
-        if not selected.indexes():
-            return
-
-        for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-        for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-            if vidpath not in self.selected_videos and vidpath != 'None':
-                self.selected_videos = self.selected_videos + [vidpath]
-
-        self.shown_video_path = str(os.path.join(self.project.path,
-                                           selected.indexes()[0].data(Qt.DisplayRole))
-                              + '.npy')
-        frame = fileloader.load_reference_frame(self.shown_video_path)
-        self.view.show(frame)
+    # def selected_video_changed(self, selected, deselected):
+    #     if not selected.indexes():
+    #         return
+    #
+    #     for index in deselected.indexes():
+    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+    #     for index in selected.indexes():
+    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    #         if vidpath not in self.selected_videos and vidpath != 'None':
+    #             self.selected_videos = self.selected_videos + [vidpath]
+    #
+    #     self.shown_video_path = str(os.path.join(self.project.path,
+    #                                        selected.indexes()[0].data(Qt.DisplayRole))
+    #                           + '.npy')
+    #     frame = fileloader.load_reference_frame(self.shown_video_path)
+    #     self.view.show(frame)
 
     def vbc_clicked(self, x, y):
         assert self.selected_videos
