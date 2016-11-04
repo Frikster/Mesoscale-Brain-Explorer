@@ -271,7 +271,7 @@ class Widget(QWidget):
         seed_table = np.array(seed_table)
         self.headers = [str.strip(x) for x in seed_table[0,]]
         seed_table_range = range(len(seed_table))[1:]
-        seed_names = [seed_table[x, 0] for x in seed_table_range]
+        seed_names = [str(seed_table[x, 0]) for x in seed_table_range]
         seed_coord_x = [float(seed_table[x, 1]) for x in seed_table_range]
         seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
         self.data = {self.headers[0]: seed_names, self.headers[1]: seed_coord_x, self.headers[2]: seed_coord_y}
