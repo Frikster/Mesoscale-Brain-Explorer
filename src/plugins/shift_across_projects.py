@@ -36,64 +36,64 @@ class Widget(QWidget):
     self.origin_label = QLabel('Origin:')
     self.setup_ui()
 
-    self.listview.setModel(QStandardItemModel())
+    self.list_all.setModel(QStandardItemModel())
+    self.list_shifted.setModel(QStandardItemModel())
     for f in self.project.files:
-      if f['type'] == 'video':
-        self.listview.model().appendRow(QStandardItem(f['path']))
+      if f['type'] == 'shifted':
+        self.list_all.model().appendRow(QStandardItem(f['path']))
 
   def setup_ui(self):
     vbox = QVBoxLayout()
-    self.listview = QListView()
-    self.listview.setStyleSheet('QListView::item { height: 26px; }')
-    self.listview.setSelectionMode(QAbstractItemView.NoSelection)
-    vbox.addWidget(self.listview)
-
+    vbox.addWidget(QLabel('Data from other projects'))
+    pb = QPushButton('Load JSON files from other projects to align to this one')
+    pb.clicked.connect(self.new_video)
+    vbox.addWidget(pb)
+    self.list_all = QListView()
+    self.list_all.setStyleSheet('QListView::item { height: 26px; }')
+    self.list_all.setSelectionMode(QAbstractItemView.NoSelection)
+    vbox.addWidget(self.list_all)
+    pb = QPushButton('Align selected data to this project')
+    pb.clicked.connect(self.new_video)
+    vbox.addWidget(pb)
+    vbox.addWidget(QLabel('Shifted Data from other projects'))
+    self.list_shifted = QListView()
+    self.list_shifted.setStyleSheet('QListView::item { height: 26px; }')
+    self.list_shifted.setSelectionMode(QAbstractItemView.NoSelection)
+    vbox.addWidget(self.list_shifted)
     self.setLayout(vbox)
-    #
-    # hbox = QVBoxLayout()
-    # hbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
-    #                                  ' We advise you only import files no larger than 1/4 of your memory'))
-    # pb = QPushButton('New Video')
-    # pb.clicked.connect(self.new_video)
-    # hbox.addWidget(pb)
-    #
-    # vbox.addLayout(hbox)
-    # vbox.addStretch()
 
+  def refresh_video_list_via_combo_box(self, trigger_item=None):
+    pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  def selected_video_changed(self, selected, deselected):
+    pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
-
-    def custom_butt_clicked(self):
-        print('Do custom stuff. Coding required.')
-
-    def new_video(self):
-        filenames = QFileDialog.getOpenFileNames(
-            self, 'Load images', QSettings().value('last_load_data_path'),
-            'Video files (*.npy *.tif *.raw)')
-        if not filenames:
-            return
-        QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
+  def new_json(self):
+    filenames = QFileDialog.getOpenFileNames(
+        self, 'Load images', QSettings().value('last_load_data_path'),
+        'Video files (*.npy)')
+    if not filenames:
+        return
+    QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
+    for json_path in filenames:
+        print('loading...')
         self.import_files(filenames)
 
-    def import_files(self, filenames):
-        for filename in filenames:
-            if filename in [f['path'] for f in self.project.files]:
-                continue
-            try:
-                filename = self.import_file(filename)
-            except NotConvertedError:
-                qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
-            except FileAlreadyInProjectError as e:
-                qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
-            except:
-                qtutil.critical('Import of \'{}\' failed:\n'.format(filename) + \
-                                traceback.format_exc())
-            else:
-                self.listview.model().appendRow(QStandardItem(filename))
+  def import_files(self, filenames):
+    for filename in filenames:
+        if filename in [f['path'] for f in self.project.files]:
+            continue
+        try:
+            filename = self.import_file(filename)
+        except NotConvertedError:
+            qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
+        except FileAlreadyInProjectError as e:
+            qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
+        except:
+            qtutil.critical('Import of \'{}\' failed:\n'.format(filename) + \
+                            traceback.format_exc())
+        else:
+            self.listview.model().appendRow(QStandardItem(filename))
 
 
 class MyPlugin:
