@@ -12,6 +12,7 @@ from PyQt4.QtCore import *
 
 sys.path.append('..')
 import qtutil
+from project import Project
 import tifffile as tiff
 
 from .util.mygraphicsview import MyGraphicsView
@@ -36,6 +37,7 @@ class Widget(QWidget):
 
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
+    self.project_list = []
     self.list_all = QListView()
     self.list_shifted = QListView()
     self.origin_label = QLabel('Origin:')
@@ -88,13 +90,17 @@ class Widget(QWidget):
     pfs.selected_video_changed_multi(self, selected, deselected)
 
   def new_json(self):
-    filenames = QFileDialog.getOpenFileNames(
+    filenames = QFileDialog.getExistingDirectory(
         self, 'Load images', QSettings().value('last_load_data_path'),
-        'Video files (*.npy)')
+        'Video files (*.json)')
     if not filenames:
         return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
     for json_path in filenames:
+        if os.path.splitext(json_path)[1] != '.json':
+            qtutil.critical(json_path + 'is not a json file. Skipping.')
+            continue
+        self.project_list = self.project_list + Project(json_path)
         print('loading...')
         #self.import_files(filenames)
 
