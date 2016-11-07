@@ -14,7 +14,7 @@ sys.path.append('..')
 import qtutil
 import tifffile as tiff
 
-from .util import fileloader, fileconverter
+from .util.mygraphicsview import MyGraphicsView
 from .util import mse_ui_elements as mue
 from .util import project_functions as pfs
 
@@ -33,7 +33,14 @@ class Widget(QWidget):
       return
 
     self.project = project
+
+    # define ui components and global data
+    self.view = MyGraphicsView(self.project)
+    self.list_all = QListView()
+    self.list_shifted = QListView()
     self.origin_label = QLabel('Origin:')
+    self.left = QFrame()
+    self.right = QFrame()
     self.setup_ui()
 
     self.list_all.setModel(QStandardItemModel())
@@ -43,24 +50,36 @@ class Widget(QWidget):
         self.list_all.model().appendRow(QStandardItem(f['path']))
 
   def setup_ui(self):
+    vbox_view = QVBoxLayout()
+    vbox_view.addWidget(self.view)
+    self.view.vb.setCursor(Qt.CrossCursor)
+    self.left.setLayout(vbox_view)
+
     vbox = QVBoxLayout()
     vbox.addWidget(QLabel('Data from other projects'))
-    pb = QPushButton('Load JSON files from other projects to align to this one')
-    pb.clicked.connect(self.new_video)
+    pb = QPushButton('Load JSON files from other projects')
+    pb.clicked.connect(self.new_json)
     vbox.addWidget(pb)
-    self.list_all = QListView()
     self.list_all.setStyleSheet('QListView::item { height: 26px; }')
     self.list_all.setSelectionMode(QAbstractItemView.NoSelection)
     vbox.addWidget(self.list_all)
+    vbox.addWidget(qtutil.separator())
     pb = QPushButton('Align selected data to this project')
-    pb.clicked.connect(self.new_video)
+    pb.clicked.connect(self.new_json)
     vbox.addWidget(pb)
     vbox.addWidget(QLabel('Shifted Data from other projects'))
-    self.list_shifted = QListView()
     self.list_shifted.setStyleSheet('QListView::item { height: 26px; }')
     self.list_shifted.setSelectionMode(QAbstractItemView.NoSelection)
     vbox.addWidget(self.list_shifted)
-    self.setLayout(vbox)
+    self.right.setLayout(vbox)
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.setHandleWidth(3)
+    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    splitter.addWidget(self.left)
+    splitter.addWidget(self.right)
+    hbox_global = QHBoxLayout()
+    hbox_global.addWidget(splitter)
+    self.setLayout(hbox_global)
 
   def refresh_video_list_via_combo_box(self, trigger_item=None):
     pfs.refresh_video_list_via_combo_box(self, trigger_item)
@@ -77,7 +96,7 @@ class Widget(QWidget):
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
     for json_path in filenames:
         print('loading...')
-        self.import_files(filenames)
+        #self.import_files(filenames)
 
   def import_files(self, filenames):
     for filename in filenames:
