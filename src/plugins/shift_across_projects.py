@@ -94,13 +94,10 @@ class Widget(QWidget):
     pfs.selected_video_changed_multi(self, selected, deselected)
 
   def new_json(self):
-    #app = QApplication(sys.argv)
     fd = FileDialog()
+    fd.exec_()
+    fd.show()
     dirnames = fd.selectedFiles()
-
-
-    #fd.isHidden()
-    #sys.exit(app.exec_())
 
     if not dirnames or dirnames[0] == fd.directory():
         return
@@ -113,7 +110,7 @@ class Widget(QWidget):
         for json_path in json_paths:
             self.project_list = self.project_list + Project(json_path)
             print('loading...')
-        #self.import_files(filenames)
+        # self.import_files(filenames)
 
   def import_files(self, filenames):
     for filename in filenames:
@@ -141,15 +138,14 @@ class FileDialog(QtGui.QFileDialog):
             if isinstance(view.model(), QtGui.QFileSystemModel):
                 view.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
-        self.filesSelected.connect(self.handleStop)
-        self.show()
-        self._running = True
-        while self._running:
-            QtGui.qApp.processEvents()
-            time.sleep(0.05)
-
-    def handleStop(self):
-        self._running = False
+    #     self.filesSelected.connect(self.handleStop)
+    #     self._running = True
+    #     # while self._running:
+    #     #     QtGui.qApp.processEvents()
+    #     #     time.sleep(0.05)
+    #
+    # def handleStop(self):
+    #     self._running = False
 
 
 class MyPlugin:
