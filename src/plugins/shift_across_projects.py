@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 
 import os
+from os.path import isfile, join
+from os import listdir
 import sys
 import traceback
+import time
 import numpy as np
 from shutil import copyfile
 import matplotlib.pyplot as plt
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4 import QtGui
 
 sys.path.append('..')
 import qtutil
@@ -90,18 +94,25 @@ class Widget(QWidget):
     pfs.selected_video_changed_multi(self, selected, deselected)
 
   def new_json(self):
-    filenames = QFileDialog.getExistingDirectory(
-        self, 'Load images', QSettings().value('last_load_data_path'),
-        'Video files (*.json)')
-    if not filenames:
+    #app = QApplication(sys.argv)
+    fd = FileDialog()
+    dirnames = fd.selectedFiles()
+
+
+    #fd.isHidden()
+    #sys.exit(app.exec_())
+
+    if not dirnames or dirnames[0] == fd.directory():
         return
-    QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
-    for json_path in filenames:
-        if os.path.splitext(json_path)[1] != '.json':
-            qtutil.critical(json_path + 'is not a json file. Skipping.')
-            continue
-        self.project_list = self.project_list + Project(json_path)
-        print('loading...')
+    for project_dir in dirnames:
+        only_files = [f for f in listdir(project_dir) if isfile(join(project_dir, f))]
+        json_paths = [f for f in only_files if f[-5:]]
+        if not json_paths:
+            qtutil.critical("Not a project directory. No JSON file found.")
+            return
+        for json_path in json_paths:
+            self.project_list = self.project_list + Project(json_path)
+            print('loading...')
         #self.import_files(filenames)
 
   def import_files(self, filenames):
@@ -119,6 +130,26 @@ class Widget(QWidget):
                             traceback.format_exc())
         else:
             self.listview.model().appendRow(QStandardItem(filename))
+
+class FileDialog(QtGui.QFileDialog):
+    def __init__(self, *args):
+        QtGui.QFileDialog.__init__(self, *args)
+        self.setOption(self.DontUseNativeDialog, True)
+        self.setFileMode(self.DirectoryOnly)
+
+        for view in self.findChildren((QtGui.QListView, QtGui.QTreeView)):
+            if isinstance(view.model(), QtGui.QFileSystemModel):
+                view.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+
+        self.filesSelected.connect(self.handleStop)
+        self.show()
+        self._running = True
+        while self._running:
+            QtGui.qApp.processEvents()
+            time.sleep(0.05)
+
+    def handleStop(self):
+        self._running = False
 
 
 class MyPlugin:
