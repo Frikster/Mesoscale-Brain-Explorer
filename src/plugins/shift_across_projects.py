@@ -19,6 +19,7 @@ sys.path.append('..')
 import qtutil
 from project import Project
 import tifffile as tiff
+import imreg_dft as ird
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import mse_ui_elements as mue
@@ -49,7 +50,9 @@ class Widget(QWidget):
     self.video_list = QListView()
     self.list_shifted = QListView()
     self.origin_label = QLabel()
-    (self.x, self.y) = ast.literal_eval(self.project['origin'])
+    self.selected_videos = []
+    #self.projects_selected_videos_are_from = []
+    [self.x, self.y] = self.project['origin']
     self.origin_label.setText('Origin to align to: ({} | {})'.format(round(self.x, 2), round(self.y, 2)))
     self.left = QFrame()
     self.right = QFrame()
@@ -59,6 +62,8 @@ class Widget(QWidget):
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
     self.list_shifted.setModel(QStandardItemModel())
+    self.list_shifted.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_shifted_changed)
     for f in self.project.files:
       if f['type'] == 'shifted':
         self.video_list.model().appendRow(QStandardItem(f['path']))
@@ -85,7 +90,7 @@ class Widget(QWidget):
     vbox.addWidget(pb)
     vbox.addWidget(QLabel('Shifted Data from other projects'))
     self.list_shifted.setStyleSheet('QListView::item { height: 26px; }')
-    self.list_shifted.setSelectionMode(QAbstractItemView.NoSelection)
+    self.list_shifted.setSelectionMode(QAbstractItemView.SingleSelection)
     vbox.addWidget(self.list_shifted)
     self.right.setLayout(vbox)
     splitter = QSplitter(Qt.Horizontal)
@@ -97,17 +102,31 @@ class Widget(QWidget):
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
 
+  def selected_shifted_changed(self, selected, deselected):
+      if not self.list_shifted.selectedIndexes():
+          return
+      self.selected_videos = []
+      for index in self.list_shifted.selectedIndexes():
+          vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+          if vidpath not in self.selected_videos and vidpath != 'None':
+              self.selected_videos = self.selected_videos + [vidpath]
+              self.shown_video_path = str(os.path.join(self.project.path,
+                                                       self.list_shifted.currentIndex().data(Qt.DisplayRole))
+                                          + '.npy')
+      frame = pfs.load_reference_frame(self.shown_video_path)
+      self.view.show(frame)
+
   def selected_video_changed(self, selected, deselected):
       if not self.video_list.selectedIndexes():
           return
       self.selected_videos = []
       for index in self.video_list.selectedIndexes():
           project_from = self.project_at_ind[index.row()]
-          vidpath = str(os.path.join(project_from, index.data(Qt.DisplayRole)) + '.npy')
+          vidpath = str(os.path.join(project_from.path, index.data(Qt.DisplayRole)) + '.npy')
           if vidpath not in self.selected_videos and vidpath != 'None':
               self.selected_videos = self.selected_videos + [vidpath]
-              self.projects_selected_videos_are_from = self.projects_selected_videos_are_from + [project_from]
-              self.shown_video_path = str(os.path.join(project_from,
+              #self.projects_selected_videos_are_from = self.projects_selected_videos_are_from + [project_from]
+              self.shown_video_path = str(os.path.join(project_from.path,
                                                        self.video_list.currentIndex().data(Qt.DisplayRole))
                                           + '.npy')
       frame = pfs.load_reference_frame(self.shown_video_path)
@@ -134,31 +153,108 @@ class Widget(QWidget):
                 if f['type'] != 'video':
                     continue
                 self.video_list.model().appendRow(QStandardItem(f['name']))
-                self.project_at_ind = self.project_at_ind + [project.path]
+                self.project_at_ind = self.project_at_ind + [project]
             self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
   def shift_to_this(self):
       if not self.selected_videos:
           return
+      progress_global = QProgressDialog('Total progress shifting all files', 'Abort', 0, 100, self)
+      progress_global.setAutoClose(True)
+      progress_global.setMinimumDuration(0)
+      def callback_global(x):
+          progress_global.setValue(x * 100)
+          QApplication.processEvents()
+      callback_global(0)
+      manips = []
       for i, video_path in enumerate(self.selected_videos):
-          project_from = self.projects_selected_videos_are_from[i]
-          name_before, ext = os.path.splitext(os.path.basename(video_path))
-          name_after = str(name_before + '_' + 'from_' + project_from.name)
+          callback_global(i / float(len(self.selected_videos)))
+          progress = QProgressDialog('Shifting ' + video_path, 'Abort', 0, 100, self)
+          progress.setAutoClose(True)
+          progress.setMinimumDuration(0)
+          def callback(x):
+              progress.setValue(x * 100)
+              QApplication.processEvents()
+          #project_from = self.projects_selected_videos_are_from[i]
+          project_from = Project(os.path.dirname(self.selected_videos[i]))
+
           frames = fileloader.load_file(video_path)
-          path_output = str(os.path.join(self.project.path, name_after) + '.npy')
+          [x_shift_from, y_shift_from] = project_from['origin']
+          x_shift = self.x - x_shift_from
+          y_shift = self.y - y_shift_from
+          shift = [x_shift, y_shift]
+          shifted_frames = self.apply_shift(frames, shift, callback)
+          # and save to project
+          pre_shifted_basename, ext = os.path.splitext(os.path.basename(video_path))
+          manip = '_shift_from_' + project_from.name
+          manips = manips + [manip]
+          path_after = str(os.path.join(self.project.path, pre_shifted_basename+manip) + '.npy')
+          fileloader.save_file(path_after, shifted_frames)
+          name_after, ext = os.path.splitext(os.path.basename(path_after))
+          if path_after in [f['path'] for f in self.project.files]:
+              raise FileAlreadyInProjectError(path_after)
+          self.project.files.append({
+              'name': name_after,
+              'path': path_after,
+              'type': 'video',
+              'manipulations': str([manip])
+          })
+          self.project.save()
+          #self.save_project(path_after, self.project, shifted_frames, manip, 'video')
+          self.refresh_all_list(self.project, self.list_shifted, manips)
+      callback_global(1)
 
-          project_from_path = project_from.path
-          str(os.path.join(project_from_path, index.data(Qt.DisplayRole)) + '.npy')
+  def refresh_all_list(self, project, video_list, last_manips_to_display=['All']):
+      video_list.model().clear()
+      for f in project.files:
+          if f['type'] != 'ref_frame':
+              continue
+          video_list.model().appendRow(QStandardItem(f['name']))
+      for f in project.files:
+          if f['type'] != 'video':
+              continue
+          if 'All' in last_manips_to_display:
+              video_list.model().appendRow(QStandardItem(f['name']))
+          elif f['manipulations'] != []:
+              if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+                  video_list.model().appendRow(QStandardItem(f['name']))
+      # video_list.setCurrentIndex(video_list.model().index(0, 0))
 
-          project.path
+  def save_project(self, video_path, project, frames, manip, file_type):
+      name_before, ext = os.path.splitext(os.path.basename(video_path))
+      file_before = [files for files in project.files if files['name'] == name_before]
+      assert (len(file_before) == 1)
+      file_before = file_before[0]
 
-  def apply_shifts(self, frames, shifts, progress_callback):
+      name_after = str(name_before + '_' + manip)
+      path = str(os.path.join(project.path, name_after) + '.npy')
+      if frames is not None:
+          if os.path.isfile(path):
+              os.remove(path)
+          np.save(path, frames)
+      if not file_before['manipulations'] == []:
+          project.files.append({
+              'path': path,
+              'type': file_type,
+              'source_video': video_path,
+              'manipulations': str(ast.literal_eval(file_before['manipulations']) + [manip]),
+              'name': name_after
+          })
+      else:
+          project.files.append({
+              'path': path,
+              'type': file_type,
+              'source_video': video_path,
+              'manipulations': str([manip]),
+              'name': name_after
+          })
+      project.save()
+
+  def apply_shift(self, frames, shift, progress_callback):
       shifted_frames = []
-      for frame_no, shift in enumerate(shifts):
-          tvec = shift["tvec"]
-          progress_callback(frame_no / float(len(shifts)))
-          frame = frames[frame_no]
-          shifted_frames.append(ird.transform_img(frame, tvec=tvec))
+      for frame_no, frame in enumerate(frames):
+          progress_callback(frame_no / float(len(frames)))
+          shifted_frames.append(ird.transform_img(frame, tvec=shift))
       progress_callback(1)
       return shifted_frames
 
