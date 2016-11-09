@@ -42,18 +42,20 @@ class Widget(QWidget):
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
     self.project_list = []
-    self.list_all = QListView()
+    self.video_list = QListView()
     self.list_shifted = QListView()
     self.origin_label = QLabel('Origin:')
     self.left = QFrame()
     self.right = QFrame()
     self.setup_ui()
 
-    self.list_all.setModel(QStandardItemModel())
+    self.video_list.setModel(QStandardItemModel())
+    self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_video_changed)
     self.list_shifted.setModel(QStandardItemModel())
     for f in self.project.files:
       if f['type'] == 'shifted':
-        self.list_all.model().appendRow(QStandardItem(f['path']))
+        self.video_list.model().appendRow(QStandardItem(f['path']))
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -66,9 +68,9 @@ class Widget(QWidget):
     pb = QPushButton('Load JSON files from other projects')
     pb.clicked.connect(self.new_json)
     vbox.addWidget(pb)
-    self.list_all.setStyleSheet('QListView::item { height: 26px; }')
-    self.list_all.setSelectionMode(QAbstractItemView.NoSelection)
-    vbox.addWidget(self.list_all)
+    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    vbox.addWidget(self.video_list)
     vbox.addWidget(qtutil.separator())
     pb = QPushButton('Align selected data to this project')
     pb.clicked.connect(self.new_json)
@@ -102,14 +104,17 @@ class Widget(QWidget):
     if not dirnames or dirnames[0] == fd.directory():
         return
     for project_dir in dirnames:
-        only_files = [f for f in listdir(project_dir) if isfile(join(project_dir, f))]
-        json_paths = [f for f in only_files if f[-5:]]
+        only_files = [join(project_dir, f) for f in listdir(project_dir) if isfile(join(project_dir, f))]
+        json_paths = [f for f in only_files if f[-5:] == '.json']
         if not json_paths:
-            qtutil.critical("Not a project directory. No JSON file found.")
-            return
-        for json_path in json_paths:
-            self.project_list = self.project_list + Project(json_path)
-            print('loading...')
+            qtutil.critical("Not a project directory. No JSON file found in " + project_dir + ". Skipping.")
+            continue
+        self.project_list = self.project_list + [Project(project_dir)]
+        for project in self.project_list:
+            pfs.refresh_video_list(project, self.video_list)
+            # for f in project.files:
+            #     if f['type'] == 'video':
+            #         self.video_list.model().appendRow(QStandardItem(f['path']))
         # self.import_files(filenames)
 
   def import_files(self, filenames):
@@ -136,8 +141,7 @@ class FileDialog(QtGui.QFileDialog):
 
         for view in self.findChildren((QtGui.QListView, QtGui.QTreeView)):
             if isinstance(view.model(), QtGui.QFileSystemModel):
-                view.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-
+                view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
     #     self.filesSelected.connect(self.handleStop)
     #     self._running = True
     #     # while self._running:
@@ -152,7 +156,6 @@ class MyPlugin:
     def __init__(self, project):
         self.name = 'Shift Across Projects'
         self.widget = Widget(project)
-
     def run(self):
         pass
 
