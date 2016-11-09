@@ -5,6 +5,7 @@ from os.path import isfile, join
 from os import listdir
 import sys
 import traceback
+import ast
 import time
 import numpy as np
 from shutil import copyfile
@@ -42,6 +43,8 @@ class Widget(QWidget):
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
     self.project_list = []
+    self.project_at_ind = [] # project_at_ind[x] is what project the value in video_list at the x'th index is from
+    self.shown_video_path = None
     self.video_list = QListView()
     self.list_shifted = QListView()
     self.origin_label = QLabel('Origin:')
@@ -89,14 +92,60 @@ class Widget(QWidget):
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
 
-  def refresh_video_list_via_combo_box(self, trigger_item=None):
-    pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  # def refresh_video_list_via_combo_box(self, trigger_item=None):
+  #   pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+  # def refresh_video_list(self, project, video_list, last_manips_to_display=['All']):
+  #     video_list.model().clear()
+  #     for f in project.files:
+  #         if f['type'] != 'video':
+  #             continue
+  #         if 'All' in last_manips_to_display:
+  #             video_list.model().appendRow(QStandardItem(f['name']))
+  #         elif f['manipulations'] != []:
+  #             if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+  #                 video_list.model().appendRow(QStandardItem(f['name']))
+  #     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
   def selected_video_changed(self, selected, deselected):
-    pfs.selected_video_changed_multi(self, selected, deselected)
+      if not self.video_list.selectedIndexes():
+          return
+      self.selected_videos = []
+      for index in self.video_list.selectedIndexes():
+          project_from = self.project_at_ind[index.row()]
+          vidpath = str(os.path.join(project_from, index.data(Qt.DisplayRole)) + '.npy')
+          if vidpath not in self.selected_videos and vidpath != 'None':
+              self.selected_videos = self.selected_videos + [vidpath]
+              self.shown_video_path = str(os.path.join(project_from,
+                                                       self.video_list.currentIndex().data(Qt.DisplayRole))
+                                          + '.npy')
+      frame = pfs.load_reference_frame(self.shown_video_path)
+      self.view.show(frame)
+
+
+
+#    self.selected_video_changed_multi(selected, deselected)
+
+  def selected_video_changed_multi(self, selected, deselected):
+      if not self.video_list.selectedIndexes():
+          return
+      self.selected_videos = []
+      for index in self.video_list.selectedIndexes():
+          vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+          if vidpath not in self.selected_videos and vidpath != 'None':
+              self.selected_videos = self.selected_videos + [vidpath]
+              self.shown_video_path = str(os.path.join(self.project.path,
+                                                       self.video_list.currentIndex().data(Qt.DisplayRole))
+                                            + '.npy')
+      frame = load_reference_frame(self.shown_video_path)
+      self.view.show(frame)
+
+
 
   def new_json(self):
+    self.video_list.model().clear()
     fd = FileDialog()
+    # SLOW
     fd.exec_()
     fd.show()
     dirnames = fd.selectedFiles()
@@ -111,11 +160,14 @@ class Widget(QWidget):
             continue
         self.project_list = self.project_list + [Project(project_dir)]
         for project in self.project_list:
-            pfs.refresh_video_list(project, self.video_list)
-            # for f in project.files:
-            #     if f['type'] == 'video':
-            #         self.video_list.model().appendRow(QStandardItem(f['path']))
-        # self.import_files(filenames)
+            for f in project.files:
+                if f['type'] != 'video':
+                    continue
+                self.video_list.model().appendRow(QStandardItem(f['name']))
+                self.project_at_ind = self.project_at_ind + [project.path]
+            self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
+           # self.refresh_video_list(project, self.video_list)
 
   def import_files(self, filenames):
     for filename in filenames:
@@ -133,6 +185,7 @@ class Widget(QWidget):
         else:
             self.listview.model().appendRow(QStandardItem(filename))
 
+#SLOW
 class FileDialog(QtGui.QFileDialog):
     def __init__(self, *args):
         QtGui.QFileDialog.__init__(self, *args)
@@ -151,6 +204,26 @@ class FileDialog(QtGui.QFileDialog):
     # def handleStop(self):
     #     self._running = False
 
+# FAST
+# class FileDialog(QtGui.QFileDialog):
+#     def __init__(self, *args):
+#         QtGui.QFileDialog.__init__(self, *args)
+#         self.setOption(self.DontUseNativeDialog, True)
+#         self.setFileMode(self.DirectoryOnly)
+#
+#         for view in self.findChildren((QtGui.QListView, QtGui.QTreeView)):
+#             if isinstance(view.model(), QtGui.QFileSystemModel):
+#                 view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+#
+#         self.filesSelected.connect(self.handleStop)
+#         self.show()
+#         self._running = True
+#         while self._running:
+#             QtGui.qApp.processEvents()
+#             time.sleep(0.05)
+#
+#     def handleStop(self):
+#         self._running = False
 
 class MyPlugin:
     def __init__(self, project):
