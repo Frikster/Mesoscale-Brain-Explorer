@@ -175,9 +175,7 @@ class Widget(QWidget):
           def callback(x):
               progress.setValue(x * 100)
               QApplication.processEvents()
-          #project_from = self.projects_selected_videos_are_from[i]
           project_from = Project(os.path.dirname(self.selected_videos[i]))
-
           frames = fileloader.load_file(video_path)
           [x_shift_from, y_shift_from] = project_from['origin']
           x_shift = self.x - x_shift_from
@@ -200,7 +198,7 @@ class Widget(QWidget):
               'manipulations': str([manip])
           })
           self.project.save()
-          #self.save_project(path_after, self.project, shifted_frames, manip, 'video')
+          # self.save_project(path_after, self.project, shifted_frames, manip, 'video')
           self.refresh_all_list(self.project, self.list_shifted, manips)
       callback_global(1)
 
