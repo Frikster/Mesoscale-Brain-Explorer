@@ -12,6 +12,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import project_functions as pfs
 
 import uuid
 import psutil
@@ -31,6 +32,7 @@ class Widget(QWidget):
         self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.listview.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_video_changed)
+        self.listview.doubleClicked.connect(pfs.video_triggered)
         for f in project.files:
             if f['type'] != 'video':
                 continue

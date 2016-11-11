@@ -3,9 +3,8 @@
   "unit_per_pixel": 1,
   "pipeline": [
     "fileimporter",
-    "videoplayer",
     "cut_off",
-    "alignment2",
+    "alignment",
 	"set_coordinate_system",
     "roi_creator",
     "chebyshev_filter",

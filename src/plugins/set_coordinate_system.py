@@ -38,7 +38,7 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
-
+    self.video_list.doubleClicked.connect(self.video_triggered)
     pfs.refresh_video_list(self.project, self.video_list)
 
     # for f in project.files:
@@ -46,6 +46,9 @@ class Widget(QWidget):
     #     continue
     #   self.listview.model().appendRow(QStandardItem(f['name']))
     # self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -62,6 +65,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(self.origin_label)
     pb = QPushButton('&Average origin from selected files\' origins')

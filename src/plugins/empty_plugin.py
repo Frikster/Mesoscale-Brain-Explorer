@@ -20,6 +20,7 @@ class Widget(QWidget):
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
     self.video_list = QListView()
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     self.left = QFrame()
     self.right = QFrame()
     self.open_dialogs = []

@@ -20,7 +20,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import uuid
 import csv
-import pyqtgraph as pg
+from .util import project_functions as pfs
 
 import itertools
 
@@ -178,6 +178,7 @@ class Widget(QWidget):
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged[QItemSelection,
           QItemSelection].connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
 
         self.roi_list.setModel(RoiModel())
         self.roi_list.selectionModel().selectionChanged[QItemSelection,
@@ -193,6 +194,9 @@ class Widget(QWidget):
 
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
+
     def setup_ui(self):
         vbox_view = QVBoxLayout()
         vbox_view.addWidget(self.view)
@@ -206,6 +210,7 @@ class Widget(QWidget):
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Select video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
         vbox.addWidget(qtutil.separator())

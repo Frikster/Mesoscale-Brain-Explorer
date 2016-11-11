@@ -112,6 +112,7 @@ class Widget(QWidget):
     self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
     vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     self.max_stdev.setMinimum(0.0000)
     self.max_stdev.setValue(1.0000)

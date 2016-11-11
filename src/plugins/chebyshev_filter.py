@@ -101,6 +101,7 @@ class Widget(QWidget):
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                           QItemSelection].connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
 
         if self.project:
             for f in self.project.files:
@@ -113,6 +114,8 @@ class Widget(QWidget):
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
         self.temp_filter_pb.clicked.connect(self.filter_clicked)
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
 
     def setup_ui(self):
         vbox_view = QVBoxLayout()
@@ -127,6 +130,7 @@ class Widget(QWidget):
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         vbox.addWidget(self.video_list)
         vbox.addWidget(QLabel('Low Bandpass (Hz)'))
         self.f_low.setMinimum(0.0)

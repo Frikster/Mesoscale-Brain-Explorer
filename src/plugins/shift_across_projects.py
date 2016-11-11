@@ -61,12 +61,16 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
     self.list_shifted.setModel(QStandardItemModel())
     self.list_shifted.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_shifted_changed)
     for f in self.project.files:
       if f['type'] == 'shifted':
         self.video_list.model().appendRow(QStandardItem(f['path']))
+
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -81,6 +85,7 @@ class Widget(QWidget):
     vbox.addWidget(pb)
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(qtutil.separator())
     vbox.addWidget(QLabel('Data from other projects'))

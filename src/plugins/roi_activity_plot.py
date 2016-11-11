@@ -84,6 +84,7 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
 
     self.roi_list.setModel(QStandardItemModel())
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
@@ -100,6 +101,9 @@ class Widget(QWidget):
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
     self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
+
   def setup_ui(self):
     vbox_view = QVBoxLayout()
     vbox_view.addWidget(self.view)
@@ -113,6 +117,7 @@ class Widget(QWidget):
     vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Select video:'))
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(QLabel('Select ROI:'))
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)

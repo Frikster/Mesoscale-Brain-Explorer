@@ -178,6 +178,7 @@ class Widget(QWidget):
         self.video_list.setModel(QStandardItemModel())
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
         for f in project.files:
           if f['type'] != 'video':
             continue
@@ -200,6 +201,9 @@ class Widget(QWidget):
                 model.appendseed(seed_name)
         self.seed_list.setCurrentIndex(model.index(0, 0))
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
+
     def setup_ui(self):
         vbox_view = QVBoxLayout()
         vbox_view.addWidget(self.view)
@@ -211,6 +215,7 @@ class Widget(QWidget):
         self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         vbox.addWidget(self.video_list)
         vbox.addWidget(QLabel('Choose colormap:'))
         self.cm_comboBox.addItem("jet")

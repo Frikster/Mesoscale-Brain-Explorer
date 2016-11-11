@@ -38,6 +38,10 @@ class Widget(QWidget):
         continue
       self.video_list.model().appendRow(QStandardItem(f['name']))
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+    self.video_list.doubleClicked.connect(self.video_triggered)
+
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -52,6 +56,7 @@ class Widget(QWidget):
     vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     vbox.addWidget(self.video_list)
     hhbox = QHBoxLayout()

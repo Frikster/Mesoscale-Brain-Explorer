@@ -113,6 +113,7 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
     for f in project.files:
       if f['type'] != 'video':
         continue
@@ -167,6 +168,8 @@ class Widget(QWidget):
           self.table_widget.setRowCount(len(self.data[self.headers[0]]))
           self.table_widget.update(self.data)
 
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
   # def roi_item_edited(self, item):
   #   new_name = item.text()
   #   prev_name = item.data(Qt.UserRole)
@@ -188,6 +191,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list = QListView()
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
     pb.clicked.connect(self.load_ROI_table)

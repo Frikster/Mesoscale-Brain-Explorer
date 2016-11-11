@@ -41,11 +41,15 @@ class Widget(QWidget):
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
         for f in project.files:
             if f['type'] != 'video':
                 continue
             self.video_list.model().appendRow(QStandardItem(f['name']))
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
 
     def setup_ui(self):
         vbox_view = QVBoxLayout()
@@ -59,6 +63,7 @@ class Widget(QWidget):
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
         max_cut_off = 5000

@@ -86,6 +86,7 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
     for f in project.files:
       if f['type'] != 'video':
         continue
@@ -105,6 +106,9 @@ class Widget(QWidget):
       model.appendRoi(roi_name)
     #self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_project_roi)
+
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -128,6 +132,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     pb = QPushButton('Create poly ROI')
     pb.clicked.connect(self.create_roi)
