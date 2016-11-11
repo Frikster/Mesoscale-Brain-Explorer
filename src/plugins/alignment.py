@@ -208,7 +208,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project):
-        self.name = 'Alignment2'
+        self.name = 'Alignment'
         self.widget = Widget(project)
 
     def run(self):
