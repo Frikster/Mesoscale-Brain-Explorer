@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4 import QtGui, QtCore
 from . import fileloader
+from .mygraphicsview import MyGraphicsView
 
 class Video_Selector:
     def __init__(self, project, view):
@@ -88,3 +90,33 @@ class CheckableComboBox(QtGui.QComboBox):
         else:
             item.setCheckState(QtCore.Qt.Checked)
 
+class PlayerDialog(QDialog):
+  def __init__(self, project, filename, parent=None):
+    super(PlayerDialog, self).__init__(parent)
+    self.project = project
+    self.setup_ui()
+
+    self.fp = np.load(filename, mmap_mode='r')
+    self.slider.setMaximum(len(self.fp)-1)
+    self.show_frame(0)
+
+  def show_frame(self, frame_num):
+    frame = self.fp[frame_num]
+    self.label_frame.setText(str(frame_num) + ' / ' + str(len(self.fp)-1))
+    self.view.show(frame)
+
+  def setup_ui(self):
+    vbox = QVBoxLayout()
+    self.view = MyGraphicsView(self.project)
+    vbox.addWidget(self.view)
+    hbox = QHBoxLayout()
+    self.slider = QSlider(Qt.Horizontal)
+    self.slider.valueChanged.connect(self.slider_moved)
+    hbox.addWidget(self.slider)
+    self.label_frame = QLabel('- / -')
+    hbox.addWidget(self.label_frame)
+    vbox.addLayout(hbox)
+    self.setLayout(vbox)
+
+  def slider_moved(self, value):
+    self.show_frame(value)

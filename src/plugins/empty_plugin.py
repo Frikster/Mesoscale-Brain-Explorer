@@ -7,6 +7,7 @@ from .chebyshev_filter import *
 from PyQt4.QtGui import *
 from .util import project_functions as pfs
 from PyQt4.QtCore import *
+from .videoplayer import PlayerDialog
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -21,6 +22,7 @@ class Widget(QWidget):
     self.video_list = QListView()
     self.left = QFrame()
     self.right = QFrame()
+    self.open_dialogs = []
 
     self.setup_ui()
     self.selected_videos = []
@@ -28,11 +30,18 @@ class Widget(QWidget):
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
     for f in project.files:
       if f['type'] != 'video':
         continue
       self.video_list.model().appendRow(QStandardItem(f['name']))
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
+  def video_triggered(self, index):
+    filename = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    dialog = PlayerDialog(self.project, filename, self)
+    dialog.show()
+    self.open_dialogs.append(dialog)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()

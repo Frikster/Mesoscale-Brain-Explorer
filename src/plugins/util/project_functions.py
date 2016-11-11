@@ -5,7 +5,7 @@ import numpy as np
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import ast
-from .mse_ui_elements import CheckableComboBox
+from .mse_ui_elements import CheckableComboBox, PlayerDialog
 from .fileloader import load_reference_frame
 
 def save_project(video_path, project, frames, manip, file_type):
@@ -139,3 +139,10 @@ def selected_video_changed_multi(widget, selected, deselected):
                                     + '.npy')
     frame = load_reference_frame(widget.shown_video_path)
     widget.view.show(frame)
+
+
+def video_triggered(self, index):
+    filename = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    dialog = PlayerDialog(self.project, filename, self)
+    dialog.show()
+    self.open_dialogs.append(dialog)
