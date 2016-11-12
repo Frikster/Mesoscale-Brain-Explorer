@@ -184,8 +184,8 @@ class Widget(QWidget):
           frames = fileloader.load_file(video_path)
           [x_shift_from, y_shift_from] = project_from['origin']
           x_shift = self.x - x_shift_from
-          y_shift = self.y - y_shift_from
-          shift = [x_shift, y_shift]
+          y_shift = y_shift_from - self.y
+          shift = [y_shift, x_shift]
           shifted_frames = self.apply_shift(frames, shift, callback)
           # and save to project
           pre_shifted_basename, ext = os.path.splitext(os.path.basename(video_path))

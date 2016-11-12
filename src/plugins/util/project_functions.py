@@ -50,29 +50,33 @@ def change_origin(project, video_path, origin):
 def refresh_all_list(project, video_list, last_manips_to_display=['All']):
     video_list.model().clear()
     for f in project.files:
+        item = QStandardItem(f['name'])
+        item.setDropEnabled(False)
         if f['type'] != 'ref_frame':
             continue
-        video_list.model().appendRow(QStandardItem(f['name']))
+        video_list.model().appendRow(item)
     for f in project.files:
         if f['type'] != 'video':
             continue
         if 'All' in last_manips_to_display:
-            video_list.model().appendRow(QStandardItem(f['name']))
+            video_list.model().appendRow(item)
         elif f['manipulations'] != []:
             if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
-                video_list.model().appendRow(QStandardItem(f['name']))
+                video_list.model().appendRow(item)
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
 def refresh_video_list(project, video_list, last_manips_to_display=['All']):
     video_list.model().clear()
     for f in project.files:
+        item = QStandardItem(f['name'])
+        item.setDropEnabled(False)
         if f['type'] != 'video':
             continue
         if 'All' in last_manips_to_display:
-            video_list.model().appendRow(QStandardItem(f['name']))
+            video_list.model().appendRow(QStandardItem(item))
         elif f['manipulations'] != []:
             if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
-                video_list.model().appendRow(QStandardItem(f['name']))
+                video_list.model().appendRow(item)
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
 def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=False):
