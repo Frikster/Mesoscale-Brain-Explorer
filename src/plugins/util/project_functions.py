@@ -22,7 +22,7 @@ def save_project(video_path, project, frames, manip, file_type):
         np.save(path, frames)
     if not file_before['manipulations'] == []:
         project.files.append({
-            'path': path,
+            'path': os.path.normpath(path),
             'type': file_type,
             'source_video': video_path,
             'manipulations': str(ast.literal_eval(file_before['manipulations']) + [manip]),
@@ -30,7 +30,7 @@ def save_project(video_path, project, frames, manip, file_type):
         })
     else:
         project.files.append({
-            'path': path,
+            'path': os.path.normpath(path),
             'type': file_type,
             'source_video': video_path,
             'manipulations': str([manip]),
@@ -39,7 +39,7 @@ def save_project(video_path, project, frames, manip, file_type):
     project.save()
 
 def change_origin(project, video_path, origin):
-    file = [files for files in project.files if files['path'] == video_path]
+    file = [files for files in project.files if os.path.normpath(files['path']) == os.path.normpath(video_path)]
     assert(len(file) == 1)
     file = file[0]
     index_of_file = project.files.index(file)
@@ -87,7 +87,7 @@ def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=Fals
 
 
 def get_project_file_from_key_item(project, key, item):
-    file = [files for files in project.files if files[key] == item]
+    file = [files for files in project.files if os.path.normpath(files[key]) == os.path.normpath(item)]
     if not file:
         return
     assert (len(file) == 1)

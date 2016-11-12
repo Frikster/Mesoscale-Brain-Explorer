@@ -140,13 +140,14 @@ class Widget(QWidget):
                                                         'path',
                                                         self.shown_video_path)
       # Check if origin exists
-      try:
-        (x, y) = ast.literal_eval(project_file['origin'])
-      except KeyError:
-        self.origin_label.setText('Origin:')
-      else:
-        (x, y) = ast.literal_eval(project_file['origin'])
-        self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
+      if project_file is not None:
+          try:
+            (x, y) = ast.literal_eval(project_file['origin'])
+          except KeyError:
+            self.origin_label.setText('Origin:')
+          else:
+            (x, y) = ast.literal_eval(project_file['origin'])
+            self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
       frame = fileloader.load_reference_frame(self.shown_video_path)
       self.view.show(frame)
 
