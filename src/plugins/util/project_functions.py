@@ -56,6 +56,8 @@ def refresh_all_list(project, video_list, last_manips_to_display=['All']):
             continue
         video_list.model().appendRow(item)
     for f in project.files:
+        item = QStandardItem(f['name'])
+        item.setDropEnabled(False)
         if f['type'] != 'video':
             continue
         if 'All' in last_manips_to_display:
@@ -135,12 +137,12 @@ def selected_video_changed_multi(widget, selected, deselected):
     #     widget.selected_videos = [x for x in widget.selected_videos if x != vidpath]
     widget.selected_videos = []
     for index in widget.video_list.selectedIndexes():
-        vidpath = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
+        vidpath = str(os.path.normpath(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy'))
         if vidpath not in widget.selected_videos and vidpath != 'None':
             widget.selected_videos = widget.selected_videos + [vidpath]
-            widget.shown_video_path = str(os.path.join(widget.project.path,
+            widget.shown_video_path = str(os.path.normpath(os.path.join(widget.project.path,
                                                        widget.video_list.currentIndex().data(Qt.DisplayRole))
-                                    + '.npy')
+                                    + '.npy'))
     frame = load_reference_frame(widget.shown_video_path)
     widget.view.show(frame)
 
