@@ -129,11 +129,17 @@ class ProjectManager:
             return None
           parent = os.path.abspath(os.path.join(path, os.pardir))
           QSettings().setValue('projects_path', parent)
-      
+
     if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'spcproject.json')):
-      return Project(path)
+      return self.redefine_paths(Project(path))
     else:
       return None
+
+  def redefine_paths(self, project):
+    for file in project.files:
+        basename = os.path.basename(file['path'])
+        file['path'] = os.path.join(project.path, basename)
+    return project
 
 class Project:
   def __init__(self, path):
