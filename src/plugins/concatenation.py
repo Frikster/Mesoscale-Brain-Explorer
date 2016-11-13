@@ -108,7 +108,10 @@ class Widget(QWidget):
         # concat_path = os.path.join(self.project.path, concat_name)
         # First one has to take the name otherwise pfs.save_projects doesn't work
         filenames = [os.path.basename(path) for path in paths]
-        pfs.save_project(paths[0], self.project, frames, 'concat_'+'_concat_'.join(filenames[1:]), 'video')
+        manip = 'concat_'+str(len(filenames))
+        # long_ass_name = 'concat_'+'_concat_'.join(filenames[1:])
+        # long_ass_name = long_ass_name.replace('.npy', '')
+        pfs.save_project(paths[0], self.project, frames, manip, 'video')
         pfs.refresh_all_list(self.project, self.video_list)
 
         # path = os.path.join(self.project.path, str(uuid.uuid4()) + 'Concat.npy')

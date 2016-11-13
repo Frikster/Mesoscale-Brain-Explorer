@@ -19,11 +19,11 @@ Data management
 * Manage 'manipulations' correctly
 * The source field tells you what video was in view for bulk processing, not which video it is from
 
-alignment + concat
+Auto ROI Placement
 ------------------
-* Add error checks especially considering
-  conflicting array shapes
+Sometimes the ROI's are incorrectly placed. Cause unknown however reloading the ROI's seems to fix it every time
 
 Memory-efficient processing
 ---------------------------
 * Change all plugins to process efficiently
+

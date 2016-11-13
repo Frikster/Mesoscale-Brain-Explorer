@@ -15,7 +15,7 @@ def save_project(video_path, project, frames, manip, file_type):
     file_before = file_before[0]
 
     name_after = str(name_before + '_' + manip)
-    path = str(os.path.join(project.path, name_after) + '.npy')
+    path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
         if os.path.isfile(path):
             os.remove(path)
