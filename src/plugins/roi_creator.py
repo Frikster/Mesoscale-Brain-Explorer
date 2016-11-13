@@ -226,6 +226,7 @@ class Widget(QWidget):
     self.remove_all_rois()
     old_path = self.project.path + '/' + str(prev_name_str) + '.roi'
     self.view.vb.loadROI([old_path])
+    assert(len(self.view.vb.rois) == 1)
     roi = self.view.vb.rois[0]
     roi.setName(str(new_name_str))
     for i in range(len(self.project.files)):

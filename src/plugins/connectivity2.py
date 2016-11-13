@@ -62,7 +62,9 @@ class ConnectivityModel(QAbstractTableModel):
             for i in xrange(len(tot_data)):
                 for j in xrange(len(tot_data)):
                     dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
-                    if video_path != selected_videos[0]:
+                    # Start above with self._data recieving the first value before adding on the rest.
+                    # don't add the first value twice
+                    if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
                         tot_data[i][j] = tot_data[i][j] + self._data[i][j]
         # Finally compute averages
         for i in xrange(len(tot_data)):

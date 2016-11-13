@@ -326,6 +326,7 @@ class Widget(QWidget):
       self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
       self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
       self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
+      assert (len(self.view.vb.rois) == 1)
       roi = self.view.vb.rois[0]
       self.update_project_roi(roi)
 
