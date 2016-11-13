@@ -9,6 +9,7 @@ from PyQt4.QtCore import *
 
 from .util import fileloader
 from .util import project_functions as pfs
+from .util import mse_ui_elements as mue
 from .util.qt import FileTable, FileTableModel, qtutil
 from .videoplayer import PlayerDialog
 
@@ -74,6 +75,8 @@ class Widget(QWidget):
         self.video_list.setDragDropOverwriteMode(False)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
+        vbox.addWidget(mue.InfoWidget('This operation requires as much memory as the combined size of all selected '
+                                      'stacks in the project directory. Note also there is no explicit progress bar'))
         hhbox = QHBoxLayout()
         concat_butt = QPushButton('Concatenate selected videos in selected order')
         hhbox.addWidget(concat_butt)
