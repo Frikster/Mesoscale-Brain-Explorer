@@ -94,8 +94,10 @@ class Widget(QWidget):
 
     self.video_path = None
     self.open_dialogs = []
+    self.selected_videos = []
 
     self.video_list.setModel(QStandardItemModel())
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
     for f in project.files:
       if f['type'] != 'video':
@@ -149,34 +151,40 @@ class Widget(QWidget):
   def cm_choice(self, cm_choice):
       self.cm_type = cm_choice
 
-  # def set_max_as_max(self):
-  #     frames = np.load(self.video_path, mmap_mode='r')
-  #     frames_
-
   def refresh_video_list_via_combo_box(self, trigger_item=None):
       pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-  def selected_video_changed(self, selection):
-    if not selection.indexes():
-      return
-    self.video_path = str(os.path.join(self.project.path,
-                                   selection.indexes()[0].data(Qt.DisplayRole))
-                          + '.npy')
-    frame = fileloader.load_reference_frame(self.video_path)
-    self.view.show(frame)
+  def selected_video_changed(self, selected, deselected):
+      pfs.selected_video_changed_multi(self, selected, deselected)
+
+  # def selected_video_changed(self, selection):
+  #   if not selection.indexes():
+  #     return
+  #   self.video_path = str(os.path.join(self.project.path,
+  #                                  selection.indexes()[0].data(Qt.DisplayRole))
+  #                         + '.npy')
+  #   frame = fileloader.load_reference_frame(self.video_path)
+  #   self.view.show(frame)
 
   def go(self):
-    if not self.video_path:
-      return
-    progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
-    stddev = calc_stddev(self.video_path, progress)
-    if self.max_checkbox.isChecked():
-        dialog = StdDevDialog(self.project, self.video_path, stddev, np.max(stddev), self.cm_type, self)
-    else:
-        dialog = StdDevDialog(self.project, self.video_path, stddev, self.max_stdev.value(), self.cm_type, self)
-    dialog.show()
-    self.open_dialogs.append(dialog)
-
+    global_progress = QProgressDialog('Generating Requested Standard Deviation Maps', 'Abort', 0, 100, self)
+    global_progress.setAutoClose(True)
+    global_progress.setMinimumDuration(0)
+    def global_callback(x):
+        global_progress.setValue(x * 100)
+        QApplication.processEvents()
+    total = len(self.selected_videos)
+    for selected_vid_no, video_path in enumerate(self.selected_videos):
+        global_callback(selected_vid_no / total)
+        progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
+        stddev = calc_stddev(video_path, progress)
+        if self.max_checkbox.isChecked():
+            dialog = StdDevDialog(self.project, video_path, stddev, np.max(stddev), self.cm_type, self)
+        else:
+            dialog = StdDevDialog(self.project, video_path, stddev, self.max_stdev.value(), self.cm_type, self)
+        dialog.show()
+        self.open_dialogs.append(dialog)
+    global_callback(1)
 
 class MyPlugin:
   def __init__(self, project):
