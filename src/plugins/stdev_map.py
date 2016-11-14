@@ -13,6 +13,7 @@ from .util import fileloader
 from .util import project_functions as pfs
 
 import os
+import scipy
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -44,10 +45,12 @@ class StdDevDialog(QDialog):
     self.video_path = video_path
     self.stddev = stddevmap
     self.max_stdev = max_stdev
+    self.cm_type = cm_type
     self.setup_ui()
     l = GradientLegend(0.0, max_stdev, cm_type)
     l.setParentItem(self.view.vb)
     self.setWindowTitle('Standard Deviation Map')
+    self.colorized_spc = self.colorize_spc(stddevmap)
 
     self.view.show(prepare_image(stddevmap, max_stdev, cm_type))
     self.view.vb.hovering.connect(self.vbc_hovering)
@@ -72,6 +75,27 @@ class StdDevDialog(QDialog):
     except:
       value = '-'
     self.the_label.setText('Standard deviation at crosshair: {}'.format(value))
+
+  # copy-pasted from spc_map
+  def colorize_spc(self, spc_map):
+      spc_map_with_nan = np.copy(spc_map)
+      spc_map[np.isnan(spc_map)] = 0
+      gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+      spc_map = np.ma.masked_where(spc_map == 0, spc_map)
+      cmap = matplotlib.cm.ScalarMappable(
+          gradient_range, self.cm_type)
+      spc_map_color = cmap.to_rgba(spc_map, bytes=True)
+      # turn areas outside mask black
+      spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
+
+      # make regions where RGB values are taken from 0, black. take the top left corner value...
+
+      spc_map_color = spc_map_color.swapaxes(0, 1)
+      if spc_map_color.ndim == 2:
+          spc_map_color = spc_map_color[:, ::-1]
+      elif spc_map_color.ndim == 3:
+          spc_map_color = spc_map_color[:, ::-1, :]
+      return spc_map_color
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):
@@ -179,12 +203,27 @@ class Widget(QWidget):
         progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
         stddev = calc_stddev(video_path, progress)
         if self.max_checkbox.isChecked():
+            max_val = str(np.max(stddev))
             dialog = StdDevDialog(self.project, video_path, stddev, np.max(stddev), self.cm_type, self)
+            stddev_col = dialog.colorized_spc
         else:
+            max_val = str(self.max_stdev.value())
             dialog = StdDevDialog(self.project, video_path, stddev, self.max_stdev.value(), self.cm_type, self)
+            stddev_col = dialog.colorized_spc
         dialog.show()
         self.open_dialogs.append(dialog)
+        self.stdev_to_file(max_val, video_path, stddev_col, stddev)
     global_callback(1)
+
+  def stdev_to_file(self, max_val, vid_path, stddev_col, stddev):
+      assert self.selected_videos
+      # define base name
+      vid_name = os.path.basename(vid_path)
+      path_without_ext = os.path.join(self.project.path, vid_name + "_" + 'stdev_with_max_'+max_val)
+      # save to npy
+      np.save(path_without_ext + '.npy', stddev)
+      # Save as png and jpeg
+      scipy.misc.toimage(stddev_col).save(path_without_ext + '.jpg')
 
 class MyPlugin:
   def __init__(self, project):
