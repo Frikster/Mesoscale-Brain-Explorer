@@ -2,6 +2,7 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from pyqtgraph.Qt import QtCore, QtGui
 
 from .util import filter_jeff
 from .util.mygraphicsview import MyGraphicsView
@@ -20,17 +21,15 @@ import math
 def calc_stddev(video_path, progress):
   progress.setValue(0)
   frames = fileloader.load_file(video_path)
-  #stddev = filter_jeff.standard_deviation(frames, progress)
   stddev = np.std(frames, axis=0)
   progress.setValue(100)
-
   return stddev
 
-def prepare_image(stddev, max_stdev):
+def prepare_image(stddev, max_stdev, cm_type):
   stddev[np.isnan(stddev)] = 0.0
   gradient_range = matplotlib.colors.Normalize(0.0, max_stdev)
   image = matplotlib.cm.ScalarMappable(
-    gradient_range, 'jet').to_rgba(stddev, bytes=True)
+    gradient_range, cm_type).to_rgba(stddev, bytes=True)
   image = image.swapaxes(0, 1)
   if image.ndim == 2:
     image = image[:, ::-1]
@@ -39,18 +38,18 @@ def prepare_image(stddev, max_stdev):
   return image
 
 class StdDevDialog(QDialog):
-  def __init__(self, project, video_path, stddevmap, max_stdev, parent=None):
+  def __init__(self, project, video_path, stddevmap, max_stdev, cm_type, parent=None):
     super(StdDevDialog, self).__init__(parent)
     self.project = project
     self.video_path = video_path
     self.stddev = stddevmap
     self.max_stdev = max_stdev
     self.setup_ui()
-    l = GradientLegend(0.0, max_stdev)
+    l = GradientLegend(0.0, max_stdev, cm_type)
     l.setParentItem(self.view.vb)
     self.setWindowTitle('Standard Deviation Map')
 
-    self.view.show(prepare_image(stddevmap, max_stdev))
+    self.view.show(prepare_image(stddevmap, max_stdev, cm_type))
     self.view.vb.hovering.connect(self.vbc_hovering)
 
   def setup_ui(self):
@@ -86,9 +85,12 @@ class Widget(QWidget):
     self.right = QFrame()
     self.view = MyGraphicsView(self.project)
     self.video_list = MyListView()
+    self.cm_comboBox = QtGui.QComboBox(self)
+    self.max_checkbox = QCheckBox("Select maximum value of image stack as upper limit")
     self.max_stdev = QDoubleSpinBox(decimals=4)
 
     self.setup_ui()
+    self.cm_type = self.cm_comboBox.itemText(0)
 
     self.video_path = None
     self.open_dialogs = []
@@ -100,6 +102,7 @@ class Widget(QWidget):
         continue
       self.video_list.model().appendRow(QStandardItem(f['name']))
     self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+    self.cm_comboBox.activated[str].connect(self.cm_choice)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -114,6 +117,18 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Choose video:'))
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
+    vbox.addWidget(QLabel('Choose colormap:'))
+    # colormap list should be dealt with in a seperate script
+    self.cm_comboBox.addItem("jet")
+    self.cm_comboBox.addItem("viridis")
+    self.cm_comboBox.addItem("inferno")
+    self.cm_comboBox.addItem("plasma")
+    self.cm_comboBox.addItem("magma")
+    self.cm_comboBox.addItem("seismic")
+    self.cm_comboBox.addItem("rainbow")
+    vbox.addWidget(self.cm_comboBox)
+    vbox.addWidget(self.max_checkbox)
+    vbox.addWidget(QLabel('Choose upper limit of colormap:'))
     self.max_stdev.setMinimum(0.0000)
     self.max_stdev.setValue(1.0000)
     vbox.addWidget(self.max_stdev)
@@ -131,6 +146,13 @@ class Widget(QWidget):
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
 
+  def cm_choice(self, cm_choice):
+      self.cm_type = cm_choice
+
+  # def set_max_as_max(self):
+  #     frames = np.load(self.video_path, mmap_mode='r')
+  #     frames_
+
   def refresh_video_list_via_combo_box(self, trigger_item=None):
       pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
@@ -146,10 +168,12 @@ class Widget(QWidget):
   def go(self):
     if not self.video_path:
       return
-
     progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
     stddev = calc_stddev(self.video_path, progress)
-    dialog = StdDevDialog(self.project, self.video_path, stddev, self.max_stdev.value(), self)
+    if self.max_checkbox.isChecked():
+        dialog = StdDevDialog(self.project, self.video_path, stddev, np.max(stddev), self.cm_type, self)
+    else:
+        dialog = StdDevDialog(self.project, self.video_path, stddev, self.max_stdev.value(), self.cm_type, self)
     dialog.show()
     self.open_dialogs.append(dialog)
 
