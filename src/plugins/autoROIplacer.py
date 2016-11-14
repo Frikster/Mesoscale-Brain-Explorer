@@ -18,6 +18,7 @@ from .util import project_functions as pfs
 import qtutil
 import uuid
 from .util import fileloader
+from shutil import copyfile
 import csv
 from .util.mse_ui_elements import Video_Selector
 
@@ -281,7 +282,8 @@ class Widget(QWidget):
       # for now only support having one roi_table associated per project
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
         if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
-          self.project.files.append({
+            copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
+            self.project.files.append({
             'path': text_file_path,
             'type': 'roi_table',
             'source_video': self.video_path,
