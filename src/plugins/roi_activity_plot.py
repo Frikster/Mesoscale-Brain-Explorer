@@ -37,11 +37,11 @@ kelly_colors = [
   Color('dark_olive_green', (35, 44, 22))
 ]
 
-def plot_roi_activities(video_path, rois, image, progress_callback):
-  win = pg.GraphicsWindow(title="Activity across frames")
+def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress_callback):
+  win = pg.GraphicsWindow(title=win_title)
   win.resize(1000, 600)
-  win.setWindowTitle('Activity across frames')
-  plot = win.addPlot(title="Activity across frames")
+  #win.setWindowTitle('Activity across frames')
+  plot = win.addPlot(title=plot_title)
   plot.addLegend()
 
   pg.setConfigOptions(antialias=True)
@@ -80,6 +80,7 @@ class Widget(QWidget):
     self.setup_ui()
 
     self.open_dialogs = []
+    self.selected_videos = []
 
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
@@ -118,6 +119,7 @@ class Widget(QWidget):
     vbox.addWidget(QLabel('Select video:'))
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     vbox.addWidget(self.video_list)
     vbox.addWidget(QLabel('Select ROI:'))
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -147,14 +149,14 @@ class Widget(QWidget):
   def selected_video_changed(self, selected, deselected):
       pfs.selected_video_changed_multi(self, selected, deselected)
 
-  def selected_video_changed(self, selection):
-    if not selection.indexes():
-      return
-    self.video_path = str(os.path.join(self.project.path,
-                                   selection.indexes()[0].data(Qt.DisplayRole))
-                          + '.npy')
-    frame = fileloader.load_reference_frame(self.video_path)
-    self.view.show(frame)
+  # def selected_video_changed(self, selection):
+  #   if not selection.indexes():
+  #     return
+  #   self.video_path = str(os.path.join(self.project.path,
+  #                                  selection.indexes()[0].data(Qt.DisplayRole))
+  #                         + '.npy')
+  #   frame = fileloader.load_reference_frame(self.video_path)
+  #   self.view.show(frame)
 
   def selected_roi_changed(self, selected, deselected):
     for index in deselected.indexes():
@@ -166,18 +168,32 @@ class Widget(QWidget):
       self.view.vb.addRoi(roipath, roiname)
 
   def plot_triggered(self):
-    progress = QProgressDialog('Generating Activity Plots of Selected ROIs', 'Abort', 0, 100, self)
-    progress.setAutoClose(True)
-    progress.setMinimumDuration(0)
-    def callback(x):
-        progress.setValue(x * 100)
+    global_progress = QProgressDialog('Generating Activity Plots of Selected ROIs', 'Abort', 0, 100, self)
+    global_progress.setAutoClose(True)
+    global_progress.setMinimumDuration(0)
+    def global_callback(x):
+        global_progress.setValue(x * 100)
         QApplication.processEvents()
-    callback(0.01)
-    indexes = self.roi_list.selectionModel().selectedIndexes()
-    roinames = [index.data(Qt.DisplayRole) for index in indexes]
-    rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
-    win = plot_roi_activities(self.video_path, rois, self.view.vb.img, callback)
-    self.open_dialogs.append(win)
+
+    total = len(self.selected_videos)
+
+    for selected_vid_no, video_path in enumerate(self.selected_videos):
+      global_callback(selected_vid_no / total)
+      progress = QProgressDialog('Generating Activity Plot for ' + video_path, 'Abort', 0, 100, self)
+      progress.setAutoClose(True)
+      progress.setMinimumDuration(0)
+      def callback(x):
+          progress.setValue(x * 100)
+          QApplication.processEvents()
+      callback(0.01)
+      indexes = self.roi_list.selectionModel().selectedIndexes()
+      roinames = [index.data(Qt.DisplayRole) for index in indexes]
+      rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
+      plot_title = 'Activity Across Frames for ' + os.path.basename(video_path)
+      win_title = self.project.name
+      win = plot_roi_activities(video_path, rois, self.view.vb.img, plot_title, win_title, callback)
+      self.open_dialogs.append(win)
+    global_callback(1)
 
 class MyPlugin:
   def __init__(self, project):
