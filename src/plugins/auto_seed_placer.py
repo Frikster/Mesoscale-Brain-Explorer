@@ -16,6 +16,7 @@ from .util import project_functions as pfs
 
 # sys.path.append('..')
 import qtutil
+from shutil import copyfile
 import uuid
 from .util import fileloader
 import csv
@@ -282,6 +283,7 @@ class Widget(QWidget):
         # for now only support having one seed_table associated per project
         if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
             if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+                copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
                 self.project.files.append({
                     'path': text_file_path,
                     'type': 'seed_table',

@@ -136,7 +136,6 @@ class SPCMapDialog(QDialog):
         # turn areas outside mask black
         spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
 
-
         # make regions where RGB values are taken from 0, black. take the top left corner value...
 
         spc_map_color = spc_map_color.swapaxes(0, 1)
