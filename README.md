@@ -24,4 +24,6 @@ sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk
 Please download and install the latest pyqtgraph package from the following link if it fails via the terminal: http://www.pyqtgraph.org/
 
 Now open the terminal at *Mesoscale-Brain-Explorer/src* and execute the following to run MBE
-> python3 pipegui.py
+```bash
+python3 pipegui.py
+```
