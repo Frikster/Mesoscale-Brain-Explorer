@@ -5,7 +5,9 @@
 Windows users simply have to download and extract the most recent release and run pipegui.exe contained within
 
 Linux users will need Python 3.5 and the following dependencies installed:
-> sudo apt-get update
+```bash
+ sudo apt-get update
+```
 > sudo apt-get upgrade
 > pip3 install pandas scipy matplotlib tifffile psutil imreg_dft parmap
 > pip3 install pyqtgraph
