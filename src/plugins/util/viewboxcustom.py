@@ -55,7 +55,7 @@ class ViewMode():
         self.cmap = cmap
         self.getLookupTable()
     def getLookupTable(self):        
-        lut = [ [ int(255*val) for val in self.cmap(i)[:3] ] for i in xrange(256) ]
+        lut = [ [ int(255*val) for val in self.cmap(i)[:3] ] for i in range(256) ]
         lut = np.array(lut,dtype=np.ubyte)
         self.lut = lut     
 

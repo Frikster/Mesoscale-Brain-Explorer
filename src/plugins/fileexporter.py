@@ -14,7 +14,7 @@ from .util.qt import FileTable, InfoWidget, MyProgressDialog
 from .util import fileloader
 
 import tifffile as tiff
-import cv2
+#import cv2
 
 class Exporter(QWidget):
   def __init__(self, parent=None):
@@ -24,6 +24,7 @@ class Exporter(QWidget):
     pass
   
   def export_avi(self, fileinfo, filename):
+    return
     progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
       frames = fileloader.load_file(fileinfo['path'])
