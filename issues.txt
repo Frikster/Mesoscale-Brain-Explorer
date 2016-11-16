@@ -15,9 +15,22 @@ Auto ROI Placement
 ------------------
  * Sometimes the ROI's are incorrectly placed. Cause unknown however reloading the ROI's seems to fix it every time
 
+Evoked Triggered Average
+-------------------
+* UI needs to be redesigned
+
 FileExporter
 ------------------
 * Exporting to avi does not work
+
+ROI Creator
+------------------
+* Cannot save ROI's after moving them
+
+SPC Map
+------------------
+* ROIs cannot be saved from the SPC map window
+* Cannot export numpy array of custom clicked seeds
 
 Stdev Map
 ------------------
