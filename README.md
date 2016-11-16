@@ -7,9 +7,7 @@ Windows users simply have to download and extract the most recent release and ru
 Linux users will need Python 3.5 and the following dependencies installed:
 ```bash
  sudo apt-get update
-```
-```bash
-sudo apt-get upgrade
+ sudo apt-get upgrade
 ```
 ```bash
 pip3 install pandas scipy matplotlib tifffile psutil imreg_dft parmap
