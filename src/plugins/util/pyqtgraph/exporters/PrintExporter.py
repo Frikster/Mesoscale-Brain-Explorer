@@ -1,9 +1,8 @@
 from .Exporter import Exporter
+from ..Qt import QtGui, QtCore
 from ..parametertree import Parameter
-from ..Qt import QtGui, QtCore, QtSvg
-import re
 
-__all__ = ['PrintExporter']  
+__all__ = ['PrintExporter']
 #__all__ = []   ## Printer is disabled for now--does not work very well.
 
 class PrintExporter(Exporter):

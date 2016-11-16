@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-
-from .util import filter_jeff
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView, MyProgressDialog
-from .util.gradient import GradientLegend
-from .util import project_functions as pfs
-from .util import fileloader
-from .util import mse_ui_elements as mue
-
-import os
-import numpy as np
 import imreg_dft as ird
-import itertools
-import matplotlib
-import matplotlib.pyplot as plt
-import math
+import numpy as np
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from .util import fileloader
+from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import MyListView
+
 
 class Widget(QWidget):
     def __init__(self, project, parent=None):

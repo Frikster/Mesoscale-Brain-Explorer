@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore
 import traceback
+
+from ..Qt import QtCore
+
 
 class Mutex(QtCore.QMutex):
     """

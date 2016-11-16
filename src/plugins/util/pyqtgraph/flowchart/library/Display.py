@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..Node import Node
-import weakref
-from ...Qt import QtCore, QtGui
-from ...graphicsItems.ScatterPlotItem import ScatterPlotItem
-from ...graphicsItems.PlotCurveItem import PlotCurveItem
-from ... import PlotDataItem, ComboBox
+import numpy as np
 
 from .common import *
-import numpy as np
+from ... import PlotDataItem, ComboBox
+from ...Qt import QtGui
+from ...graphicsItems.ScatterPlotItem import ScatterPlotItem
+
 
 class PlotWidgetNode(Node):
     """Connection to PlotWidget. Will plot arrays, metaarrays, and display event lists."""

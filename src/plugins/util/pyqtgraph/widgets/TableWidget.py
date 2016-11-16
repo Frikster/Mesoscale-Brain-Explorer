@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import numpy as np
+
 from ..Qt import QtGui, QtCore
 from ..python2_3 import asUnicode
 
-import numpy as np
 try:
     import metaarray
     HAVE_METAARRAY = True

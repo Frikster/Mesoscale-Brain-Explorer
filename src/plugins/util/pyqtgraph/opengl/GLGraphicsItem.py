@@ -1,7 +1,8 @@
-from ..Qt import QtGui, QtCore
-from .. import Transform3D
-from OpenGL.GL import *
 from OpenGL import GL
+from OpenGL.GL import *
+
+from .. import Transform3D
+from ..Qt import QtCore
 
 GLOptions = {
     'opaque': {

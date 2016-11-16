@@ -5,13 +5,13 @@ Update a simple plot as rapidly as possible to measure speed.
 """
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
 
-from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
 from pyqtgraph.ptime import time
+
 app = QtGui.QApplication([])
 
 p = pg.plot()

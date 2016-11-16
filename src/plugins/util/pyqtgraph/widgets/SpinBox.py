@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtGui, QtCore
-from ..python2_3 import asUnicode
-from ..SignalProxy import SignalProxy
+from decimal import *
+from decimal import Decimal as D  ## Use decimal to avoid accumulating floating-point errors
 
 from .. import functions as fn
-from math import log
-from decimal import Decimal as D  ## Use decimal to avoid accumulating floating-point errors
-from decimal import *
-import weakref
+from ..Qt import QtGui, QtCore
+from ..SignalProxy import SignalProxy
+from ..python2_3 import asUnicode
 
 __all__ = ['SpinBox']
 class SpinBox(QtGui.QAbstractSpinBox):

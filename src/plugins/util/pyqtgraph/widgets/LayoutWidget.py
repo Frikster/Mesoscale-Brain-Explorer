@@ -1,4 +1,4 @@
-from ..Qt import QtGui, QtCore
+from ..Qt import QtGui
 
 __all__ = ['LayoutWidget']
 class LayoutWidget(QtGui.QWidget):

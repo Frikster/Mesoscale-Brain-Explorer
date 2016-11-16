@@ -1,6 +1,7 @@
-from fft_tools import zoom
-import numpy as np
 import matplotlib.pyplot as pl
+import numpy as np
+from fft_tools import zoom
+
 
 def iterative_zoom(image, mindiff=1., zoomshape=[10,10],
         return_zoomed=False, zoomstep=2, verbose=False,

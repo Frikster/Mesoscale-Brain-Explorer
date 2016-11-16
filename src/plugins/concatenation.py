@@ -1,20 +1,9 @@
 #!/usr/bin/env python3
 
-import os
-import numpy as np
-import uuid
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-
-from .util import fileloader
-from .util import project_functions as pfs
-from .util import mse_ui_elements as mue
-from .util.qt import FileTable, FileTableModel, qtutil
-from .videoplayer import PlayerDialog
-
-import sys
 from .chebyshev_filter import *
+from .util import mse_ui_elements as mue
+import qtutil
+from .videoplayer import PlayerDialog
 
 
 class Widget(QWidget):

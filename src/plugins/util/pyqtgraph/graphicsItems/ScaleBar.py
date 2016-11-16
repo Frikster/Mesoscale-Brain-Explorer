@@ -1,11 +1,10 @@
-from ..Qt import QtGui, QtCore
 from .GraphicsObject import *
 from .GraphicsWidgetAnchor import *
 from .TextItem import TextItem
-import numpy as np
 from .. import functions as fn
 from .. import getConfigOption
 from ..Point import Point
+from ..Qt import QtGui
 
 __all__ = ['ScaleBar']
 

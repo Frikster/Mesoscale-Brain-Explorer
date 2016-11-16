@@ -1,7 +1,8 @@
-from ..Qt import QtGui
-from .. import functions as fn
-from .PlotDataItem import PlotDataItem
 from .PlotCurveItem import PlotCurveItem
+from .PlotDataItem import PlotDataItem
+from .. import functions as fn
+from ..Qt import QtGui
+
 
 class FillBetweenItem(QtGui.QGraphicsPathItem):
     """

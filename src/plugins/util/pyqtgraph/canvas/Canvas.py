@@ -4,18 +4,16 @@ if __name__ == '__main__':
     md = os.path.dirname(os.path.abspath(__file__))
     sys.path = [os.path.dirname(md), os.path.join(md, '..', '..', '..')] + sys.path
 
-from ..Qt import QtGui, QtCore, USE_PYSIDE
+from ..Qt import QtGui, USE_PYSIDE
+from ..graphicsItems.GridItem import GridItem
 from ..graphicsItems.ROI import ROI
 from ..graphicsItems.ViewBox import ViewBox
-from ..graphicsItems.GridItem import GridItem
 
 if USE_PYSIDE:
     from .CanvasTemplate_pyside import *
 else:
     from .CanvasTemplate_pyqt import *
-    
-import numpy as np
-from .. import debug
+
 import weakref
 from .CanvasManager import CanvasManager
 from .CanvasItem import CanvasItem, GroupCanvasItem

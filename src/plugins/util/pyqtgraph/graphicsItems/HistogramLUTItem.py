@@ -2,22 +2,20 @@
 GraphicsWidget displaying an image histogram along with gradient editor. Can be used to adjust the appearance of images.
 """
 
+import weakref
 
-from ..Qt import QtGui, QtCore
-from .. import functions as fn
-from .GraphicsWidget import GraphicsWidget
-from .ViewBox import *
+import numpy as np
+
+from .AxisItem import *
 from .GradientEditorItem import *
+from .GraphicsWidget import GraphicsWidget
 from .LinearRegionItem import *
 from .PlotDataItem import *
-from .AxisItem import *
-from .GridItem import *
-from ..Point import Point
-from .. import functions as fn
-import numpy as np
+from .ViewBox import *
 from .. import debug as debug
-
-import weakref
+from .. import functions as fn
+from ..Point import Point
+from ..Qt import QtGui
 
 __all__ = ['HistogramLUTItem']
 

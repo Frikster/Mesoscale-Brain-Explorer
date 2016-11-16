@@ -5,11 +5,10 @@ Demonstrates use of GLScatterPlotItem with rapidly-updating plots.
 """
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
-from pyqtgraph.Qt import QtCore, QtGui
-import pyqtgraph.opengl as gl
 import numpy as np
+import pyqtgraph.opengl as gl
+from pyqtgraph.Qt import QtCore, QtGui
 
 app = QtGui.QApplication([])
 w = gl.GLViewWidget()

@@ -9,7 +9,8 @@ This module exists to smooth out some of the differences between PySide and PyQt
 
 """
 
-import sys, re
+import re
+import sys
 
 from .python2_3 import asUnicode
 
@@ -32,7 +33,8 @@ else:
             raise Exception("PyQtGraph requires either PyQt4 or PySide; neither package could be imported.")
 
 if USE_PYSIDE:
-    from PySide import QtGui, QtCore, QtOpenGL, QtSvg
+    from PySide import QtCore
+
     try:
         from PySide import QtTest
     except ImportError:
@@ -101,7 +103,7 @@ if USE_PYSIDE:
     
     
 else:
-    from PyQt4 import QtGui, QtCore, uic
+    from PyQt4 import QtCore, uic
     try:
         from PyQt4 import QtSvg
     except ImportError:

@@ -1,7 +1,8 @@
-from ..Qt import QtCore, QtGui
-from ..Point import Point
 from .UIGraphicsItem import *
 from .. import functions as fn
+from ..Point import Point
+from ..Qt import QtCore, QtGui
+
 
 class TextItem(UIGraphicsItem):
     """

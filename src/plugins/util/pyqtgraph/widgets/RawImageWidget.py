@@ -7,7 +7,7 @@ except ImportError:
     HAVE_OPENGL = False
 
 from .. import functions as fn
-import numpy as np
+
 
 class RawImageWidget(QtGui.QWidget):
     """

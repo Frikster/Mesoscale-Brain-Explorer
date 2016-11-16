@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import os
+
 import numpy as np
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 from . import fileloader
 from .mygraphicsview import MyGraphicsView
+
 
 class Video_Selector:
     def __init__(self, project, view):

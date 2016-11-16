@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-import pandas as pd
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-
-from plugins.util.qt import FileTable, FileTableModel
 
 import qtutil
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from plugins.util.qt import FileTable, FileTableModel
 
 class DetailsModel(QAbstractTableModel):
   def __init__(self, obj, parent=None):

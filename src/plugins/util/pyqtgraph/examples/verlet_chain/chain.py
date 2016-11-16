@@ -1,6 +1,6 @@
-import pyqtgraph as pg
 import numpy as np
-import time
+import pyqtgraph as pg
+
 from . import relax
 
 

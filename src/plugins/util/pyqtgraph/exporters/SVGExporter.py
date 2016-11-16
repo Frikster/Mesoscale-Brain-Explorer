@@ -1,13 +1,14 @@
-from .Exporter import Exporter
-from ..python2_3 import asUnicode
-from ..parametertree import Parameter
-from ..Qt import QtGui, QtCore, QtSvg, USE_PYSIDE
-from .. import debug
-from .. import functions as fn
 import re
 import xml.dom.minidom as xml
+
 import numpy as np
 
+from .Exporter import Exporter
+from .. import debug
+from .. import functions as fn
+from ..Qt import QtGui, QtCore, QtSvg, USE_PYSIDE
+from ..parametertree import Parameter
+from ..python2_3 import asUnicode
 
 __all__ = ['SVGExporter']
 

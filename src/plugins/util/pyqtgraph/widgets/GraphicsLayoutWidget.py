@@ -1,6 +1,5 @@
-from ..Qt import QtGui
-from ..graphicsItems.GraphicsLayout import GraphicsLayout
 from .GraphicsView import GraphicsView
+from ..graphicsItems.GraphicsLayout import GraphicsLayout
 
 __all__ = ['GraphicsLayoutWidget']
 class GraphicsLayoutWidget(GraphicsView):

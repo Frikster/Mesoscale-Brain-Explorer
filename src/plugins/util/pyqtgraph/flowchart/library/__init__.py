@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
-from ...pgcollections import OrderedDict
-import os, types
-from ...debug import printExc
 from ..NodeLibrary import NodeLibrary, isNodeClass
-from ... import reload as reload
-
 
 # Build default library
 LIBRARY = NodeLibrary()

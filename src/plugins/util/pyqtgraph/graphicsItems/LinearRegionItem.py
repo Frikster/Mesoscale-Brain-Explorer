@@ -1,8 +1,8 @@
-from ..Qt import QtGui, QtCore
-from .UIGraphicsItem import UIGraphicsItem
 from .InfiniteLine import InfiniteLine
-from .. import functions as fn
+from .UIGraphicsItem import UIGraphicsItem
 from .. import debug as debug
+from .. import functions as fn
+from ..Qt import QtGui, QtCore
 
 __all__ = ['LinearRegionItem']
 

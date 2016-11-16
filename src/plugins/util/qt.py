@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-import qtutil
-from qtutil import PandasModel
 
 class JSObjectModel(QAbstractTableModel):
   def __init__(self, data, parent=None):

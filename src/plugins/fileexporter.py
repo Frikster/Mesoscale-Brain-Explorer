@@ -1,16 +1,16 @@
 import os
-import sys
 import shutil
+import sys
 import traceback
-import numpy as np
 
-from PyQt4.QtGui import *
+import numpy as np
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 sys.path.append('..')
 import qtutil
 
-from .util.qt import FileTable, InfoWidget, MyProgressDialog
+from .util.qt import FileTable, MyProgressDialog
 from .util import fileloader
 
 import tifffile as tiff

@@ -1,11 +1,7 @@
-from ..Qt import QtCore, QtGui
-from ..python2_3 import sortList
-import weakref
-from ..Point import Point
-from .. import functions as fn
-from .. import ptime as ptime
 from .mouseEvents import *
 from .. import debug as debug
+from ..Qt import QtGui
+from ..python2_3 import sortList
 
 if hasattr(QtCore, 'PYQT_VERSION'):
     try:

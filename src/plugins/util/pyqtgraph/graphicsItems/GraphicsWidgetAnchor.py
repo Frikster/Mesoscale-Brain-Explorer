@@ -1,4 +1,3 @@
-from ..Qt import QtGui, QtCore
 from ..Point import Point
 
 

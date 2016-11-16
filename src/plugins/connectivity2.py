@@ -4,13 +4,12 @@ from __future__ import print_function
 import os
 import sys
 
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
 from .util import mse_ui_elements as mue
-from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
 
 sys.path.append('..')
 import qtutil

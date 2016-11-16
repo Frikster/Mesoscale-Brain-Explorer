@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-import os
-import numpy as np
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 import ast
-from .mse_ui_elements import CheckableComboBox, PlayerDialog
+import os
+
+import numpy as np
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 from .fileloader import load_reference_frame
+from .mse_ui_elements import CheckableComboBox, PlayerDialog
+
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -113,7 +116,7 @@ def add_combo_dropdown(widget, items):
         item.setCheckState(Qt.Unchecked)
     return widget.ComboBox
 
-from collections import Iterable
+
 def flatten(foo):
     for x in foo:
         if hasattr(x, '__iter__') and not isinstance(x, str):

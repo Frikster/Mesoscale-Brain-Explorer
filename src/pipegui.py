@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 
+import collections
+import importlib
+import multiprocessing
 import os
 import sys
-import inspect
-import importlib
-import collections
-import traceback
-import multiprocessing
-
-from PyQt4.QtGui import *
-import PyQt4.QtGui as QtGui
-from PyQt4.QtCore import *
-from PyQt4.QtGui import QApplication
-
-from pipeconf import PipeconfDialog, PipelineModel
-from datadialog import DataDialog
-from project import ProjectManager
 
 import qtutil
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.QtGui import QApplication
+from datadialog import DataDialog
+from pipeconf import PipeconfDialog, PipelineModel
+from project import ProjectManager
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -205,12 +200,12 @@ class MainWindow(QMainWindow):
     m.addAction(a)
     self.project_menu = m
 
-    settings_menu = self.menu.addMenu('&Settings')
-    #a = QAction('&Pipeline Automation', self)
-    #a.setEnabled(False)
-    #a.setStatusTip('Create new project')
-    #a.triggered.connect(self.create_project)
-    settings_menu.addAction(a)
+    # settings_menu = self.menu.addMenu('&Settings')
+    # a = QAction('&Pipeline Automation', self)
+    # a.setEnabled(False)
+    # a.setStatusTip('Not Available')
+    # a.triggered.connect(self.create_project)
+    # settings_menu.addAction(a)
 
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
@@ -292,7 +287,10 @@ class MainWindow(QMainWindow):
     QMessageBox.about(self, 'About ' + APPNAME, 
         """
         <b>%s</b>
-        <p>A simple program that is a work in progress.</p>
+        <p>An online readme, including user manual and developer tutorial can be found
+        <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer">here</a></p>
+        <p>Please submit any feature requests or issues
+        <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer/issues">here</a></p>
         <p></p>
         <p><table border="0" width="150">
         <tr>
@@ -309,7 +307,6 @@ class MainWindow(QMainWindow):
         </tr>            
         </table></p>
         """ % (APPNAME, author, VERSION, date))
-
 
 if __name__ == '__main__':
   multiprocessing.freeze_support()

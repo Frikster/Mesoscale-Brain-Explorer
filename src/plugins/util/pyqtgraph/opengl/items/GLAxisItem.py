@@ -1,4 +1,5 @@
 from OpenGL.GL import *
+
 from .. GLGraphicsItem import GLGraphicsItem
 from ... import QtGui
 

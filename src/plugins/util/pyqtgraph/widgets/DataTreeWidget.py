@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtGui, QtCore
-from ..pgcollections import OrderedDict
-import types, traceback
+import traceback
+import types
+
 import numpy as np
+
+from ..Qt import QtGui
 
 try:
     import metaarray

@@ -6,8 +6,10 @@ Distributed under MIT/X11 license. See license.txt for more infomation.
 """
 
 from __future__ import division
+
+from .Qt import QtGui
 from .python2_3 import asUnicode
-from .Qt import QtGui, QtCore, USE_PYSIDE
+
 Colors = {
     'b': QtGui.QColor(0,0,255,255),
     'g': QtGui.QColor(0,255,0,255),
@@ -32,7 +34,7 @@ from . import getConfigOption, setConfigOptions
 import numpy as np
 import decimal, re
 import ctypes
-import sys, struct
+import struct
 
 from . import debug
 
@@ -2217,9 +2219,9 @@ def toposort(deps, nodes=None, seen=None, stack=None, depth=0):
 
         # Sort the following graph:
         # 
-        #   B ”””¬”””””> C <”” D
-        #       ”‚       ”‚       
-        #   E <””´”> A <””˜
+        #   B ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½> C <ï¿½ï¿½ D
+        #       ï¿½ï¿½       ï¿½ï¿½       
+        #   E <ï¿½ï¿½ï¿½ï¿½> A <ï¿½ï¿½ï¿½
         #     
         deps = {'a': ['b', 'c'], 'c': ['b', 'd'], 'e': ['b']}
         toposort(deps)

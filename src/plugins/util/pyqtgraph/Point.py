@@ -5,8 +5,10 @@ Copyright 2010  Luke Campagnola
 Distributed under MIT/X11 license. See license.txt for more infomation.
 """
 
-from .Qt import QtCore
 import numpy as np
+
+from .Qt import QtCore
+
 
 def clip(x, mn, mx):
     if x > mx:

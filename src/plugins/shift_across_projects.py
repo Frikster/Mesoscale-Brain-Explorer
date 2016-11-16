@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
 
+import ast
 import os
-from os.path import isfile, join
-from os import listdir
 import sys
 import traceback
-import ast
-import time
-import numpy as np
-from shutil import copyfile
-import matplotlib.pyplot as plt
+from os import listdir
+from os.path import isfile, join
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+import numpy as np
 from PyQt4 import QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 sys.path.append('..')
 import qtutil
 from project import Project
-import tifffile as tiff
 import imreg_dft as ird
 
 from .util.mygraphicsview import MyGraphicsView
-from .util import mse_ui_elements as mue
 from .util import project_functions as pfs
 from .util import fileloader
 

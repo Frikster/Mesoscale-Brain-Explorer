@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore, QtGui
 import weakref
-from ..graphicsItems.GraphicsObject import GraphicsObject
+
+from .eq import *
 from .. import functions as fn
 from ..Point import Point
-#from PySide import QtCore, QtGui
-from .eq import *
+from ..Qt import QtCore, QtGui
+from ..graphicsItems.GraphicsObject import GraphicsObject
+
 
 class Terminal(object):
     def __init__(self, node, name, io, optional=False, multi=False, pos=None, renamable=False, removable=False, multiable=False, bypass=None):

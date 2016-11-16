@@ -1,7 +1,8 @@
-from ..Qt import QtCore, QtGui
-from ..ptime import time
-from .. import functions as fn
 from functools import reduce
+
+from .. import functions as fn
+from ..Qt import QtGui
+from ..ptime import time
 
 __all__ = ['ValueLabel']
 

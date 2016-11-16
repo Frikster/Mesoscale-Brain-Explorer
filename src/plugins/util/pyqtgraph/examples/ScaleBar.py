@@ -2,11 +2,10 @@
 """
 Demonstrates ScaleBar
 """
-import initExample ## Add path to library (just for examples; you do not need this)
 
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
 
 pg.mkQApp()
 win = pg.GraphicsWindow()

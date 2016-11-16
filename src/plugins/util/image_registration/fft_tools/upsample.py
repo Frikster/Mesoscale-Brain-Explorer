@@ -1,8 +1,5 @@
 import fast_ffts
-import warnings
-import numpy as np
-import scale
-import zoom
+
 
 def dftups(inp,nor=None,noc=None,usfac=1,roff=0,coff=0):
     """
@@ -34,7 +31,7 @@ def dftups(inp,nor=None,noc=None,usfac=1,roff=0,coff=0):
     """
     # this function is translated from matlab, so I'm just going to pretend
     # it is matlab/pylab
-    from numpy.fft import ifftshift,fftfreq
+    from numpy.fft import ifftshift
     from numpy import pi,newaxis,floor
 
     nr,nc=np.shape(inp);
@@ -60,8 +57,8 @@ def dftups1d(inp,usfac=1,outsize=None,offset=0, return_xouts=False):
     """
     # this function is translated from matlab, so I'm just going to pretend
     # it is matlab/pylab
-    from numpy.fft import ifftshift,fftfreq
-    from numpy import pi,newaxis,floor
+    from numpy.fft import fftfreq
+    from numpy import pi,newaxis
 
     insize, = inp.shape
     if outsize is None: outsize=insize

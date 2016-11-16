@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 
-import os, sys
-import numpy as np
-from scipy import signal
-from .util import project_functions as pfs
+import os
+import sys
 
 import PyQt4
-from PyQt4.QtGui import *
+import numpy as np
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from scipy import signal
 
-from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
 from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
+
 
 #import numba as nb
 #from numba import cuda
-import uuid
-import psutil
-
-import parmap
+#import parmap
 
 # def temporal_filter_beams(frames):
 #     frame_rate = 30

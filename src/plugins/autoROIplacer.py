@@ -1,26 +1,20 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 
-import os
-import sys
-import numpy as np
-import pyqtgraph as pg
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from PyQt4 import QtCore
-from PyQt4 import QtGui
-
-from .util.mygraphicsview import MyGraphicsView
-from .util import project_functions as pfs
-
-#sys.path.append('..')
-import qtutil
-import uuid
-from .util import fileloader
-from shutil import copyfile
 import csv
-from .util.mse_ui_elements import Video_Selector
+import os
+from shutil import copyfile
+
+import numpy as np
+import qtutil
+from PyQt4 import QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from .util import fileloader
+from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
+
 
 #This the code for getting the ROI locations from bregma.
 

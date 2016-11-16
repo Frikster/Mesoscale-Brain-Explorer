@@ -1,7 +1,6 @@
+import itertools
 import operator
 import sys
-import itertools
-
 
 _IS_PY3 = sys.version_info[0] == 3
 

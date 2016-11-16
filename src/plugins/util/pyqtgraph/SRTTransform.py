@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from .Qt import QtCore, QtGui
 from .Point import Point
-import numpy as np
+from .Qt import QtGui
+
 
 class SRTTransform(QtGui.QTransform):
     """Transform that can always be represented as a combination of 3 matrices: scale * rotate * translate

@@ -1,8 +1,9 @@
-from .Exporter import Exporter
-from ..parametertree import Parameter
-from ..Qt import QtGui, QtCore, QtSvg, USE_PYSIDE
-from .. import functions as fn
 import numpy as np
+
+from .Exporter import Exporter
+from .. import functions as fn
+from ..Qt import QtGui, QtCore, USE_PYSIDE
+from ..parametertree import Parameter
 
 __all__ = ['ImageExporter']
 

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import numpy as np
 
+import matplotlib.pyplot as plt
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.graphicsItems.UIGraphicsItem import *
-
-import matplotlib.pyplot as plt
 
 class GradientLegend(UIGraphicsItem):
   def __init__(self, min_label, max_label, cm_type):

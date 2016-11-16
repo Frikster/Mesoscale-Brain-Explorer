@@ -1,7 +1,8 @@
 ## make this version of pyqtgraph importable before any others
 ## we do this to make sure that, when running examples, the correct library
 ## version is imported (if there are multiple versions present).
-import sys, os
+import os
+import sys
 
 if not hasattr(sys, 'frozen'):
     if __file__ == '<stdin>':

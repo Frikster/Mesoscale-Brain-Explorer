@@ -1,6 +1,6 @@
-from ...Qt import QtCore, QtGui, USE_PYSIDE
-from ...python2_3 import asUnicode
+from ...Qt import QtGui, USE_PYSIDE
 from ...WidgetGroup import WidgetGroup
+from ...python2_3 import asUnicode
 
 if USE_PYSIDE:
     from .axisCtrlTemplate_pyside import Ui_Form as AxisCtrlTemplate

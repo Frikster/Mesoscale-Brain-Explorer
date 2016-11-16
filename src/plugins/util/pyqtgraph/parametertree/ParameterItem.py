@@ -1,6 +1,6 @@
 from ..Qt import QtGui, QtCore
 from ..python2_3 import asUnicode
-import os, weakref, re
+
 
 class ParameterItem(QtGui.QTreeWidgetItem):
     """

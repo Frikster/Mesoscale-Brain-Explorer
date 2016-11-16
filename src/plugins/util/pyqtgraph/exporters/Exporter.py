@@ -1,8 +1,11 @@
-from ..widgets.FileDialog import FileDialog
-from ..Qt import QtGui, QtCore, QtSvg
-from ..python2_3 import asUnicode
+import os
+import re
+
 from ..GraphicsScene import GraphicsScene
-import os, re
+from ..Qt import QtGui, QtCore
+from ..python2_3 import asUnicode
+from ..widgets.FileDialog import FileDialog
+
 LastExportDirectory = None
 
 

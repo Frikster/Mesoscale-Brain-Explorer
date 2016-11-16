@@ -1,9 +1,10 @@
-from ..Qt import QtGui, QtCore, isQObjectAlive
+import operator
+import weakref
+
+from .. import functions as fn
 from ..GraphicsScene import GraphicsScene
 from ..Point import Point
-from .. import functions as fn
-import weakref
-import operator
+from ..Qt import QtGui, QtCore, isQObjectAlive
 from ..util.lru_cache import LRUCache
 
 

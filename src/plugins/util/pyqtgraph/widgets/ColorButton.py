@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtGui, QtCore
 from .. import functions as functions
+from ..Qt import QtGui, QtCore
 
 __all__ = ['ColorButton']
 

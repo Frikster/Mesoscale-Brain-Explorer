@@ -1,7 +1,6 @@
 from OpenGL.GL import *
+
 from .. GLGraphicsItem import GLGraphicsItem
-from ...Qt import QtGui
-import numpy as np
 
 __all__ = ['GLImageItem']
 

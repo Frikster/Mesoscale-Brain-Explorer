@@ -1,5 +1,7 @@
-from ..Qt import QtCore, QtGui, QtOpenGL
 from OpenGL.GL import *
+
+from ..Qt import QtGui, QtOpenGL
+
 app = QtGui.QApplication([])
 
 class GLTest(QtOpenGL.QGLWidget):

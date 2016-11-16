@@ -1,4 +1,5 @@
-from .Qt import QtCore, QtGui
+from .Qt import QtCore
+
 
 class ThreadsafeTimer(QtCore.QObject):
     """

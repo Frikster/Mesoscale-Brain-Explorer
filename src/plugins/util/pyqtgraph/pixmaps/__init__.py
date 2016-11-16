@@ -3,9 +3,12 @@ Allows easy loading of pixmaps used in UI elements.
 Provides support for frozen environments as well.
 """
 
-import os, sys, pickle
-from ..functions import makeQImage
+import pickle
+import sys
+
 from ..Qt import QtGui
+from ..functions import makeQImage
+
 if sys.version_info[0] == 2:
     from . import pixmapData_2 as pixmapData
 else:

@@ -10,10 +10,11 @@ Includes:
   - ThreadsafeDict, ThreadsafeList - Self-mutexed data structures
 """
 
-import threading, sys, copy, collections
-#from debug import *
-
+import collections
+import copy
+import threading
 from collections import OrderedDict
+
 
 class ReverseDict(dict):
     """extends dict so that reverse lookups are possible by requesting the key as a list of length 1:

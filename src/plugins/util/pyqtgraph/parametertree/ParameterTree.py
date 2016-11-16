@@ -1,7 +1,8 @@
+from .ParameterItem import ParameterItem
 from ..Qt import QtCore, QtGui
 from ..widgets.TreeWidget import TreeWidget
-import os, weakref, re
-from .ParameterItem import ParameterItem
+
+
 #import functions as fn
         
             

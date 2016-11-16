@@ -1,4 +1,7 @@
-import sys, os, subprocess, time
+import os
+import subprocess
+import sys
+import time
 
 if __name__ == "__main__" and (__package__ is None or __package__==''):
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -6,8 +9,7 @@ if __name__ == "__main__" and (__package__ is None or __package__==''):
     import examples
     __package__ = "examples"
 
-from . import initExample
-from pyqtgraph.Qt import QtCore, QtGui, USE_PYSIDE
+from pyqtgraph.Qt import QtGui, USE_PYSIDE
 import pyqtgraph as pg
 
 if USE_PYSIDE:

@@ -5,10 +5,7 @@ Copyright 2010  Luke Campagnola
 Distributed under MIT/X11 license. See license.txt for more infomation.
 """
 
-from numpy import ndarray
 from . import GraphicsLayout
-from ..metaarray import *
-
 
 __all__ = ['MultiPlotItem']
 class MultiPlotItem(GraphicsLayout.GraphicsLayout):

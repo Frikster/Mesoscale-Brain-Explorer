@@ -1,8 +1,10 @@
-from ..Qt import QtGui, QtCore
-import os, weakref, re
+import re
+import weakref
+
+from .ParameterItem import ParameterItem
+from ..Qt import QtCore
 from ..pgcollections import OrderedDict
 from ..python2_3 import asUnicode
-from .ParameterItem import ParameterItem
 
 PARAM_TYPES = {}
 PARAM_NAMES = {}

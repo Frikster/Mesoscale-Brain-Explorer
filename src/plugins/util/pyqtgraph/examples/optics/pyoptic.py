@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtGui, QtCore
-import pyqtgraph as pg
-#from pyqtgraph.canvas import Canvas, CanvasItem
+import csv
+import gzip
+import os
+
 import numpy as np
-import csv, gzip, os
+import pyqtgraph as pg
+from PyQt4 import QtGui, QtCore
 from pyqtgraph import Point
+
 
 class GlassDB:
     """

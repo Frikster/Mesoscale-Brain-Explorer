@@ -1,8 +1,7 @@
-from ..Qt import QtCore, QtGui
-
 from .DockDrop import *
-from ..widgets.VerticalLabel import VerticalLabel
+from ..Qt import QtGui
 from ..python2_3 import asUnicode
+from ..widgets.VerticalLabel import VerticalLabel
 
 class Dock(QtGui.QWidget, DockDrop):
     

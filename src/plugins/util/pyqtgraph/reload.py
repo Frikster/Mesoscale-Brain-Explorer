@@ -21,8 +21,10 @@ Does NOT:
        print module.someObject
 """
 
+import gc
+import inspect
+import sys
 
-import inspect, os, sys, gc, traceback
 try:
     import __builtin__ as builtins
 except ImportError:
@@ -311,8 +313,8 @@ def fn():
     #print "function IDs  a1 bound method: %d a1 func: %d  a1 class: %d  b1 func: %d  b1 class: %d" % (id(a1.fn), id(a1.fn.im_func), id(a1.fn.im_class), id(b1.fn.im_func), id(b1.fn.im_class))
 
 
-    from test2 import fn, C
-    
+    from test2 import fn
+
     if doQtTest:
         print("Button test before:")
         btn.sig.connect(fn)

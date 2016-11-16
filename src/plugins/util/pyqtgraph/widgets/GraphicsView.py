@@ -14,12 +14,9 @@ except ImportError:
     HAVE_OPENGL = False
 
 from ..Point import Point
-import sys, os
-from .FileDialog import FileDialog
 from ..GraphicsScene import GraphicsScene
 import numpy as np
 from .. import functions as fn
-from .. import debug as debug
 from .. import getConfigOption
 
 __all__ = ['GraphicsView']

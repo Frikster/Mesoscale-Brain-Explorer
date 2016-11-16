@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
-from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
 from pyqtgraph.GraphicsScene import GraphicsScene
+from pyqtgraph.Qt import QtCore, QtGui
 
 app = QtGui.QApplication([])
 win = pg.GraphicsView()

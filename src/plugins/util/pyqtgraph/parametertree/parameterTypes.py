@@ -1,14 +1,15 @@
-from ..Qt import QtCore, QtGui
-from ..python2_3 import asUnicode
+import os
+
 from .Parameter import Parameter, registerParameterType
 from .ParameterItem import ParameterItem
-from ..widgets.SpinBox import SpinBox
-from ..widgets.ColorButton import ColorButton
-#from ..widgets.GradientWidget import GradientWidget ## creates import loop
-from .. import pixmaps as pixmaps
 from .. import functions as fn
-import os
+from .. import pixmaps as pixmaps
+from ..Qt import QtCore, QtGui
 from ..pgcollections import OrderedDict
+from ..python2_3 import asUnicode
+from ..widgets.ColorButton import ColorButton
+from ..widgets.SpinBox import SpinBox
+
 
 class WidgetParameterItem(ParameterItem):
     """

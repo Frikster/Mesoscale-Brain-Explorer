@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtGui, QtCore, QtSvg, USE_PYSIDE
-from ..graphicsItems.ROI import ROI
 from .. import SRTTransform, ItemGroup
+from ..Qt import QtGui, QtCore, USE_PYSIDE
+from ..graphicsItems.ROI import ROI
+
 if USE_PYSIDE:
     from . import TransformGuiTemplate_pyside as TransformGuiTemplate
 else:

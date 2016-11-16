@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 
-import os, sys
-import numpy as np
+import os
 import random
+import sys
 
-from scipy import stats
-import matplotlib.pylab as plt
-
-from PyQt4.QtGui import *
+import numpy as np
+import qtutil
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from scipy import stats
 
-from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
 from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
 
-import uuid
-import psutil
-import qtutil
 
 class Widget(QWidget):
     def __init__(self, project=None, parent=None):

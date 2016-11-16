@@ -1,6 +1,6 @@
-from ..Qt import QtGui, QtCore, USE_PYSIDE
-import weakref
 from .GraphicsObject import GraphicsObject
+from ..Qt import QtGui, QtCore, USE_PYSIDE
+
 if not USE_PYSIDE:
     import sip
 

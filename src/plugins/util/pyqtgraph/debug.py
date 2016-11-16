@@ -7,12 +7,24 @@ Distributed under MIT/X11 license. See license.txt for more infomation.
 
 from __future__ import print_function
 
-import sys, traceback, time, gc, re, types, weakref, inspect, os, cProfile, threading
-from . import ptime
+import cProfile
+import gc
+import inspect
+import os
+import re
+import sys
+import threading
+import time
+import traceback
+import types
+import weakref
+
 from numpy import ndarray
-from .Qt import QtCore, QtGui
-from .util.mutex import Mutex
+
+from . import ptime
+from .Qt import QtCore
 from .util import cprint
+from .util.mutex import Mutex
 
 __ftraceDepth = 0
 def ftrace(func):

@@ -1,9 +1,10 @@
-from .. import functions as fn
+import numpy as np
+
 from .GraphicsObject import GraphicsObject
 from .ScatterPlotItem import ScatterPlotItem
-from ..Qt import QtGui, QtCore
-import numpy as np
+from .. import functions as fn
 from .. import getConfigOption
+from ..Qt import QtGui, QtCore
 
 __all__ = ['GraphItem']
 

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore, QtGui
-from ..graphicsItems.GraphicsObject import GraphicsObject
-from .. import functions as fn
 from .Terminal import *
-from ..pgcollections import OrderedDict
-from ..debug import *
-import numpy as np
 from .eq import *
+from ..Qt import QtGui
+from ..debug import *
+from ..pgcollections import OrderedDict
 
 
 def strDict(d):

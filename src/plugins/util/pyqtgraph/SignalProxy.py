@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import weakref
+
+from . import ThreadsafeTimer
 from .Qt import QtCore
 from .ptime import time
-from . import ThreadsafeTimer
-import weakref
 
 __all__ = ['SignalProxy']
 

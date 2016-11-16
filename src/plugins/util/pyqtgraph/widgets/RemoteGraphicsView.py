@@ -4,7 +4,6 @@ if not USE_PYSIDE:
 from .. import multiprocess as mp
 from .GraphicsView import GraphicsView
 from .. import CONFIG_OPTIONS
-import numpy as np
 import mmap, tempfile, ctypes, atexit, sys, random
 
 __all__ = ['RemoteGraphicsView']

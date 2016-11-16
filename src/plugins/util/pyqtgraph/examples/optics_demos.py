@@ -6,13 +6,9 @@ Optical system design demo
 
 """
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
-from optics import *
-
-import pyqtgraph as pg
-
 import numpy as np
+import pyqtgraph as pg
+from optics import *
 from pyqtgraph import Point
 
 app = pg.QtGui.QApplication([])

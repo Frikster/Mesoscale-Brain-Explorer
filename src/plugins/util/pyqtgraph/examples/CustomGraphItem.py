@@ -3,11 +3,9 @@
 Simple example of subclassing GraphItem.
 """
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
 
 # Enable antialiasing for prettier plots
 pg.setConfigOptions(antialias=True)

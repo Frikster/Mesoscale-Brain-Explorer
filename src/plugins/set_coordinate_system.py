@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 
+import ast
 import os
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-
-from .util.mygraphicsview import MyGraphicsView
-from .util import fileloader
-from .util import project_functions as pfs
 
 import qtutil
-import ast
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from .util import fileloader
+from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):

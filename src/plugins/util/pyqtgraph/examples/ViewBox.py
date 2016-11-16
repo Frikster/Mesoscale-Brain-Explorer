@@ -10,13 +10,12 @@ plot area with axes, very similar to the way PlotItem is built.
 
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
 ## This example uses a ViewBox to create a PlotWidget-like interface
 
 import numpy as np
-from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
 
 app = QtGui.QApplication([])
 mw = QtGui.QMainWindow()

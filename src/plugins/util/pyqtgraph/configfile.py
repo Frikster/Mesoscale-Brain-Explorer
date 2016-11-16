@@ -9,8 +9,12 @@ file format. Data structures may be nested and contain any data type as long
 as it can be converted to/from a string using repr and eval.
 """
 
-import re, os, sys
+import os
+import re
+import sys
+
 from .pgcollections import OrderedDict
+
 GLOBAL_PATH = None # so not thread safe.
 from . import units
 from .python2_3 import asUnicode

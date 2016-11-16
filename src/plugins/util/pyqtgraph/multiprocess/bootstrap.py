@@ -1,5 +1,7 @@
 """For starting up remote processes"""
-import sys, pickle, os
+import os
+import pickle
+import sys
 
 if __name__ == '__main__':
     if hasattr(os, 'setpgrp'):
@@ -19,7 +21,7 @@ if __name__ == '__main__':
         sys.path.extend(path)
         
     if opts.pop('pyside', False):
-        import PySide
+        pass
         
     
     targetStr = opts.pop('targetStr')

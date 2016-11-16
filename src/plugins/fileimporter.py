@@ -3,12 +3,11 @@
 import os
 import sys
 import traceback
-import numpy as np
 from shutil import copyfile
-import matplotlib.pyplot as plt
 
-from PyQt4.QtGui import *
+import numpy as np
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 sys.path.append('..')
 import qtutil
@@ -16,7 +15,7 @@ import tifffile as tiff
 
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
-from .util import project_functions as pfs
+
 
 class NotConvertedError(Exception):
   pass

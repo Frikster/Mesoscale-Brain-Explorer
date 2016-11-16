@@ -4,13 +4,9 @@ Demonstrates the appearance / interactivity of GradientWidget
 (without actually doing anything useful with it)
 
 """
-import initExample ## Add path to library (just for examples; you do not need this)
 
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
-
-
 
 app = QtGui.QApplication([])
 w = QtGui.QMainWindow()

@@ -1,4 +1,4 @@
-from ..Qt import QtGui, QtCore, USE_PYSIDE
+from ..Qt import QtGui, USE_PYSIDE
 if not USE_PYSIDE:
     import sip
 from .GraphicsItem import GraphicsItem

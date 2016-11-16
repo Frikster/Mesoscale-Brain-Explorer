@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 
 class PandasModel(QAbstractTableModel):
   def __init__(self, data, parent=None):

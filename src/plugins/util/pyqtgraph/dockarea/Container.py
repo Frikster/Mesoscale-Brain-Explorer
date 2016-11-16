@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore, QtGui
 import weakref
+
+from ..Qt import QtCore, QtGui
+
 
 class Container(object):
     #sigStretchChanged = QtCore.Signal()  ## can't do this here; not a QObject.

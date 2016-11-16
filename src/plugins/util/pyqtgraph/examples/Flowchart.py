@@ -10,14 +10,12 @@ Basic steps are:
   - flowchart connects data to the first plot, where it is displayed
   - add a gaussian filter to lowpass the data, then display it in the second plot.
 """
-import initExample ## Add path to library (just for examples; you do not need this)
 
-
-from pyqtgraph.flowchart import Flowchart
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
 import numpy as np
+import pyqtgraph as pg
 import pyqtgraph.metaarray as metaarray
+from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.flowchart import Flowchart
 
 app = QtGui.QApplication([])
 

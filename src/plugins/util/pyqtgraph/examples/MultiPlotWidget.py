@@ -1,14 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
 
-from scipy import random
 from numpy import linspace
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
 from pyqtgraph import MultiPlotWidget
+from pyqtgraph.Qt import QtGui, QtCore
+from scipy import random
+
 try:
     from pyqtgraph.metaarray import *
 except:

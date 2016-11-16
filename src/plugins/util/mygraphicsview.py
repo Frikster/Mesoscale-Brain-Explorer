@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: cp1252 -*-
 
-import os
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-
 import pyqtgraph as pg
+from PyQt4.QtGui import *
 
 from .viewboxcustom import MultiRoiViewBox
 

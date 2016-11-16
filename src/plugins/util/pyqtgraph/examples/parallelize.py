@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import initExample ## Add path to library (just for examples; you do not need this)
-import numpy as np
-import pyqtgraph.multiprocess as mp
-import pyqtgraph as pg
 import time
+
+import pyqtgraph as pg
+import pyqtgraph.multiprocess as mp
 
 print( "\n=================\nParallelize")
 

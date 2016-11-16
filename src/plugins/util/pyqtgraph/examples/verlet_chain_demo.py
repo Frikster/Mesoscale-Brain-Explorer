@@ -9,13 +9,10 @@ running the `examples/verlet_chain/make` script.
 
 """
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
-
+import pyqtgraph as pg
 import verlet_chain
+from pyqtgraph.Qt import QtCore, QtGui
 
 sim = verlet_chain.ChainSim()
 

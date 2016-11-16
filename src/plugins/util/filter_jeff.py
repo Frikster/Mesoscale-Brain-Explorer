@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
-import numpy as np
-from scipy import signal
-import matplotlib.pyplot as plt
-from scipy.stats.stats import pearsonr
-from scipy import ndimage
-#import parmap
 from multiprocessing import Pool
-from numpy import *
-import tifffile as tiff
 
+import matplotlib.pyplot as plt
+import numpy as np
+import tifffile as tiff
 from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from numpy import *
+from scipy import ndimage
+from scipy.stats.stats import pearsonr
+
 
 def load_raw(filename, width, height, dat_type):
     dat_type = np.dtype(dat_type)

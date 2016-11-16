@@ -1,12 +1,14 @@
-from ..Qt import QtGui, QtCore
-from ..python2_3 import asUnicode
-import numpy as np
-from ..Point import Point
-from .. import debug as debug
 import weakref
+
+import numpy as np
+
+from .GraphicsWidget import GraphicsWidget
+from .. import debug as debug
 from .. import functions as fn
 from .. import getConfigOption
-from .GraphicsWidget import GraphicsWidget
+from ..Point import Point
+from ..Qt import QtGui, QtCore
+from ..python2_3 import asUnicode
 
 __all__ = ['AxisItem']
 class AxisItem(GraphicsWidget):

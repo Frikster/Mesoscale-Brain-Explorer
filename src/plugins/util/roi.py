@@ -1,11 +1,12 @@
-from pyqtgraph.Qt import QtCore, QtGui, USE_PYSIDE
-import pyqtgraph.graphicsItems.ROI as pgROI
-import pyqtgraph.functions as fn
-from pyqtgraph.Point import Point
-from .custom_items import QMenuCustom
-import numpy as np
-import matplotlib.pylab as plt
 import uuid
+
+import numpy as np
+import pyqtgraph.functions as fn
+import pyqtgraph.graphicsItems.ROI as pgROI
+from pyqtgraph.Point import Point
+from pyqtgraph.Qt import QtCore, QtGui, USE_PYSIDE
+
+from .custom_items import QMenuCustom
 
 __all__ = ['ROI', 'Handle','PolylineSegment','RectROIcustom','PolyLineROIcustom']
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 
 class PluginModel(QStandardItemModel):
   def __init__(self, parent=None):
@@ -92,6 +93,7 @@ class PipeconfDialog(QDialog):
     self.setWindowTitle('Pipeline Configuration')
 
     self.plugin_list = PluginList(plugins)
+    self.plugin_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.pipeline_list = PipelineList()
   
     hbox = QHBoxLayout()
@@ -129,8 +131,9 @@ class PipeconfDialog(QDialog):
   def add_plugin(self):
     indices = self.plugin_list.selectionModel().selectedIndexes()
     if indices:
-      item = self.plugin_list.model().itemFromIndex(indices[0])
-      self.pipeline_list.model().appendRow(QStandardItem(item))
+      for indice in indices:
+          item = self.plugin_list.model().itemFromIndex(indice)
+          self.pipeline_list.model().appendRow(QStandardItem(item))
     
   def remove_plugins(self):
     self.pipeline_list.setUpdatesEnabled(False)

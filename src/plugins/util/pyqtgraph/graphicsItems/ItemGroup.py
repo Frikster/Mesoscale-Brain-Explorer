@@ -1,5 +1,5 @@
-from ..Qt import QtGui, QtCore
 from .GraphicsObject import GraphicsObject
+from ..Qt import QtCore
 
 __all__ = ['ItemGroup']
 class ItemGroup(GraphicsObject):

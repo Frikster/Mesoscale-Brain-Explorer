@@ -1,6 +1,10 @@
+import re
+import subprocess
+import sys
+import traceback
 
-from ..Qt import QtCore, QtGui, USE_PYSIDE
-import sys, re, os, time, traceback, subprocess
+from ..Qt import QtGui, USE_PYSIDE
+
 if USE_PYSIDE:
     from . import template_pyside as template
 else:

@@ -1,10 +1,7 @@
-from ..Qt import QtGui, QtCore
-from ..Point import Point
 from .GraphicsObject import GraphicsObject
 from .. import functions as fn
-import numpy as np
-import weakref
-
+from ..Point import Point
+from ..Qt import QtCore
 
 __all__ = ['InfiniteLine']
 class InfiniteLine(GraphicsObject):

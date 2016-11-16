@@ -5,11 +5,10 @@ This example uses the isosurface function to convert a scalar field
 """
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
-from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
+from pyqtgraph.Qt import QtCore, QtGui
 
 app = QtGui.QApplication([])
 w = gl.GLViewWidget()

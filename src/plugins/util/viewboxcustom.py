@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore,QtGui
-import numpy as np
-from .roi import ROI,RectROIcustom, PolyLineROIcustom
-from .custom_items import QActionCustom, QMenuCustom, ImageExporterCustom
-import matplotlib
 import pickle
-import pyqtgraph.functions as fn
 import types
-import matplotlib.pyplot as plt
-import logging
+
+import matplotlib
+import numpy as np
+import pyqtgraph as pg
+import pyqtgraph.functions as fn
+from pyqtgraph.Qt import QtCore,QtGui
+
+from .custom_items import QMenuCustom, ImageExporterCustom
+from .roi import RectROIcustom, PolyLineROIcustom
 
 __all__= ['ImageAnalysisViewBox', 'ViewMode', 'MultiRoiViewBox']
 

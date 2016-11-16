@@ -1,9 +1,10 @@
-from ..Qt import QtGui, QtCore
-from . import ArrowItem
-import numpy as np
-from ..Point import Point
 import weakref
+
+import numpy as np
+
+from . import ArrowItem
 from .GraphicsObject import GraphicsObject
+from ..Qt import QtGui, QtCore
 
 __all__ = ['CurvePoint', 'CurveArrow']
 class CurvePoint(GraphicsObject):

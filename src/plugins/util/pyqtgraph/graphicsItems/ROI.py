@@ -12,15 +12,14 @@ The ROI class is meant to serve as the base for more specific types; see several
 of how to build an ROI at the bottom of the file.
 """
 
-from ..Qt import QtCore, QtGui
-import numpy as np
-#from numpy.linalg import norm
-from ..Point import *
-from ..SRTTransform import SRTTransform
 from math import cos, sin
-from .. import functions as fn
+
 from .GraphicsObject import GraphicsObject
 from .UIGraphicsItem import UIGraphicsItem
+from .. import functions as fn
+from ..Point import *
+from ..Qt import QtGui
+from ..SRTTransform import SRTTransform
 
 __all__ = [
     'ROI', 

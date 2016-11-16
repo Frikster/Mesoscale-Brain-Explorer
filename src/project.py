@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import os
 import json
-import traceback
+import os
 import shutil
-
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+import traceback
 
 import qtutil
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
 
 class NewProjectDialog(QDialog):
   def __init__(self, parent=None):

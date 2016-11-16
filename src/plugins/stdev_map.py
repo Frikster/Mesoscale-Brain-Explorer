@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from pyqtgraph.Qt import QtCore, QtGui
+import os
 
-from .util import filter_jeff
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView, MyProgressDialog
-from .util.gradient import GradientLegend
+import matplotlib
+import numpy as np
+import scipy
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from pyqtgraph.Qt import QtGui
 
 from .util import fileloader
 from .util import project_functions as pfs
+from .util.gradient import GradientLegend
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import MyListView, MyProgressDialog
 
-import os
-import scipy
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-import math
 
 def calc_stddev(video_path, progress):
   progress.setValue(0)

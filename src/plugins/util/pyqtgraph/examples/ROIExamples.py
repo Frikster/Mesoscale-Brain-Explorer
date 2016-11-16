@@ -5,12 +5,9 @@ region of interest marker. It is possible to customize the layout and
 function of the scale/rotate handles in very flexible ways. 
 """
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
-
 
 ## Create image to display
 arr = np.ones((100, 100), dtype=float)

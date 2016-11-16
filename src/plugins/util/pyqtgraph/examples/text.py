@@ -8,12 +8,9 @@ For text that scales with the data, use QTextItem.
 For text that can be placed in a layout, use LabelItem.
 """
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
-
 
 x = np.linspace(-20, 20, 1000)
 y = np.sin(x) / x

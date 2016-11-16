@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import os
+
 import numpy as np
 import psutil
-import os
 import qtutil
+
 
 class UnknownFileFormatError(Exception):
   pass
@@ -20,7 +22,9 @@ def save_file(path, data):
 
 def load_file(filename):
   file_size = os.path.getsize(filename)
-  [total, available, percent, used, free, active, inactive, buffers, cached, shared] = list(psutil.virtual_memory())
+  available = list(psutil.virtual_memory())[1]
+  percent = list(psutil.virtual_memory())[2]
+  # [total, available, percent, used, free, active, inactive, buffers, cached, shared] = list(psutil.virtual_memory())
 
   if file_size > available:
     qtutil.critical('Not enough memory. File is of size '+str(file_size) +

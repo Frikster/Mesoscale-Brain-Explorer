@@ -1,9 +1,10 @@
-from ..Qt import QtCore, QtGui, QtOpenGL
-from OpenGL.GL import *
 import OpenGL.GL.framebufferobjects as glfbo
 import numpy as np
+from OpenGL.GL import *
+
 from .. import Vector
 from .. import functions as fn
+from ..Qt import QtCore, QtGui, QtOpenGL
 
 ##Vector = QtGui.QVector3D
 

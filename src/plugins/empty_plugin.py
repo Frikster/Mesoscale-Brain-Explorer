@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-from .chebyshev_filter import *
-
-from PyQt4.QtGui import *
-from .util import project_functions as pfs
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from .chebyshev_filter import *
+from .util import project_functions as pfs
 from .videoplayer import PlayerDialog
 
 class Widget(QWidget):

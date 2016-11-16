@@ -1,9 +1,8 @@
-from OpenGL.GL import *
-from OpenGL.arrays import vbo
-from .. GLGraphicsItem import GLGraphicsItem
-from .. import shaders
-from ... import QtGui
 import numpy as np
+from OpenGL.GL import *
+
+from .. GLGraphicsItem import GLGraphicsItem
+from ... import QtGui
 
 __all__ = ['GLLinePlotItem']
 

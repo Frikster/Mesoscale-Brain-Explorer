@@ -1,5 +1,7 @@
 import numpy as np
+
 from ...metaarray import MetaArray
+
 
 def downsample(data, n, axis=0, xvals='subsample'):
     """Downsample by averaging points together across axis.

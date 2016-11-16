@@ -1,12 +1,14 @@
 from __future__ import division
 
-from ..Qt import QtGui, QtCore
-import numpy as np
 import collections
-from .. import functions as fn
-from .. import debug as debug
+
+import numpy as np
+
 from .GraphicsObject import GraphicsObject
+from .. import debug as debug
+from .. import functions as fn
 from ..Point import Point
+from ..Qt import QtGui, QtCore
 
 __all__ = ['ImageItem']
 

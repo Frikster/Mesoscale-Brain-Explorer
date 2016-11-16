@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtCore import pyqtRemoveInputHook, pyqtRestoreInputHook
-from pdb import set_trace
-import sys
 import pdb
+import sys
+from pdb import set_trace
+
+from PyQt4.QtCore import pyqtRemoveInputHook, pyqtRestoreInputHook
+
 
 class SetTrace:
   def __init__(self):

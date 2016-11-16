@@ -1,7 +1,8 @@
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore,QtGui
-from pyqtgraph.exporters.ImageExporter import ImageExporter 
-import numpy as np
+from pyqtgraph.exporters.ImageExporter import ImageExporter
+
 
 class QMenuCustom(QtGui.QMenu):
     """ Custum QMenu that closes on leaveEvent """

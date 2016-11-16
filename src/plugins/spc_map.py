@@ -1,28 +1,25 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
-from pyqtgraph.Qt import QtCore, QtGui
-from pyqtgraph.graphicsItems.UIGraphicsItem import *
-
-from .util import filter_jeff
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView, MyProgressDialog, InfoWidget
-from .util.gradient import GradientLegend
-from .util import mse_ui_elements as mue
-from .util import project_functions as pfs
-
-from .util import fileloader
-
+import csv
 import os
+
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import qtutil
-import csv
 import scipy.misc
-import math
-import multiprocessing
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from pyqtgraph.Qt import QtGui
+from pyqtgraph.graphicsItems.UIGraphicsItem import *
+
+from .util import fileloader
+from .util import filter_jeff
+from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
+from .util.gradient import GradientLegend
+from .util.mygraphicsview import MyGraphicsView
+from .util.qt import MyListView, MyProgressDialog
+
 
 def calc_spc(video_path, x, y, progress):
     frame = fileloader.load_reference_frame(video_path)

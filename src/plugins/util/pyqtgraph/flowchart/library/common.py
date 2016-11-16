@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from ...Qt import QtCore, QtGui
-from ...widgets.SpinBox import SpinBox
-#from ...SignalProxy import SignalProxy
-from ...WidgetGroup import WidgetGroup
-#from ColorMapper import ColorMapper
-from ..Node import Node
 import numpy as np
+
+from ..Node import Node
+from ...Qt import QtCore, QtGui
+from ...WidgetGroup import WidgetGroup
 from ...widgets.ColorButton import ColorButton
+from ...widgets.SpinBox import SpinBox
+
 try:
     import metaarray
     HAVE_METAARRAY = True

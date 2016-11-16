@@ -69,12 +69,12 @@ Members
 # at  http://stackoverflow.com/a/5443941/446149
 
 
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from __future__ import division
 
-import warnings
 import sys
+import warnings
 
 try:
     from itertools import izip

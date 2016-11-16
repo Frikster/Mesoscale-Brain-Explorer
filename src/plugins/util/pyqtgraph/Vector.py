@@ -5,8 +5,10 @@ Copyright 2010  Luke Campagnola
 Distributed under MIT/X11 license. See license.txt for more infomation.
 """
 
-from .Qt import QtGui, QtCore, USE_PYSIDE
 import numpy as np
+
+from .Qt import QtGui, QtCore, USE_PYSIDE
+
 
 class Vector(QtGui.QVector3D):
     """Extension of QVector3D which adds a few helpful methods."""

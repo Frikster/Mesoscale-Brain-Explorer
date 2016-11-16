@@ -1,9 +1,10 @@
-from ..Qt import QtGui, QtCore, USE_PYSIDE
-from ..Point import Point
-from .. import functions as fn
-from .GraphicsItem import GraphicsItem
+from itertools import repeat
+
 from .GraphicsObject import GraphicsObject
-from itertools import starmap, repeat
+from .. import functions as fn
+from ..Point import Point
+from ..Qt import QtGui, QtCore, USE_PYSIDE
+
 try:
     from itertools import imap
 except ImportError:
@@ -11,7 +12,6 @@ except ImportError:
 import numpy as np
 import weakref
 from .. import getConfigOption
-from .. import debug as debug
 from ..pgcollections import OrderedDict
 from .. import debug
 

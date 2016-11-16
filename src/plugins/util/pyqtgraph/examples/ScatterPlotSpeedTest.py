@@ -9,13 +9,13 @@ For testing rapid updates of ScatterPlotItem under various conditions.
 
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
 
-from pyqtgraph.Qt import QtGui, QtCore, USE_PYSIDE
 import numpy as np
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore, USE_PYSIDE
 from pyqtgraph.ptime import time
+
 #QtGui.QApplication.setGraphicsSystem('raster')
 app = QtGui.QApplication([])
 #mw = QtGui.QMainWindow()

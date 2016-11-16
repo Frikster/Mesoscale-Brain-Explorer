@@ -6,14 +6,10 @@ it is being scaled and/or converted by lookup table, and whether OpenGL
 is used by the view widget
 """
 
-
-import initExample ## Add path to library (just for examples; you do not need this)
-
-
-from pyqtgraph.Qt import QtGui, QtCore, USE_PYSIDE
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.ptime as ptime
+from pyqtgraph.Qt import QtGui, QtCore, USE_PYSIDE
 
 if USE_PYSIDE:
     import VideoTemplate_pyside as VideoTemplate

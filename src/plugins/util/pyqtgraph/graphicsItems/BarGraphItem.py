@@ -1,9 +1,9 @@
-from ..Qt import QtGui, QtCore
-from .GraphicsObject import GraphicsObject
-from .. import getConfigOption
-from .. import functions as fn
 import numpy as np
 
+from .GraphicsObject import GraphicsObject
+from .. import functions as fn
+from .. import getConfigOption
+from ..Qt import QtGui, QtCore
 
 __all__ = ['BarGraphItem']
 

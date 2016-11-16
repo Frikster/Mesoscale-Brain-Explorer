@@ -1,12 +1,13 @@
-from ..Qt import QtGui, QtCore
-from .PlotWidget import PlotWidget
-from .DataFilterWidget import DataFilterParameter
+import numpy as np
+
 from .ColorMapWidget import ColorMapParameter
-from .. import parametertree as ptree
+from .DataFilterWidget import DataFilterParameter
+from .PlotWidget import PlotWidget
 from .. import functions as fn
 from .. import getConfigOption
+from .. import parametertree as ptree
+from ..Qt import QtGui, QtCore
 from ..graphicsItems.TextItem import TextItem
-import numpy as np
 from ..pgcollections import OrderedDict
 
 __all__ = ['ScatterPlotWidget']

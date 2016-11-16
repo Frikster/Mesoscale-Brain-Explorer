@@ -8,11 +8,10 @@ a 2D plane and interpolate data along that plane to generate a slice image
 """
 
 ## Add path to library (just for examples; you do not need this)
-import initExample
 
 import numpy as np
-from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtGui
 
 app = QtGui.QApplication([])
 

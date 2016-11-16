@@ -2,7 +2,6 @@
 Demonstrate creation of a custom graphic (a candlestick plot)
 
 """
-import initExample ## Add path to library (just for examples; you do not need this)
 
 import pyqtgraph as pg
 from pyqtgraph import QtCore, QtGui

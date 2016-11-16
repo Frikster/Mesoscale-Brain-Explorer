@@ -16,9 +16,8 @@ This class is very heavily featured:
   - Control panel with a huge feature set including averaging, decimation,
     display, power spectrum, svg/png export, plot linking, and more.
 """
-from ...Qt import QtGui, QtCore, QtSvg, USE_PYSIDE
 from ... import pixmaps
-import sys
+from ...Qt import QtGui, QtSvg, USE_PYSIDE
 
 if USE_PYSIDE:
     from .plotConfigTemplate_pyside import *

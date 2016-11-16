@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
-import os
-import numpy as np
-
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-from .util.mygraphicsview import MyGraphicsView
-from .util import filter_jeff as fj
 from .util import fileloader
+from .util import filter_jeff as fj
 from .util import project_functions as pfs
+from .util.mygraphicsview import MyGraphicsView
+
 
 # on button click!
 

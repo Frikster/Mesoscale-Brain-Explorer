@@ -1,8 +1,8 @@
-from ..Qt import QtCore, QtGui, USE_PYSIDE
 from .. import exporters as exporters
 from .. import functions as fn
-from ..graphicsItems.ViewBox import ViewBox
+from ..Qt import QtCore, QtGui, USE_PYSIDE
 from ..graphicsItems.PlotItem import PlotItem
+from ..graphicsItems.ViewBox import ViewBox
 
 if USE_PYSIDE:
     from . import exportDialogTemplate_pyside as exportDialogTemplate

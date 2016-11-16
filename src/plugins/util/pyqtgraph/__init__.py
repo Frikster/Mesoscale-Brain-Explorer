@@ -10,16 +10,10 @@ __version__ = '0.9.10'
 
 ## 'Qt' is a local module; it is intended mainly to cover up the differences
 ## between PyQt4 and PySide.
+import os
+import sys
+
 from .Qt import QtGui
-
-## not really safe--If we accidentally create another QApplication, the process hangs (and it is very difficult to trace the cause)
-#if QtGui.QApplication.instance() is None:
-    #app = QtGui.QApplication([])
-
-import numpy  ## pyqtgraph requires numpy
-              ## (import here to avoid massive error dump later on if numpy is not available)
-
-import os, sys
 
 ## check python version
 ## Allow anything >= 2.7

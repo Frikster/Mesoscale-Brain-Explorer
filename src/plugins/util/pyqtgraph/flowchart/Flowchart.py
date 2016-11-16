@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore, QtGui, USE_PYSIDE
 from .Node import *
-from ..pgcollections import OrderedDict
-from ..widgets.TreeWidget import *
 from .. import FileDialog, DataTreeWidget
+from ..Qt import QtGui, USE_PYSIDE
+from ..pgcollections import OrderedDict
 
 ## pyside and pyqt use incompatible ui files.
 if USE_PYSIDE:
-    from . import FlowchartTemplate_pyside as FlowchartTemplate
     from . import FlowchartCtrlTemplate_pyside as FlowchartCtrlTemplate
 else:
-    from . import FlowchartTemplate_pyqt as FlowchartTemplate
     from . import FlowchartCtrlTemplate_pyqt as FlowchartCtrlTemplate
     
 from .Terminal import Terminal

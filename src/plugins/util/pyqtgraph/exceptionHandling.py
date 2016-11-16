@@ -15,9 +15,10 @@ The module also provides a callback mechanism allowing others to respond
 to exceptions.
 """
 
-import sys, time
-#from lib.Manager import logMsg
+import sys
+import time
 import traceback
+
 #from log import *
 
 #logging = False

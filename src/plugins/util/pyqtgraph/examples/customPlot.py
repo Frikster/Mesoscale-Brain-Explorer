@@ -4,13 +4,12 @@ This example demonstrates the creation of a plot with a customized
 AxisItem and ViewBox. 
 """
 
+import time
 
-import initExample ## Add path to library (just for examples; you do not need this)
-
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import numpy as np
-import time
+
 
 class DateAxis(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):

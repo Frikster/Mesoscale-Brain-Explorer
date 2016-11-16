@@ -1,6 +1,5 @@
-from ..Qt import QtGui, QtCore  
-from ..GraphicsScene import GraphicsScene
 from .GraphicsItem import GraphicsItem
+from ..Qt import QtGui
 
 __all__ = ['GraphicsWidget']
 

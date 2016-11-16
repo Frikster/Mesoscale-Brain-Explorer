@@ -1,16 +1,18 @@
-from ...Qt import QtGui, QtCore
-from ...python2_3 import sortList
-import numpy as np
-from ...Point import Point
-from ... import functions as fn
-from .. ItemGroup import ItemGroup
-from .. GraphicsWidget import GraphicsWidget
+import sys
 import weakref
 from copy import deepcopy
+
+import numpy as np
+
+from .. GraphicsWidget import GraphicsWidget
+from .. ItemGroup import ItemGroup
 from ... import debug as debug
+from ... import functions as fn
 from ... import getConfigOption
-import sys
+from ...Point import Point
+from ...Qt import QtGui, QtCore
 from ...Qt import isQObjectAlive
+from ...python2_3 import sortList
 
 __all__ = ['ViewBox']
 

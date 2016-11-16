@@ -1,8 +1,9 @@
-from ..Qt import QtGui, QtCore
-from .UIGraphicsItem import *
 import numpy as np
-from ..Point import Point
+
+from .UIGraphicsItem import *
 from .. import functions as fn
+from ..Point import Point
+from ..Qt import QtGui, QtCore
 
 __all__ = ['GridItem']
 class GridItem(UIGraphicsItem):

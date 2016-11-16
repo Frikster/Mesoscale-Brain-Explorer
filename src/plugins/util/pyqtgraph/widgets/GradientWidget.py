@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtGui, QtCore
 from .GraphicsView import GraphicsView
+from ..Qt import QtGui, QtCore
 from ..graphicsItems.GradientEditorItem import GradientEditorItem
-import weakref
-import numpy as np
 
 __all__ = ['GradientWidget']
 

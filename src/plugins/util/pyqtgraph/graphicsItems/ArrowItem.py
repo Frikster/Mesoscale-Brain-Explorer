@@ -1,6 +1,6 @@
-from ..Qt import QtGui, QtCore
 from .. import functions as fn
-import numpy as np
+from ..Qt import QtGui
+
 __all__ = ['ArrowItem']
 
 class ArrowItem(QtGui.QGraphicsPathItem):

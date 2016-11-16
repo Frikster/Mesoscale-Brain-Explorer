@@ -13,15 +13,9 @@ would consist of dockable components.
 
 """
 
-
-
-import initExample ## Add path to library (just for examples; you do not need this)
-
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
-import pyqtgraph.console
-import numpy as np
-
 from pyqtgraph.dockarea import *
 
 app = QtGui.QApplication([])

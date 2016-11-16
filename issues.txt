@@ -7,12 +7,16 @@ General
 * General refactoring as well as fixing todo items
 * App crashes upon closing
 * Application often shows as not responding during heavy processing
+* If you hold down the down/up key on the pipeline list plugins pop up in a new window
+* Prototype code contains future warnings (uses to be deprecated APIs)
+* Project corruption warning nt very descriptive
 
 Main User-interface
 ---------------
 * The selectionModel used to list files always resets to the topmost file when navigating to a new plugin
 * In Ubuntu there is no tick-box in the combobox used for filtering files
 * Combobox selection isn't saved for each plugin. It shouldn't reset each time.
+* Aborting a process doesn't work very well
 
 Data management
 ---------------
@@ -28,19 +32,27 @@ Auto ROI Placement
 Evoked Triggered Average
 -------------------
 * UI needs to be redesigned
+* Untested
 
 FileExporter
 ------------------
 * Exporting to avi does not work
+* Switching between types changes filename
+* Untested
 
 ROI Creator
 ------------------
 * Cannot save ROI's after moving them
 * Mask import/export not yet implemented
+* Deletion does not update immediately
 
 Set Coordinate System
 ----------------
 * coordinates loaded from csv or txt must be the of the same units as the units used for pixel width
+
+Connectivity Diagram
+----------------
+* No warning appears when trying to craete a plot with seeds outside the ROI
 
 SPC Map
 ------------------
@@ -48,6 +60,7 @@ SPC Map
 * Cannot export numpy array of custom clicked seeds
 * colormaps should be listed in a seperate script (make exstensible)
 * Map window always in focus (cannot bring main window in front of it)
+* In windows th gradient bar is stuck in the top left. Move the image and it moves to the right spot
 
 Stdev Map
 ------------------
@@ -55,6 +68,7 @@ Stdev Map
 * Cannot save ROI made on the stdev map
 * colormaps should be listed in a seperate script (make exstensible)
 * Map window always in focus (cannot bring main window in front of it)
+* In windows th gradient bar is stuck in the top left. Move the image and it moves to the right spot
 
 Video Player
 ------------------

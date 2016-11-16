@@ -1,9 +1,9 @@
-from ..Qt import QtGui, QtCore
-from .Exporter import Exporter
-from ..parametertree import Parameter
-from .. import PlotItem
+import numpy
 
-import numpy 
+from .Exporter import Exporter
+from .. import PlotItem
+from ..parametertree import Parameter
+
 try:
     import h5py
     HAVE_HDF5 = True

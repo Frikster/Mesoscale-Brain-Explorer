@@ -1,6 +1,7 @@
-from ..Qt import QtGui
-from .. import functions as fn
 import numpy as np
+
+from ..Qt import QtGui
+
 
 class MeshData(object):
     """

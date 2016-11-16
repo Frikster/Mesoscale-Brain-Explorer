@@ -1,5 +1,11 @@
-import subprocess, atexit, os, sys, time, random, socket, signal
+import atexit
 import multiprocessing.connection
+import os
+import signal
+import subprocess
+import sys
+import time
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -341,7 +347,7 @@ class RemoteQtEventHandler(RemoteEventHandler):
         RemoteEventHandler.__init__(self, *args, **kwds)
         
     def startEventTimer(self):
-        from ..Qt import QtGui, QtCore
+        from ..Qt import QtCore
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.processRequests)
         self.timer.start(10)
@@ -419,7 +425,7 @@ def startQtEventLoop(name, port, authkey, ppid, debug=False):
     conn = multiprocessing.connection.Client(('localhost', int(port)), authkey=authkey)
     if debug:
         cprint.cout(debug, '[%d] connected; starting remote proxy.\n' % os.getpid(), -1)
-    from ..Qt import QtGui, QtCore
+    from ..Qt import QtGui
     #from PyQt4 import QtGui, QtCore
     app = QtGui.QApplication.instance()
     #print app

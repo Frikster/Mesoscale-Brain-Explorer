@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..Qt import QtCore, QtGui
-from .Container import *
-from .DockDrop import *
-from .Dock import Dock
-from .. import debug as debug
 import weakref
+
+from .Container import *
+from .Dock import Dock
+from .DockDrop import *
+from ..Qt import QtGui
+
 
 ## TODO:
 # - containers should be drop areas, not docks. (but every slot within a container must have its own drop areas?)
