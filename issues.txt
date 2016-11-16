@@ -1,29 +1,29 @@
-Known problems
+Known problems (or potential problems)
 ==============
 
-General
--------
-* Refactor filter_jeff.py and diplacement_jeff.py
-* Removing all plugins from project causes error
-* Move commonly used widgets and models to util.qt
-* Tweak progress dialogs to behave nicely
-* Changing or moving the project file, the project directory
-  and its contents might cause error
-
-User-interface
+Main User-interface
 ---------------
 * The selectionModel used to list files always resets to the topmost file when navigating to a new plugin
+* In Ubuntu there is no tick-box in the combobox used for filtering files
 
 Data management
 ---------------
-* Manage 'manipulations' correctly
 * The source field tells you what video was in view for bulk processing, not which video it is from
+* UI wont display full names (column widths static)
 
 Auto ROI Placement
 ------------------
-Sometimes the ROI's are incorrectly placed. Cause unknown however reloading the ROI's seems to fix it every time
+ * Sometimes the ROI's are incorrectly placed. Cause unknown however reloading the ROI's seems to fix it every time
 
-Memory-efficient processing
----------------------------
-* Change all plugins to process efficiently
+FileExporter
+------------------
+* Exporting to avi does not work
 
+Stdev Map
+------------------
+* Stdev map displayed via window is correct, but the jpeg saved to file is wrong
+* Cannot save ROI made on the stdev map
+
+Video Player
+------------------
+* df_fo displays a flicker in the background; all values aren't normalized across frames

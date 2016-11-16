@@ -47,7 +47,7 @@ class ConnectivityModel(QAbstractTableModel):
         tot_data = []
         dict_for_stdev = {}
 
-        for key in [i for i in list(itertools.product(xrange(len(rois)), xrange(len(rois))))]:
+        for key in [i for i in list(itertools.product(range(len(rois)), range(len(rois))))]:
             dict_for_stdev[key] = []
 
         for i, video_path in enumerate(selected_videos):
@@ -59,16 +59,16 @@ class ConnectivityModel(QAbstractTableModel):
                 tot_data = self._data
             if avg_data == []:
                 avg_data = self._data
-            for i in xrange(len(tot_data)):
-                for j in xrange(len(tot_data)):
+            for i in range(len(tot_data)):
+                for j in range(len(tot_data)):
                     dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
                     # Start above with self._data recieving the first value before adding on the rest.
                     # don't add the first value twice
                     if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
                         tot_data[i][j] = tot_data[i][j] + self._data[i][j]
         # Finally compute averages
-        for i in xrange(len(tot_data)):
-            for j in xrange(len(tot_data)):
+        for i in range(len(tot_data)):
+            for j in range(len(tot_data)):
                 if progress_callback:
                     progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                 # ignore half of graph
@@ -80,8 +80,8 @@ class ConnectivityModel(QAbstractTableModel):
         assert(stdev_dict[(0, 0)] == 0)
 
         # combine stddev and avg data
-        for i in xrange(len(avg_data)):
-            for j in xrange(len(avg_data)):
+        for i in range(len(avg_data)):
+            for j in range(len(avg_data)):
                 if progress_callback:
                     progress_callback((i*j) / (len(avg_data) * len(avg_data)))
                 avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])

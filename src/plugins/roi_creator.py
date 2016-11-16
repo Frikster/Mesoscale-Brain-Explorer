@@ -322,7 +322,7 @@ class Widget(QWidget):
       # Collect ROI's and combine
       numROIs = len(self.view.vb.rois)
       arrRegion_masks = []
-      for i in xrange(numROIs):
+      for i in range(numROIs):
         roi = self.view.vb.rois[i]
         arrRegion_mask = roi.getROIMask(frames_swap, self.view.vb.img, axes=(0, 1))
         arrRegion_masks.append(arrRegion_mask)

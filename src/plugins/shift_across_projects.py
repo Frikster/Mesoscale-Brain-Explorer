@@ -144,7 +144,7 @@ class Widget(QWidget):
     fd.show()
     dirnames = fd.selectedFiles()
 
-    if not dirnames or os.path.normpath(dirnames[0]) == os.path.normpath(fd.directory()):
+    if not dirnames or os.path.normpath(dirnames[0]) == os.path.normpath(fd.directory().absolutePath()):
         return
     for project_dir in dirnames:
         only_files = [join(project_dir, f) for f in listdir(project_dir) if isfile(join(project_dir, f))]

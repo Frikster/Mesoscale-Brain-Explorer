@@ -82,6 +82,9 @@ def refresh_video_list(project, video_list, last_manips_to_display=['All']):
     video_list.setCurrentIndex(video_list.model().index(0, 0))
 
 def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=False):
+    if trigger_item != 0:
+        widget.toolbutton.model().item(0, 0).setCheckState(Qt.Unchecked)
+
     last_manips_to_display = []
     for i in range(widget.toolbutton.count()):
         if widget.toolbutton.model().item(i, 0).checkState() != 0:

@@ -20,7 +20,7 @@ def save_file(path, data):
 
 def load_file(filename):
   file_size = os.path.getsize(filename)
-  [total, available, percent, used, free] = list(psutil.virtual_memory())
+  [total, available, percent, used, free, active, inactive, buffers, cached, shared] = list(psutil.virtual_memory())
 
   if file_size > available:
     qtutil.critical('Not enough memory. File is of size '+str(file_size) +
