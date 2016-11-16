@@ -36,10 +36,28 @@ Windows users will need Python 3.5 64-bit. Clone
 this repo or download as a zip, open the terminal at
  *Mesoscale-Brain-Explorer/whl* and execute the 
 following to install all dependencies
+
+Please download:
+* [numpy-x.x.x+mkl-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
+* [PyQt4-x.x.x-cp35-none-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyqt4)
+* [pandas-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pandas)
+* [matplotlib-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib)
+* [scipy-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
+* [tifffile-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs)
+* [psutil-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#psutil)
+* [pyqtgraph-x.x.x-py2.py3-none-any.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/)
+* [imreg_dft-x.x.x-py2.py3-none-any.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/)
+* [PyOpenGL-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyopengl)
+* [opencv_python-x.x.x-cp35-cp35m-win_amd64.whl](http://www.lfd.uci.edu/~gohlke/pythonlibs/#opencv)
+
+x.x.x in each case simply means the latest version
+
+Go to the folder where all .whl files are downloaded and run:
 ```bash
 pip3.5 install "numpy-1.11.2+mkl-cp35-cp35m-win_amd64.whl" PyQt4-4.11.4-cp35-none-win_amd64.whl pandas-0.19.1-cp35-cp35m-win_amd64.whl matplotlib-2.0.0b4-cp35-cp35m-win_amd64.whl scipy-0.18.1-cp35-cp35m-win_amd64.whl tifffile-2016.10.28-cp35-cp35m-win_amd64.whl psutil-5.0.0-cp35-cp35m-win_amd64.whl pyqtgraph-0.10.0-py2.py3-none-any.whl imreg_dft-2.0.0-py2.py3-none-any.whl PyOpenGL-3.1.1-cp35-cp35m-win_amd64.whl opencv_python-3.1.0-cp35-cp35m-win_amd64.whl
 ```
-Now use your favourite IDE to modify the code
+This may take a while to complete. 
+Once done, use your favourite IDE to modify the code
 
 ### Custom Plugin Tutorial
 Coming soon... (with pictures and videos)
