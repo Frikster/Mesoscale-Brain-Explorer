@@ -16,6 +16,7 @@ from .viewboxcustom import MultiRoiViewBox
 class MyGraphicsView(pg.GraphicsView):
   def __init__(self, project, parent=None):
     super(MyGraphicsView, self).__init__(parent)
+    self.unit_per_pixel = 'mm'
 
     self.project = project
     self.shape = 0, 0
@@ -38,12 +39,12 @@ class MyGraphicsView(pg.GraphicsView):
     l.addItem(self.vb, 0, 1)
     self.xScale = pg.AxisItem(orientation='bottom', linkView=self.vb)
     self.xScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>X</span>"
-       "<i>Width</i>",units="mm")
+       "<i>Width</i>", units=self.unit_per_pixel)
     l.addItem(self.xScale, 1, 1)
 
     self.yScale = pg.AxisItem(orientation='left', linkView=self.vb)
     self.yScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>Y</span>"
-      "<i>Height</i>", units='mm')
+      "<i>Height</i>", units=self.unit_per_pixel)
     l.addItem(self.yScale, 0, 0)
 
     self.centralWidget.setLayout(l)
@@ -54,15 +55,19 @@ class MyGraphicsView(pg.GraphicsView):
     self.update()
 
   def _update_rect(self):
+    self.xScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>X</span>"
+       "<i>Width</i>", units=self.unit_per_pixel)
+    self.yScale.setLabel(text="<span style='color: #ff0000; font-weight: bold'>Y</span>"
+      "<i>Height</i>", units=self.unit_per_pixel)
     w, h = self.shape[0], self.shape[1]
     if not (not self.project):
       ox, oy = self.project['origin']
-      mmpixel = self.project['mmpixel']
+      unit_per_pixel = self.project['unit_per_pixel']
 
-      x = -ox * mmpixel
-      y = -oy * mmpixel
-      w = w * mmpixel
-      h = h * mmpixel
+      x = -ox *unit_per_pixel
+      y = -oy * unit_per_pixel
+      w = w * unit_per_pixel
+      h = h * unit_per_pixel
 
       self.vb.update_rect(x, y, w, h)
 

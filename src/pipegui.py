@@ -9,11 +9,15 @@ import traceback
 import multiprocessing
 
 from PyQt4.QtGui import *
+import PyQt4.QtGui as QtGui
 from PyQt4.QtCore import *
+from PyQt4.QtGui import QApplication
 
 from pipeconf import PipeconfDialog, PipelineModel
 from datadialog import DataDialog
 from project import ProjectManager
+
+import qtutil
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -102,7 +106,10 @@ class MainWindow(QMainWindow):
 
     last = str(QSettings().value('path_of_last_project'))
     if last:
-      self.open_project(last)
+      try:
+        self.open_project(last)
+      except:
+        qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
 
   def load_plugins(self):
     plugins = collections.OrderedDict()
@@ -120,7 +127,7 @@ class MainWindow(QMainWindow):
       if not hasattr(m, 'MyPlugin'):
         return None
       p = m.MyPlugin(self.project)
-      #p.run()
+      # p.run()
     except:
       print('Failed to import \'{}\'.'.format(module))
       raise
@@ -182,7 +189,7 @@ class MainWindow(QMainWindow):
     a.setShortcut("Ctrl+Q")
     a.setStatusTip('Leave The App')
     a.setIcon(QIcon('pics/quit.png'))
-    a.triggered.connect(qApp.quit)
+    a.triggered.connect(self.close)
     m.addAction(a)
 
     about_action = QAction('&About ' + APPNAME, self)
@@ -313,10 +320,11 @@ if __name__ == '__main__':
   app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()
-  w.resize(1060,660)
+  w.resize(1060, 660)
   w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
   app.exec_()
   app.deleteLater()
+  del w
   sys.exit()

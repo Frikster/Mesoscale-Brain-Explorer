@@ -26,23 +26,29 @@ class Widget(QWidget):
 
     # define ui components and global data
     self.view = MyGraphicsView(self.project)
-    self.listview = QListView()
+    self.video_list = QListView()
     self.origin_label = QLabel('Origin:')
     self.left = QFrame()
     self.right = QFrame()
+    self.combo_box = QComboBox(self)
     self.setup_ui()
 
     self.selected_videos = []
-    self.listview.setModel(QStandardItemModel())
-    self.listview.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_video_changed)
+    self.shown_video_path = None
+    self.video_list.setModel(QStandardItemModel())
+    self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_video_changed)
+    self.video_list.doubleClicked.connect(self.video_triggered)
+    pfs.refresh_video_list(self.project, self.video_list)
 
-    pfs.refresh_video_list(self.project, self.listview)
     # for f in project.files:
     #   if f['type'] != 'video':
     #     continue
     #   self.listview.model().appendRow(QStandardItem(f['name']))
     # self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+
+  def video_triggered(self, index):
+      pfs.video_triggered(self, index)
 
   def setup_ui(self):
     vbox_view = QVBoxLayout()
@@ -52,26 +58,36 @@ class Widget(QWidget):
 
     self.view.vb.clicked.connect(self.vbc_clicked)
     vbox = QVBoxLayout()
+    list_of_manips = pfs.get_list_of_project_manips(self.project)
+    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    vbox.addWidget(self.toolbutton)
     vbox.addWidget(QLabel('Choose video:'))
-    self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    self.listview.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.listview)
+    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    vbox.addWidget(self.video_list)
     vbox.addWidget(self.origin_label)
-    hhbox = QHBoxLayout()
-    hhbox.addWidget(QLabel('mm/pixel:'))
-    sb = QDoubleSpinBox()
-    sb.setRange(0.001, 9999.0)
-    sb.setSingleStep(0.01)
-    sb.setValue(self.project['mmpixel'])
-    sb.valueChanged[float].connect(self.set_mmpixel)
-    hhbox.addWidget(sb)
     pb = QPushButton('&Average origin from selected files\' origins')
     pb.clicked.connect(self.avg_origin)
     vbox.addWidget(pb)
+    vbox.addWidget(QLabel('pixel width x'))
+    comboBox = self.combo_box
+    comboBox.addItem("microns")
+    comboBox.addItem("mm")
+    vbox.addWidget(comboBox)
+    comboBox.activated[str].connect(self.set_pixel_width_magnitude)
+    hhbox = QHBoxLayout()
+    hhbox.addWidget(QLabel('x/pixel:'))
+    sb = QSpinBox()
+    sb.setRange(1, 1000)
+    sb.setSingleStep(1)
+    sb.setValue(self.project['unit_per_pixel'])
+    sb.valueChanged[int].connect(self.set_unit_per_pixel)
+    hhbox.addWidget(sb)
     vbox.addLayout(hhbox)
     vbox.addStretch()
     self.right.setLayout(vbox)
-
     splitter = QSplitter(Qt.Horizontal)
     splitter.setHandleWidth(3)
     splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
@@ -82,37 +98,57 @@ class Widget(QWidget):
     self.setLayout(hbox_global)
     self.setEnabled(False)
 
-  def selected_video_changed(self, selected, deselected):
-      if not selected.indexes():
-          return
+  def refresh_video_list_via_combo_box(self, trigger_item=None):
+      pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-      for index in deselected.indexes():
-          vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                        + '.npy')
-          self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-      for index in selected.indexes():
-          vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                        + '.npy')
-      if vidpath not in self.selected_videos and vidpath != 'None':
-          self.selected_videos = self.selected_videos + [vidpath]
+  def set_pixel_width_magnitude(self, mag):
+      self.view.unit_per_pixel = mag
+      self.view.update()
+      assert(mag == 'microns' or mag == 'mm')
+      if mag == 'microns':
+          print('microns')
+      else:
+          print('mm')
+
+  def selected_video_changed(self, selected, deselected):
+      if not self.video_list.selectedIndexes():
+          return
+      self.selected_videos = []
+      for index in self.video_list.selectedIndexes():
+          vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+          if vidpath not in self.selected_videos and vidpath != 'None':
+              self.selected_videos = self.selected_videos + [vidpath]
+              self.shown_video_path = str(os.path.join(self.project.path,
+                                                       self.video_list.currentIndex().data(Qt.DisplayRole))
+                                            + '.npy')
+
+      # if not selected.indexes():
+      #     return
+      # for index in deselected.indexes():
+      #     vidpath = str(os.path.join(self.project.path,
+      #                                index.data(Qt.DisplayRole))
+      #                   + '.npy')
+      #     self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+      # for index in selected.indexes():
+      #     vidpath = str(os.path.join(self.project.path,
+      #                                index.data(Qt.DisplayRole))
+      #                   + '.npy')
+      # if vidpath not in self.selected_videos and vidpath != 'None':
+      #     self.selected_videos = self.selected_videos + [vidpath]
 
       project_file = pfs.get_project_file_from_key_item(self.project,
                                                         'path',
-                                                        self.selected_videos[0])
+                                                        self.shown_video_path)
       # Check if origin exists
-      try:
-        (x, y) = ast.literal_eval(project_file['origin'])
-      except KeyError:
-        self.origin_label.setText('Origin:')
-      else:
-        (x , y) = ast.literal_eval(project_file['origin'])
-        self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
-      # shown_video_path = str(os.path.join(self.project.path,
-      #                                          selected.indexes()[0].data(Qt.DisplayRole))
-      #                             + '.npy')
-      frame = fileloader.load_reference_frame(self.selected_videos[0])
+      if project_file is not None:
+          try:
+            (x, y) = ast.literal_eval(project_file['origin'])
+          except KeyError:
+            self.origin_label.setText('Origin:')
+          else:
+            (x, y) = ast.literal_eval(project_file['origin'])
+            self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
+      frame = fileloader.load_reference_frame(self.shown_video_path)
       self.view.show(frame)
 
   def avg_origin(self):
@@ -157,19 +193,20 @@ class Widget(QWidget):
       return
     frame = fileloader.load_reference_frame(videos[0]['path'])
     self.view.show(frame)
-    #self.set_origin_label()
+    # self.set_origin_label()
     self.setEnabled(True)
 
   def save(self):
     self.project.save()
 
-  def set_mmpixel(self, value):
-    self.project['mmpixel'] = value
+  def set_unit_per_pixel(self, value):
+    self.view.unit_per_pixel = self.combo_box.currentText()
+    self.project['unit_per_pixel'] = value
     self.view.update()
     self.save()
 
   def vbc_clicked(self, x, y):
-    pfs.change_origin(self.project, self.selected_videos[0], (x, y))
+    pfs.change_origin(self.project, self.shown_video_path, (x, y))
     self.set_origin_label(x, y)
     self.view.update()
 

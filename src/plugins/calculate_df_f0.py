@@ -9,6 +9,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import fileloader
+from .util import project_functions as pfs
 
 import uuid
 import psutil
@@ -27,23 +28,26 @@ class Widget(QWidget):
         self.left = QFrame()
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
-        self.listview = QListView()
+        self.video_list = QListView()
         self.df_d0_pb = QPushButton('&Compute df over f0')
         self.temp_filter_pb = QPushButton('&Apply Filter')
 
         self.setup_ui()
         self.selected_videos = []
 
-        self.listview.setModel(QStandardItemModel())
-        self.listview.selectionModel().selectionChanged[QItemSelection,
-                                                        QItemSelection].connect(self.selected_video_changed)
+        self.video_list.setModel(QStandardItemModel())
+        self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                          QItemSelection].connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
         for f in project.files:
             if f['type'] != 'video':
                 continue
-            self.listview.model().appendRow(QStandardItem(f['name']))
-        self.listview.setCurrentIndex(self.listview.model().index(0, 0))
-        self.df_d0_pb.clicked.connect(self.df_f0_clicked)
+            self.video_list.model().appendRow(QStandardItem(f['name']))
+        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+        self.df_d0_pb.clicked.connect(self.calculate_df_f0)
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
 
     def setup_ui(self):
         vbox_view = QVBoxLayout()
@@ -51,10 +55,15 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.listview.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.listview)
+        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        vbox.addWidget(self.video_list)
         vbox.addWidget(self.df_d0_pb)
         self.right.setLayout(vbox)
 
@@ -67,49 +76,60 @@ class Widget(QWidget):
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
 
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
     def selected_video_changed(self, selected, deselected):
-        if not selected.indexes():
-            return
+        pfs.selected_video_changed_multi(self, selected, deselected)
 
-        for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-        for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-        if vidpath not in self.selected_videos and vidpath != 'None':
-            self.selected_videos = self.selected_videos + [vidpath]
-
-        self.shown_video_path = str(os.path.join(self.project.path,
-                                           selected.indexes()[0].data(Qt.DisplayRole))
-                              + '.npy')
-        frame = fileloader.load_reference_frame(self.shown_video_path)
-        self.view.show(frame)
-
-    def df_f0_clicked(self):
-        progress = QProgressDialog('Computing df/f0 for selection', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
+    # def selected_video_changed(self, selected, deselected):
+    #     if not selected.indexes():
+    #         return
+    #
+    #     for index in deselected.indexes():
+    #         vidpath = str(os.path.join(self.project.path,
+    #                                  index.data(Qt.DisplayRole))
+    #                           + '.npy')
+    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+    #     for index in selected.indexes():
+    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    #         if vidpath not in self.selected_videos and vidpath != 'None':
+    #             self.selected_videos = self.selected_videos + [vidpath]
+    #
+    #     self.shown_video_path = str(os.path.join(self.project.path,
+    #                                        selected.indexes()[0].data(Qt.DisplayRole))
+    #                           + '.npy')
+    #     frame = fileloader.load_reference_frame(self.shown_video_path)
+    #     self.view.show(frame)
+    def calculate_df_f0(self):
+        global_progress = QProgressDialog('Total Progress Computing df/f0 for Selection', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            global_progress.setValue(x * 100)
             QApplication.processEvents()
 
-        self.calculate_df_f0(callback)
-
-    def calculate_df_f0(self, progress_callback):
+        total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
-            progress_callback(i / float(len(self.selected_videos)))
+            global_callback(i / total)
+            progress = QProgressDialog('Total Progress Computing df/f0 for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
             frames = fileloader.load_file(video_path)
+            callback(0.3)
             baseline = np.mean(frames, axis=0)
+            callback(0.6)
             frames = np.divide(np.subtract(frames, baseline), baseline)
+            callback(0.9)
             where_are_NaNs = np.isnan(frames)
             frames[where_are_NaNs] = 0
             pfs.save_project(video_path, self.project, frames, 'df_d0', 'video')
-        progress_callback(1)
+            pfs.refresh_all_list(self.project, self.video_list)
+            callback(1)
+        global_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):

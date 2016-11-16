@@ -90,7 +90,7 @@ class Widget(QWidget):
         self.left = QFrame()
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
-        self.listview = QListView()
+        self.video_list = QListView()
         self.f_low = QDoubleSpinBox()
         self.f_high = QDoubleSpinBox()
         self.frame_rate = QSpinBox()
@@ -98,21 +98,24 @@ class Widget(QWidget):
 
         self.setup_ui()
         self.selected_videos = []
-        self.listview.setModel(QStandardItemModel())
-        self.listview.selectionModel().selectionChanged[QItemSelection,
-                                                        QItemSelection].connect(self.selected_video_changed)
+        self.video_list.setModel(QStandardItemModel())
+        self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                          QItemSelection].connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
 
         if self.project:
             for f in self.project.files:
                 if f['type'] != 'video':
                     continue
-                self.listview.model().appendRow(QStandardItem(f['name']))
+                self.video_list.model().appendRow(QStandardItem(f['name']))
         else:
             for f in filenames:
-                self.listview.model().appendRow(QStandardItem(f))
-        self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+                self.video_list.model().appendRow(QStandardItem(f))
+        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
         self.temp_filter_pb.clicked.connect(self.filter_clicked)
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
 
     def setup_ui(self):
         vbox_view = QVBoxLayout()
@@ -120,10 +123,15 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.listview.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.listview)
+        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        vbox.addWidget(self.video_list)
         vbox.addWidget(QLabel('Low Bandpass (Hz)'))
         self.f_low.setMinimum(0.0)
         self.f_low.setValue(0.3)
@@ -149,40 +157,42 @@ class Widget(QWidget):
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
 
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
     def selected_video_changed(self, selected, deselected):
-        if not selected.indexes():
-            return
+        pfs.selected_video_changed_multi(self, selected, deselected)
 
-        for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-        for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-        if vidpath not in self.selected_videos and vidpath != 'None':
-            self.selected_videos = self.selected_videos + [vidpath]
-
-        self.shown_video_path = str(os.path.join(self.project.path,
-                                           selected.indexes()[0].data(Qt.DisplayRole))
-                              + '.npy')
-        frame = fileloader.load_reference_frame(self.shown_video_path)
-        self.view.show(frame)
+    # def selected_video_changed(self, selected, deselected):
+    #     if not selected.indexes():
+    #         return
+    #
+    #     for index in deselected.indexes():
+    #         vidpath = str(os.path.join(self.project.path,
+    #                                  index.data(Qt.DisplayRole))
+    #                           + '.npy')
+    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
+    #     for index in selected.indexes():
+    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    #         if vidpath not in self.selected_videos and vidpath != 'None':
+    #             self.selected_videos = self.selected_videos + [vidpath]
+    #
+    #     self.shown_video_path = str(os.path.join(self.project.path,
+    #                                        selected.indexes()[0].data(Qt.DisplayRole))
+    #                           + '.npy')
+    #     frame = fileloader.load_reference_frame(self.shown_video_path)
+    #     self.view.show(frame)
 
     def filter_clicked(self):
-        progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
-
-        self.temporal_filter(callback)
-
-
+        # todo: butterworth could go here
+        # progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
+        # progress.setAutoClose(True)
+        # progress.setMinimumDuration(0)
+        #
+        # def callback(x):
+        #     progress.setValue(x * 100)
+        #     QApplication.processEvents()
+        self.temporal_filter()
 
     def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
         nyq = frame_rate / 2.0
@@ -204,24 +214,40 @@ class Widget(QWidget):
         print("Done!")
         return frames
 
-    def temporal_filter(self, progress_callback):
+    def temporal_filter(self):
+        global_progress = QProgressDialog('Total Progress Filtering Selection', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+
+        def global_callback(x):
+            global_progress.setValue(x * 100)
+            QApplication.processEvents()
         assert(self.f_low.value() < self.f_high.value())
         frame_rate = self.frame_rate.value()
         f_low = self.f_low.value()
         f_high = self.f_high.value()
-
         #frames_mmap = np.load(self.video_path, mmap_mode='c')
         #out = np.empty([frames_mmap.shape[1], frames_mmap.shape[2]])
         #temporal_filter_beams_nb(out, frames_mmap)
         #frames = np.array(frames_mmap)
 
+        total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
-            progress_callback(i / len(self.selected_videos))
+            global_callback(i / total)
+            progress = QProgressDialog('Total Progress filtering for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
+            callback(0.01)
             frames = fileloader.load_file(video_path)
+            callback(0.1)
             avg_frames = np.mean(frames, axis=0)
+            callback(0.2)
             frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
+            callback(0.9)
             frames += avg_frames
-
             if not self.project:
                 filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
                                                                    str(QSettings().value('last_load_data_path')),
@@ -233,7 +259,9 @@ class Widget(QWidget):
                 msgBox.exec_()
             else:
                 pfs.save_project(video_path, self.project, frames, 'cheby', 'video')
-        progress_callback(1)
+                pfs.refresh_all_list(self.project, self.video_list)
+            callback(1)
+        global_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):

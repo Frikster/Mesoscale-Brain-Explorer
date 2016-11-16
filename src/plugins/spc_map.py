@@ -9,6 +9,8 @@ from .util import filter_jeff
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog, InfoWidget
 from .util.gradient import GradientLegend
+from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
 
 from .util import fileloader
 
@@ -19,7 +21,6 @@ import numpy as np
 import qtutil
 import csv
 import scipy.misc
-import png
 import math
 import multiprocessing
 
@@ -89,36 +90,20 @@ class SeedItemModel(QAbstractListModel):
                 del seed
                 break
 
-class InfoWidget(QFrame):
-    def __init__(self, text, parent=None):
-        super(InfoWidget, self).__init__(parent)
-        self.setup_ui(text)
-  
-    def setup_ui(self, text):
-        hbox = QHBoxLayout()
-        icon = QLabel()
-        image = QImage('pics/info.png')
-        icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
-        hbox.addWidget(icon)
-        self.label = QLabel(text)
-        self.label.setWordWrap(True)
-        hbox.addWidget(self.label)
-        hbox.addStretch()
-        self.setLayout(hbox)
-
-        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
-        self.setLineWidth(2)
-        self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
-
 class SPCMapDialog(QDialog):
-    def __init__(self, project, video_path, spcmap, cm_type, parent=None):
+    def __init__(self, project, video_path, spcmap, cm_type, parent=None, seed_name=None):
         super(SPCMapDialog, self).__init__(parent)
         self.project = project
         self.video_path = video_path
         self.spc = spcmap
         self.cm_type = cm_type
         self.setup_ui()
-        self.setWindowTitle('SPC')
+        if seed_name:
+            basename , ext = os.path.splitext(os.path.basename(video_path))
+            display_name = basename + '_' + seed_name + ext
+            self.setWindowTitle(display_name)
+        else:
+            self.setWindowTitle(os.path.basename(video_path))
         self.colorized_spc = self.colorize_spc(spcmap)
         self.view.show(self.colorized_spc)
         self.view.vb.clicked.connect(self.vbc_clicked)
@@ -143,7 +128,6 @@ class SPCMapDialog(QDialog):
     def colorize_spc(self, spc_map):
         spc_map_with_nan = np.copy(spc_map)
         spc_map[np.isnan(spc_map)] = 0
-        #todo: http://stackoverflow.com/questions/22548813/python-color-map-but-with-all-zero-values-mapped-to-black
         gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
         spc_map = np.ma.masked_where(spc_map == 0, spc_map)
         cmap = matplotlib.cm.ScalarMappable(
@@ -151,7 +135,6 @@ class SPCMapDialog(QDialog):
         spc_map_color = cmap.to_rgba(spc_map, bytes=True)
         # turn areas outside mask black
         spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
-
 
         # make regions where RGB values are taken from 0, black. take the top left corner value...
 
@@ -164,9 +147,9 @@ class SPCMapDialog(QDialog):
 
     def vbc_hovering(self, x, y):
         x_origin, y_origin = self.project['origin']
-        mmpixel = self.project['mmpixel']
-        x = x / mmpixel
-        y = y / mmpixel
+        unit_per_pixel = self.project['unit_per_pixel']
+        x = x / unit_per_pixel
+        y = y / unit_per_pixel
         spc = self.spc.swapaxes(0, 1)
         spc = spc[:, ::-1]
         try:
@@ -199,6 +182,7 @@ class Widget(QWidget):
         self.video_list.setModel(QStandardItemModel())
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
         for f in project.files:
           if f['type'] != 'video':
             continue
@@ -221,15 +205,24 @@ class Widget(QWidget):
                 model.appendseed(seed_name)
         self.seed_list.setCurrentIndex(model.index(0, 0))
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
+
     def setup_ui(self):
         vbox_view = QVBoxLayout()
         vbox_view.addWidget(self.view)
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         vbox.addWidget(self.video_list)
         vbox.addWidget(QLabel('Choose colormap:'))
+        # colormap list should be dealt with in a seperate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("viridis")
         self.cm_comboBox.addItem("inferno")
@@ -241,11 +234,14 @@ class Widget(QWidget):
         vbox.addWidget(qtutil.separator())
         vbox.addWidget(QLabel('seeds'))
         vbox.addWidget(self.seed_list)
-        pb = QPushButton('Generate SPC maps from selected seeds')
+        pb = QPushButton('Save all SPC maps from table seeds to file')
         pb.clicked.connect(self.spc_bulk_clicked)
         vbox.addWidget(pb)
+        pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
+        pb.clicked.connect(self.spc_bulk_clicked_display)
+        vbox.addWidget(pb)
         vbox.addStretch()
-        vbox.addWidget(InfoWidget('Click on the image to generate custom SPC map.'))
+        vbox.addWidget(mue.InfoWidget('Click on the image to generate custom SPC map.'))
         self.right.setLayout(vbox)
 
         splitter = QSplitter(Qt.Horizontal)
@@ -256,6 +252,12 @@ class Widget(QWidget):
         hbox_global = QHBoxLayout()
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
+
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+
+    def selected_video_changed(self, selected, deselected):
+        pfs.selected_video_changed_multi(self, selected, deselected)
 
     def selected_seed_changed(self, selection):
         if self.selected_seed_changed_flag == 0:
@@ -280,15 +282,21 @@ class Widget(QWidget):
             self.view.vb.removeROI()
 
     def spc_bulk_clicked(self):
-        progress = QProgressDialog('Saving all requested maps to project dir', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
+        global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            global_progress.setValue(x * 100)
             QApplication.processEvents()
-
+        total = len(self.selected_videos)
         for selected_vid_no, video_path in enumerate(self.selected_videos):
+            global_callback(selected_vid_no / total)
+            progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
             # setup seed table
             if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
                 qtutil.critical("There's no seed table associated with this project")
@@ -309,20 +317,83 @@ class Widget(QWidget):
             seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
             seed_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in seed_coord_x]
             seed_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in seed_coord_y]
-            for ind in range(len(seed_names)):
-                callback((selected_vid_no*ind) / (len(seed_names)*len(self.selected_videos)))
+            for i, ind in enumerate(range(len(seed_names))):
+                callback(i / len(seed_names))
                 x = seed_coord_x[ind]
                 y = seed_coord_y[ind]
                 seed_name = seed_names[ind]
                 self.spc_to_file(x, y, seed_name, video_path)
-        callback(1)
+            callback(1)
+        global_callback(1)
+
+    def spc_bulk_clicked_display(self):
+        global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
+        global_progress.setAutoClose(True)
+        global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            global_progress.setValue(x * 100)
+            QApplication.processEvents()
+        total = len(self.selected_videos)
+        for selected_vid_no, video_path in enumerate(self.selected_videos):
+            global_callback(selected_vid_no / total)
+            progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
+
+            # for roi in self.view.vb.rois:
+            #     roi.print('')
+            #     roi.getROIMask(frames, self.view.vb.img., axes=(1, 2))
+            # roi_paths = [os.path.normpath(self.project.files[i]['path'])
+            #              for i in range(len(self.project.files))
+            #              if self.project.files[i]['type'] == 'roi']
+            #
+            # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+            # rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+            # for roi_to_add in rois_to_add:
+            #     self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
+
+
+            # setup seed table
+            if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+                qtutil.critical("There's no seed table associated with this project")
+                return
+            text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+                              if self.project.files[x]['type'] == 'seed_table']
+            assert(len(text_file_path) == 1)
+            text_file_path = text_file_path[0]
+            seed_table = []
+            with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+                seed_table_it = csv.reader(csvfile, delimiter=',')
+                for row in seed_table_it:
+                    seed_table = seed_table + [row]
+            seed_table = np.array(seed_table)
+            seed_table_range = range(len(seed_table))[1:]
+            seed_names = [seed_table[x, 0] for x in seed_table_range]
+            seed_coord_x = [float(seed_table[x, 1]) for x in seed_table_range]
+            seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
+            seed_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in seed_coord_x]
+            seed_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in seed_coord_y]
+            rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+            for i, seed_name in enumerate(seed_names):
+                if seed_name in rois_in_view:
+                    callback(i / len(seed_names))
+                    x = seed_coord_x[i]
+                    y = seed_coord_y[i]
+                    seed_name = seed_names[i]
+                    self.spc_to_windows(x, y, seed_name, video_path)
+            callback(1)
+        global_callback(1)
+
 
     def convert_coord_to_numpy_reference(self, coord, dim):
         assert(dim == 'x' or dim == 'y')
         if not self.project['origin']:
             qtutil.critical("No origin set for project")
             return
-        pix_per_mm = 1 / self.project['mmpixel']
+        pix_per_mm = 1 / self.project['unit_per_pixel']
         coord_pix = coord * pix_per_mm
         if dim == 'x':
             return self.project['origin'][0] + coord_pix
@@ -332,45 +403,46 @@ class Widget(QWidget):
     def cm_choice(self, cm_choice):
         self.cm_type = cm_choice
 
-    def selected_video_changed(self, selected, deselected):
-        if not selected.indexes():
-            return
-
-        for index in deselected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-            self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-        for index in selected.indexes():
-            vidpath = str(os.path.join(self.project.path,
-                                     index.data(Qt.DisplayRole))
-                              + '.npy')
-        if vidpath not in self.selected_videos and vidpath != 'None':
-            self.selected_videos = self.selected_videos + [vidpath]
-
-        self.shown_video_path = str(os.path.join(self.project.path,
-                                           selected.indexes()[0].data(Qt.DisplayRole))
-                              + '.npy')
-        frame = fileloader.load_reference_frame(self.shown_video_path)
-        self.view.show(frame)
-
     def vbc_clicked(self, x, y):
         assert self.selected_videos
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
-        spc = calc_spc(self.selected_videos[0], x, y, progress)
-        dialog = SPCMapDialog(self.project, self.selected_videos[0], spc, self.cm_type, self)
-        dialog.show()
-        self.open_dialogs.append(dialog)
+        for selected in self.selected_videos:
+            spc = calc_spc(selected, x, y, progress)
+            dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_type, self)
+            dialog.show()
+            self.open_dialogs.append(dialog)
+
+    def spc_to_windows(self, x, y, name, vid_path):
+        assert self.selected_videos
+        # define base name
+        vid_name = os.path.basename(vid_path)
+        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+        # compute spc
+        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+        spc = calc_spc(vid_path, x, y, progress)
+        # save to npy
+        np.save(path_without_ext + '.npy', spc)
+        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_type, self, name)
+        dialog_object.show()
+        self.open_dialogs.append(dialog_object)
+        spc_col = dialog_object.colorized_spc
+        # Save as png and jpeg
+        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
+
 
     def spc_to_file(self, x, y, name, vid_path):
         assert self.selected_videos
+        #define base name
+        vid_name = os.path.basename(vid_path)
+        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+        # compute spc
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         spc = calc_spc(vid_path, x, y, progress)
+        # save to npy
+        np.save(path_without_ext + '.npy', spc)
         dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_type, self)
         spc_col = dialog_object.colorized_spc
         #Save as png and jpeg
-        vid_name = vid_name = os.path.basename(vid_path)
-        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
         scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
         #not working
         #png.from_array(spc_col, 'L').save(path_without_ext+".png")

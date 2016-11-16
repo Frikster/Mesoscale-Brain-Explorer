@@ -1,7 +1,6 @@
 hiddenimports = [
     "plugins.__init__",
     "plugins.alignment",
-    "plugins.alignment2",
     "plugins.auto_seed_placer",
     "plugins.autoROIplacer",
     "plugins.calculate_df_f0",
@@ -18,6 +17,7 @@ hiddenimports = [
     "plugins.roi_activity_plot",
     "plugins.roi_creator",
     "plugins.scatterplot",
+    "plugins.shift_across_projects",
     "plugins.set_coordinate_system",
     "plugins.spc_map",
     "plugins.stdev_map",

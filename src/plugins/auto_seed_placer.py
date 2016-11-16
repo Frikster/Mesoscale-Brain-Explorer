@@ -12,9 +12,11 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 from .util.mygraphicsview import MyGraphicsView
+from .util import project_functions as pfs
 
 # sys.path.append('..')
 import qtutil
+from shutil import copyfile
 import uuid
 from .util import fileloader
 import csv
@@ -109,23 +111,25 @@ class Widget(QWidget):
         self.table_widget = AutoSeedCoords(self.data, 0, 3)
         self.left = QFrame()
         self.right = QFrame()
-        self.listview = QListView()
+        self.video_list = QListView()
         self.seed_list = QListView()
         # self.open_dialogs = []
 
         self.setup_ui()
 
-        self.listview.setModel(QStandardItemModel())
-        self.listview.selectionModel().selectionChanged[QItemSelection,
-                                                        QItemSelection].connect(self.selected_video_changed)
+        self.video_list.setModel(QStandardItemModel())
+        self.video_list.selectionModel().selectionChanged[QItemSelection,
+                                                          QItemSelection].connect(self.selected_video_changed)
+        self.video_list.doubleClicked.connect(self.video_triggered)
         for f in project.files:
             if f['type'] != 'video':
                 continue
-            self.listview.model().appendRow(QStandardItem(str(f['name'])))
-        self.listview.setCurrentIndex(self.listview.model().index(0, 0))
+            self.video_list.model().appendRow(QStandardItem(str(f['name'])))
+        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
         # setup ROI and seed list widgets
         model = SeedItemModel()
+        # todo: this wont update that specific changed value
         model.textChanged.connect(self.update_project_seed)
         self.seed_list.setModel(model)
         self.seed_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -172,6 +176,8 @@ class Widget(QWidget):
             self.table_widget.setRowCount(len(self.data[self.headers[0]]))
             self.table_widget.update(self.data)
 
+    def video_triggered(self, index):
+        pfs.video_triggered(self, index)
     # def seed_item_edited(self, item):
     #   new_name = item.text()
     #   prev_name = item.data(Qt.UserRole)
@@ -186,9 +192,14 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
-        self.listview.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.listview)
+        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        vbox.addWidget(self.video_list)
         pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
         pb.clicked.connect(self.load_seed_table)
         vbox.addWidget(pb)
@@ -214,6 +225,9 @@ class Widget(QWidget):
         hbox_global = QHBoxLayout()
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
+
+    def refresh_video_list_via_combo_box(self, trigger_item=None):
+        pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
     def remove_all_seeds(self):
         seeds = self.view.vb.rois[:]
@@ -262,13 +276,14 @@ class Widget(QWidget):
         seed_table = np.array(seed_table)
         self.headers = [str.strip(x) for x in seed_table[0,]]
         seed_table_range = range(len(seed_table))[1:]
-        seed_names = [seed_table[x, 0] for x in seed_table_range]
+        seed_names = [str(seed_table[x, 0]) for x in seed_table_range]
         seed_coord_x = [float(seed_table[x, 1]) for x in seed_table_range]
         seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
         self.data = {self.headers[0]: seed_names, self.headers[1]: seed_coord_x, self.headers[2]: seed_coord_y}
         # for now only support having one seed_table associated per project
         if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
             if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+                copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
                 self.project.files.append({
                     'path': text_file_path,
                     'type': 'seed_table',
@@ -286,7 +301,7 @@ class Widget(QWidget):
 
         # Warning: size must always be the second column
         for quad in list(locs):
-            half_length = self.project['mmpixel']
+            half_length = self.project['unit_per_pixel']
             self.remove_all_seeds()
             x1 = (quad[1] - half_length)
             x2 = (quad[1] - half_length)
@@ -304,6 +319,7 @@ class Widget(QWidget):
             self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
             self.view.vb.autoDrawPolygonRoi(quad[0], pos=QtCore.QPointF(x4, y4))
             self.view.vb.autoDrawPolygonRoi(quad[0], finished=True)
+            assert(len(self.view.vb.rois) == 1)
             seed = self.view.vb.rois[0]
             self.update_project_seed(seed)
 

@@ -7,6 +7,7 @@ from PyQt4.QtCore import *
 
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import FileTable, FileTableModel
+from .util import project_functions as pfs
 
 class PlayerDialog(QDialog):
   def __init__(self, project, filename, parent=None):

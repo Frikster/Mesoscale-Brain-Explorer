@@ -9,6 +9,8 @@ from PyQt4.QtCore import *
 
 from plugins.util.qt import FileTable, FileTableModel
 
+import qtutil
+
 class DetailsModel(QAbstractTableModel):
   def __init__(self, obj, parent=None):
     super(DetailsModel, self).__init__(parent)
@@ -140,8 +142,9 @@ class DataDialog(QDialog):
     rows = self.table.selectionModel().selectedRows()
     if not rows:
       return
-    for row in rows:
-      fileinfo = self.table.model().get_entry(row)
+    fileinfos = [self.table.model().get_entry(row) for row in rows]
+    for fileinfo in fileinfos:
+      #fileinfo = self.table.model().get_entry(row)
       dialog = RemoveDialog(fileinfo, self)
       dialog.exec_()
       if not dialog.action:

@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 import numpy as np
+from shutil import copyfile
 import matplotlib.pyplot as plt
 
 from PyQt4.QtGui import *
@@ -14,6 +15,8 @@ import qtutil
 import tifffile as tiff
 
 from .util import fileloader, fileconverter
+from .util import mse_ui_elements as mue
+from .util import project_functions as pfs
 
 class NotConvertedError(Exception):
   pass
@@ -43,89 +46,98 @@ class Widget(QWidget):
     ## Related to importing Raws
     self.setWindowTitle('Import Raw File')
 
-    vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
+    #vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
 
     grid = QGridLayout()
+    grid.addWidget(QLabel('Set channel and scale factor used for all imported data'), 0, 0)
 
-    grid.addWidget(QLabel('Width:'), 0, 0)
-    self.rescale_width = QSpinBox()
-    self.rescale_width.setMinimum(1)
-    self.rescale_width.setMaximum(1024)
-    self.rescale_width.setValue(256)
-    grid.addWidget(self.rescale_width, 0, 1)
+    # grid.addWidget(QLabel('Width:'), 0, 0)
+    # self.rescale_width = QSpinBox()
+    # self.rescale_width.setMinimum(1)
+    # self.rescale_width.setMaximum(1024)
+    # self.rescale_width.setValue(256)
+    # grid.addWidget(self.rescale_width, 0, 1)
+    #
+    # grid.addWidget(QLabel('Height:'), 1, 0)
+    # self.rescale_height = QSpinBox()
+    # self.rescale_height.setMinimum(1)
+    # self.rescale_height.setMaximum(1024)
+    # self.rescale_height.setValue(256)
+    # grid.addWidget(self.rescale_height, 1, 1)
 
-    grid.addWidget(QLabel('Height:'), 1, 0)
-    self.rescale_height = QSpinBox()
-    self.rescale_height.setMinimum(1)
-    self.rescale_height.setMaximum(1024)
-    self.rescale_height.setValue(256)
-    grid.addWidget(self.rescale_height, 1, 1)
+    grid.addWidget(QLabel('Scale Factor:'), 1, 0)
+    self.scale_factor = QDoubleSpinBox()
+    self.scale_factor.setSingleStep(0.1)
+    self.scale_factor.setMinimum(0.01)
+    self.scale_factor.setMaximum(1.00)
+    self.scale_factor.setValue(1.00)
+    grid.addWidget(self.scale_factor, 1, 1)
 
-    grid.addWidget(QLabel('Set channel imported for all data'), 2, 0)
 
-    grid.addWidget(QLabel('Channel:'), 3, 0)
+
+    grid.addWidget(QLabel('Channel:'), 2, 0)
     self.channel = QSpinBox()
     self.channel.setMinimum(1)
     self.channel.setMaximum(3)
     self.channel.setValue(2)
-    grid.addWidget(self.channel, 3, 1)
+    grid.addWidget(self.channel, 2, 1)
 
-    grid.addWidget(QLabel('Set paramaters for  all imported raws'), 4, 0)
+    grid.addWidget(qtutil.separator(), 3, 0)
+    grid.addWidget(qtutil.separator(), 3, 1)
+    grid.addWidget(QLabel('Set paramaters for all imported raws'), 4, 0)
     grid.addWidget(QLabel('All raws will be rescaled and specified channel imported upon conversion'), 5, 0)
-
     grid.addWidget(QLabel('Width:'), 6, 0)
     self.sb_width = QSpinBox()
     self.sb_width.setMinimum(1)
     self.sb_width.setMaximum(1024)
     self.sb_width.setValue(256)
     grid.addWidget(self.sb_width, 6, 1)
-
     grid.addWidget(QLabel('Height:'), 7, 0)
     self.sb_height = QSpinBox()
     self.sb_height.setMinimum(1)
     self.sb_height.setMaximum(1024)
     self.sb_height.setValue(256)
     grid.addWidget(self.sb_height, 7, 1)
-
     grid.addWidget(QLabel('Number of channels:'), 8, 0)
     self.sb_channel = QSpinBox()
     self.sb_channel.setMinimum(1)
     self.sb_channel.setMaximum(3)
     self.sb_channel.setValue(3)
     grid.addWidget(self.sb_channel, 8, 1)
-
     grid.addWidget(QLabel('dtype:'), 9, 0)
     self.cb_dtype = QComboBox()
     for t in 'uint8', 'float32', 'float64':
       self.cb_dtype.addItem(t)
     grid.addWidget(self.cb_dtype, 9, 1)
-
+    grid.addWidget(qtutil.separator(), 10, 0)
+    grid.addWidget(qtutil.separator(), 10, 1)
     vbox.addLayout(grid)
     vbox.addStretch()
 
     self.setLayout(vbox)
     self.resize(400, 220)
 
+    vbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
+                                     ' We advise you only import files no larger than 1/4 of your memory'))
+    pb = QPushButton('New Video')
+    pb.clicked.connect(self.new_video)
+    vbox.addWidget(pb)
+
     self.listview = QListView()
     self.listview.setStyleSheet('QListView::item { height: 26px; }')
     self.listview.setSelectionMode(QAbstractItemView.NoSelection)
     vbox.addWidget(self.listview)
 
-    hbox = QVBoxLayout()
-    pb = QPushButton('New Video')
-    pb.clicked.connect(self.new_video)
-    hbox.addWidget(pb)
-
-    vbox.addLayout(hbox)
     vbox.addStretch()
     self.setLayout(vbox)
 
   def convert_raw(self, filename):
-    rescale_width = int(self.rescale_width.value())
-    rescale_height = int(self.rescale_height.value())
+    rescale_value = float(self.scale_factor.value())
     dtype = str(self.cb_dtype.currentText())
     width = int(self.sb_width.value())
     height = int(self.sb_height.value())
+    rescale_width = width * rescale_value
+    rescale_height = height * rescale_value
     channels = int(self.sb_channel.value())
     channel = int(self.channel.value())
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
@@ -147,7 +159,7 @@ class Widget(QWidget):
       qtutil.critical('Converting raw to npy failed.')
       progress.close()
     else:
-      if width != rescale_width or height != rescale_height:
+      if rescale_value != 1.00:
         unscaled = np.load(path)
         no_frames = len(unscaled)
         try:
@@ -164,8 +176,7 @@ class Widget(QWidget):
     return ret_filename
 
   def convert_tif(self, filename):
-    rescale_width = int(self.rescale_width.value())
-    rescale_height = int(self.rescale_height.value())
+    rescale_value = float(self.scale_factor.value())
     channel = int(self.channel.value())
 
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
@@ -188,8 +199,10 @@ class Widget(QWidget):
     else:
       with tiff.TiffFile(filename) as tif:
         w, h = tif[0].shape
+        rescale_width = w * rescale_value
+        rescale_height = h * rescale_value
         no_frames = len(tif)
-        if w != rescale_width or h != rescale_height:
+        if rescale_value != 1.00:
           unscaled = np.load(path)
           try:
             scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
@@ -220,6 +233,14 @@ class Widget(QWidget):
         raise NotConvertedError()
       else:
         filename = new_filename
+    else:
+      new_filename = os.path.basename(filename)
+      new_filename = os.path.join(self.project.path, new_filename)
+      if filename != new_filename:
+          qtutil.info('Copying .npy from '+ filename + ' to ' + new_filename +
+                      '. You can do this manually for large files to see a progress bar')
+          copyfile(filename, new_filename)
+      filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
       raise FileAlreadyInProjectError(filename)      
