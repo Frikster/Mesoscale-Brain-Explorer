@@ -1,15 +1,25 @@
-Known problems (or potential problems)
+Known Issues
 ==============
+
+General
+---------------
+* Refactor filter_jeff.py and diplacement_jeff.py
+* General refactoring as well as fixing todo items
+* App crashes upon closing
+* Application often shows as not responding during heavy processing
 
 Main User-interface
 ---------------
 * The selectionModel used to list files always resets to the topmost file when navigating to a new plugin
 * In Ubuntu there is no tick-box in the combobox used for filtering files
+* Combobox selection isn't saved for each plugin. It shouldn't reset each time.
 
 Data management
 ---------------
 * The source field tells you what video was in view for bulk processing, not which video it is from
 * UI wont display full names (column widths static)
+* Importing files other than image stacks untested
+* Paramaters for plugins not stored. It shouldn't reset each time.
 
 Auto ROI Placement
 ------------------
@@ -26,16 +36,25 @@ FileExporter
 ROI Creator
 ------------------
 * Cannot save ROI's after moving them
+* Mask import/export not yet implemented
+
+Set Coordinate System
+----------------
+* coordinates loaded from csv or txt must be the of the same units as the units used for pixel width
 
 SPC Map
 ------------------
 * ROIs cannot be saved from the SPC map window
 * Cannot export numpy array of custom clicked seeds
+* colormaps should be listed in a seperate script (make exstensible)
+* Map window always in focus (cannot bring main window in front of it)
 
 Stdev Map
 ------------------
 * Stdev map displayed via window is correct, but the jpeg saved to file is wrong
 * Cannot save ROI made on the stdev map
+* colormaps should be listed in a seperate script (make exstensible)
+* Map window always in focus (cannot bring main window in front of it)
 
 Video Player
 ------------------
