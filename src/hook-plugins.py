@@ -4,10 +4,8 @@ hiddenimports = [
     "plugins.auto_seed_placer",
     "plugins.autoROIplacer",
     "plugins.calculate_df_f0",
-    "plugins.chebyshev_filter",
     "plugins.concatenation",
-    "plugins.connectivity2",
-    "plugins.connectivity_diagram",
+    "plugins.connectivity_matrix",
 	"plugins.cut_off",
     "plugins.empty_plugin",
 	"plugins.evoked_triggered",
@@ -21,5 +19,6 @@ hiddenimports = [
     "plugins.set_coordinate_system",
     "plugins.spc_map",
     "plugins.stdev_map",
+    "plugins.temporal_filter",
     "plugins.videoplayer"
 ]

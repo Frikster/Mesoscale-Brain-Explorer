@@ -232,13 +232,13 @@ class MyTable(QTableWidget):
 #         print('here')
 
 
-class MyPlugin:
-    def __init__(self, project):
-        self.name = 'Connectivity Diagram'
-        self.widget = Widget(project)
-
-    def run(self):
-        pass
+# class MyPlugin:
+#     def __init__(self, project):
+#         self.name = 'Do not use'
+#         self.widget = Widget(project)
+#
+#     def run(self):
+#         pass
 
 if __name__=='__main__':
     app = QApplication(sys.argv)

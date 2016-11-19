@@ -3,7 +3,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .chebyshev_filter import *
+from .temporal_filter import *
 from .util import project_functions as pfs
 from .videoplayer import PlayerDialog
 

@@ -369,7 +369,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project):
-        self.name = 'Connectivity2'
+        self.name = 'Connectivity Matrix'
         self.widget = Widget(project)
 
     def run(self):

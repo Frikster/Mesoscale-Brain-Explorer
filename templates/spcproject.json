@@ -13,7 +13,7 @@
     "auto_seed_placer",
     "spc_map",
     "autoROIplacer",
-    "connectivity2",
+    "connectivity_matrix",
     "roi_activity_plot",
     "fileexporter"
   ],

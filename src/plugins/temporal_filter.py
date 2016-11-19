@@ -263,7 +263,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project=None):
-        self.name = 'Chebyshev fiflter'
+        self.name = 'Temporal Filter'
         self.widget = Widget(project)
 
     def run(self):
