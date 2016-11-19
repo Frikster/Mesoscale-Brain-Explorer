@@ -7,7 +7,7 @@
     "alignment",
 	"set_coordinate_system",
     "roi_creator",
-    "chebyshev_filter",
+    "temporal_filter",
     "calculate_df_f0",
     "gsr",
     "auto_seed_placer",
