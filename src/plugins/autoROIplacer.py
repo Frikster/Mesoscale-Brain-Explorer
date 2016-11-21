@@ -276,7 +276,9 @@ class Widget(QWidget):
       # for now only support having one roi_table associated per project
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
         if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
-            copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
+            if not (os.path.normpath(text_file_path) ==
+                        os.path.normpath(os.path.join(self.project.path, os.path.basename(text_file_path)))):
+                copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
             self.project.files.append({
             'path': text_file_path,
             'type': 'roi_table',
