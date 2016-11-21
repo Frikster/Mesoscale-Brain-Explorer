@@ -293,6 +293,17 @@ class Widget(QWidget):
                   'source_video': self.video_path,
                   'name': os.path.basename(text_file_path)
               }
+      else:
+          # Replace old table with new one
+          # todo: remove duplicates
+          for i, item in enumerate(self.project.files):
+              if item['type'] == 'roi_table':
+                  self.project.files[i] = {
+                  'path': text_file_path,
+                  'type': 'roi_table',
+                  'source_video': self.video_path,
+                  'name': os.path.basename(text_file_path)
+              }
       self.table_widget.clear()
       self.table_widget.setRowCount(len(self.data[self.headers[0]]))
       self.table_widget.update(self.data)
