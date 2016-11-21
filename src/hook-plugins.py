@@ -8,7 +8,7 @@ hiddenimports = [
     "plugins.connectivity_matrix",
 	"plugins.cut_off",
     "plugins.empty_plugin",
-	"plugins.evoked_triggered",
+	"plugins.evoked_average",
     "plugins.fileexporter",
     "plugins.fileimporter",
     "plugins.gsr",

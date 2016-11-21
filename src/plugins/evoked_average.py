@@ -69,7 +69,7 @@ class Widget(QWidget):
 
 class MyPlugin:
     def __init__(self, project):
-        self.name = 'Evoked triggered'
+        self.name = 'Evoked Average'
         self.widget = Widget(project)
 
     def run(self):

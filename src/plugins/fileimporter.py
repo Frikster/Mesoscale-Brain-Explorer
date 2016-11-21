@@ -320,7 +320,7 @@ class Widget(QWidget):
 
 class MyPlugin:
   def __init__(self, project):
-    self.name = 'Import video files'
+    self.name = 'Import Image Stacks'
     self.widget = Widget(project)
 
   def run(self):
