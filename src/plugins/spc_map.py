@@ -96,7 +96,7 @@ class SPCMapDialog(QDialog):
         self.cm_type = cm_type
         self.setup_ui()
         if seed_name:
-            basename , ext = os.path.splitext(os.path.basename(video_path))
+            basename, ext = os.path.splitext(os.path.basename(video_path))
             display_name = basename + '_' + seed_name + ext
             self.setWindowTitle(display_name)
         else:

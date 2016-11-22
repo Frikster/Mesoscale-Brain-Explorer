@@ -16,6 +16,7 @@ import qtutil
 
 import numpy as np
 from scipy import stats
+import matplotlib
 import matplotlib.pyplot as plt
 import uuid
 import csv
@@ -40,6 +41,7 @@ def calc_connectivity(video_path, image, rois):
 class ConnectivityModel(QAbstractTableModel):
     def __init__(self, selected_videos, image, rois, parent=None, progress_callback=None):
         super(ConnectivityModel, self).__init__(parent)
+        self.cm_type = 'jet'
         self.rois = rois
         self.matrix_list = []
         avg_data = []
@@ -100,8 +102,13 @@ class ConnectivityModel(QAbstractTableModel):
             return str(round(tup[0], 2))+" +/- "+str(round(tup[1], 2))
         elif role == Qt.BackgroundRole:
             value = float(tup[0])
-            color = plt.cm.jet(value)
-            color = [x * 255 for x in color]
+
+            gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+            cmap = matplotlib.cm.ScalarMappable(
+                gradient_range, self.cm_type)
+            color = cmap.to_rgba(value, bytes=True)
+            #color = plt.cm.jet(value)
+            #color = [x * 255 for x in color]
             return QColor(*color)
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
