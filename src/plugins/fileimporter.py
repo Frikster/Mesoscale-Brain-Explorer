@@ -158,6 +158,7 @@ class Widget(QWidget):
       qtutil.critical('Converting raw to npy failed.')
       progress.close()
     else:
+      ret_filename = path
       if rescale_value != 1.00:
         unscaled = np.load(path)
         no_frames = len(unscaled)
@@ -168,10 +169,6 @@ class Widget(QWidget):
         except:
           qtutil.critical('Rebinning raw failed. We can only scale down from larger sized files to preserve data')
           progress.close()
-        else:
-          ret_filename = path
-      else:
-        ret_filename = path
     return ret_filename
 
   def convert_tif(self, filename):
@@ -196,12 +193,13 @@ class Widget(QWidget):
       qtutil.critical('Converting tiff to npy failed.')
       progress.close()
     else:
+      ret_filename = path
       with tiff.TiffFile(filename) as tif:
-        w, h = tif[0].shape
-        rescale_width = int(w * rescale_value)
-        rescale_height = int(h * rescale_value)
-        no_frames = len(tif)
         if rescale_value != 1.00:
+          w, h = tif[0].shape
+          rescale_width = int(w * rescale_value)
+          rescale_height = int(h * rescale_value)
+          no_frames = len(tif)
           unscaled = np.load(path)
           try:
             scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
@@ -210,10 +208,6 @@ class Widget(QWidget):
           except:
             qtutil.critical('Rebinning tiff failed. We can only scale down from larger sized files to preserve data')
             progress.close()
-          else:
-            ret_filename = path
-        else:
-          ret_filename = path
     return ret_filename
 
   def to_npy(self, filename):

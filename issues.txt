@@ -1,6 +1,10 @@
 Known Issues
 ==============
 
+Critical
+---------------
+* Sometimes the load button for loading image stacks just flat does not work. Without changing the code it will spontaneously fix itself. Expect QSettings is to blame.
+
 General
 ---------------
 * Refactor filter_jeff.py and diplacement_jeff.py
