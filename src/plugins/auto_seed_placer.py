@@ -291,7 +291,7 @@ class Widget(QWidget):
                     if item['path'] == text_file_path:
                         self.project.files[i] = {
                             'path': text_file_path,
-                            'type': 'roi_table',
+                            'type': 'seed_table',
                             'source_video': self.video_path,
                             'name': os.path.basename(text_file_path)
                         }
@@ -302,7 +302,7 @@ class Widget(QWidget):
                 if item['type'] == 'seed_table':
                     self.project.files[i] = {
                         'path': text_file_path,
-                        'type': 'roi_table',
+                        'type': 'seed_table',
                         'source_video': self.video_path,
                         'name': os.path.basename(text_file_path)
                     }

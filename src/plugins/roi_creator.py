@@ -140,9 +140,10 @@ class Widget(QWidget):
     pb = QPushButton('Crop to poly ROI for selected files')
     pb.clicked.connect(self.crop_clicked)
     vbox.addWidget(pb)
-    pb = QPushButton('Delete selected ROIs')
-    pb.clicked.connect(self.delete_roi)
-    vbox.addWidget(pb)
+    # todo: add deletion to this plugin?
+    # pb = QPushButton('Delete selected ROIs')
+    # pb.clicked.connect(self.delete_roi)
+    # vbox.addWidget(pb)
     # vbox.addWidget(qtutil.separator())
     # vbox2 = QVBoxLayout()
     # w = QWidget()

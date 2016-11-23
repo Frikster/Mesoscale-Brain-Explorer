@@ -135,8 +135,8 @@ class Widget(QWidget):
     dtype = str(self.cb_dtype.currentText())
     width = int(self.sb_width.value())
     height = int(self.sb_height.value())
-    rescale_width = width * rescale_value
-    rescale_height = height * rescale_value
+    rescale_width = int(width * rescale_value)
+    rescale_height = int(height * rescale_value)
     channels = int(self.sb_channel.value())
     channel = int(self.channel.value())
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
@@ -198,8 +198,8 @@ class Widget(QWidget):
     else:
       with tiff.TiffFile(filename) as tif:
         w, h = tif[0].shape
-        rescale_width = w * rescale_value
-        rescale_height = h * rescale_value
+        rescale_width = int(w * rescale_value)
+        rescale_height = int(h * rescale_value)
         no_frames = len(tif)
         if rescale_value != 1.00:
           unscaled = np.load(path)
