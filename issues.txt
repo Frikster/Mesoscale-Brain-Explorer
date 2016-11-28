@@ -14,6 +14,7 @@ General
 * If you hold down the down/up key on the pipeline list plugins pop up in a new window
 * Prototype code contains future warnings (uses to be deprecated APIs)
 * Project corruption warning nt very descriptive
+* cant delete file if you import and then open it in video player and then try to delete
 
 Main User-interface
 ---------------
