@@ -40,6 +40,8 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
   win.resize(1000, 600)
   #win.setWindowTitle('Activity across frames')
   plot = win.addPlot(title=plot_title)
+  plot.setLabel('bottom', "Image Stacks")
+  plot.setLabel('left', "Activity")
   plot.addLegend()
 
   pg.setConfigOptions(antialias=True)
@@ -59,6 +61,7 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
   progress_callback(1)
 
   return win
+
 
 class Widget(QWidget):
   def __init__(self, project, parent=None):

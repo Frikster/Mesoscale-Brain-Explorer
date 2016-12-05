@@ -51,6 +51,7 @@ class Exporter(QWidget):
   
   def export_raw(self, fileinfo, filename):
     frames = fileloader.load_file(fileinfo['path'])
+    frames = frames.astype(np.float32)
     frames.tofile(filename)
   
   def export_roi(self, fileinfo, filename):
