@@ -63,7 +63,10 @@ class ConnectivityModel(QAbstractTableModel):
             for i in range(len(tot_data)):
                 for j in range(len(tot_data)):
                     dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
-                    # Start above with self._data recieving the first value before adding on the rest.
+                    # ignore half of graph
+                    if i < j:
+                        dict_for_stdev[(i, j)] = [0]
+                    # Start above with self._data receiving= the first value before adding on the rest.
                     # don't add the first value twice
                     if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
                         tot_data[i][j] = tot_data[i][j] + self._data[i][j]
@@ -107,8 +110,8 @@ class ConnectivityModel(QAbstractTableModel):
             cmap = matplotlib.cm.ScalarMappable(
                 gradient_range, self.cm_type)
             color = cmap.to_rgba(value, bytes=True)
-            #color = plt.cm.jet(value)
-            #color = [x * 255 for x in color]
+            # color = plt.cm.jet(value)
+            # color = [x * 255 for x in color]
             return QColor(*color)
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignCenter
