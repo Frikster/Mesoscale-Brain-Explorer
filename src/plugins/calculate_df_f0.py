@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys
+import sys, os
 
 import numpy as np
 from PyQt4.QtCore import *
@@ -24,6 +24,7 @@ class Widget(QWidget):
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
+        self.video_list2 = QListView()
         self.df_d0_pb = QPushButton('&Compute df over f0')
         self.temp_filter_pb = QPushButton('&Apply Filter')
 
@@ -39,7 +40,24 @@ class Widget(QWidget):
                 continue
             self.video_list.model().appendRow(QStandardItem(f['name']))
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
+        self.video_list2.setModel(QStandardItemModel())
+        self.video_list2.selectionModel().selectionChanged[QItemSelection,
+                                                          QItemSelection].connect(self.selected_f0_video_changed)
+        self.video_list2.doubleClicked.connect(self.video_list2.clearSelection)
+        for f in project.files:
+            if f['type'] != 'video':
+                continue
+            self.video_list2.model().appendRow(QStandardItem(f['name']))
+        self.video_list2.setCurrentIndex(self.video_list2.model().index(0, 0))
         self.df_d0_pb.clicked.connect(self.calculate_df_f0)
+
+    def clear(self):
+        self.video_list2.clearSelection()
+        # listwidget.setSelected(False)
+        # for i in range(listwidget.count()):
+        #     item = listwidget.item(i)
+        #     listwidget.setItemSelected(item, False)
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -59,6 +77,11 @@ class Widget(QWidget):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         vbox.addWidget(self.video_list)
+        vbox.addWidget(QLabel('Only if needed: Choose f0 source'))
+        vbox.addWidget(QLabel('Double click to deselect all'))
+        self.video_list2.setStyleSheet('QListView::item { height: 26px; }')
+        self.video_list2.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        vbox.addWidget(self.video_list2)
         vbox.addWidget(self.df_d0_pb)
         self.right.setLayout(vbox)
 
@@ -76,6 +99,13 @@ class Widget(QWidget):
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
+
+    def selected_f0_video_changed(self, selected, deselected):
+        if len(self.video_list2.selectedIndexes()) < 1:
+            return
+        index = self.video_list2.selectedIndexes()[0]
+        self.video_list2_vidpath = str(os.path.normpath(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy'))
+        print('')
 
     # def selected_video_changed(self, selected, deselected):
     #     if not selected.indexes():
@@ -96,6 +126,7 @@ class Widget(QWidget):
     #                           + '.npy')
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
+
     def calculate_df_f0(self):
         global_progress = QProgressDialog('Total Progress Computing df/f0 for Selection', 'Abort', 0, 100, self)
         global_progress.setAutoClose(True)
@@ -115,7 +146,10 @@ class Widget(QWidget):
                 QApplication.processEvents()
             frames = fileloader.load_file(video_path)
             callback(0.3)
-            baseline = np.mean(frames, axis=0)
+            if len(self.video_list2.selectedIndexes()) == 0:
+                baseline = np.mean(frames, axis=0)
+            else:
+                baseline = np.mean(fileloader.load_file(self.video_list2_vidpath), axis=0)
             callback(0.6)
             frames = np.divide(np.subtract(frames, baseline), baseline)
             callback(0.9)
