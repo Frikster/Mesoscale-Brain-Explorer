@@ -14,7 +14,7 @@ from .util.qt import FileTable, MyProgressDialog
 from .util import fileloader
 
 import tifffile as tiff
-#import cv2
+import cv2
 
 class Exporter(QWidget):
   def __init__(self, parent=None):
@@ -24,14 +24,14 @@ class Exporter(QWidget):
     pass
   
   def export_avi(self, fileinfo, filename):
-    return
     progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
       frames = fileloader.load_file(fileinfo['path'])
       if frames.dtype != np.uint8:
         frames = frames.astype(np.uint8)
+      #todo: 30 = export framerate needs to be user-decided
       video = cv2.VideoWriter(
-        filename, cv2.cv.CV_FOURCC(*'DIVX'), 10,
+        filename, cv2.VideoWriter_fourcc(*'DIVX'), 30,
         (frames.shape[1], frames.shape[2]), False
       )
       for i, frame in enumerate(frames):
