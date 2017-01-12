@@ -188,7 +188,7 @@ class selectableROI(object):
     sigSaveRequested   = QtCore.Signal(object)  
 
     def __init__(self):
-        self.penActive   = fn.mkPen( 0, 255, 0)
+        self.penActive   = fn.mkPen(0, 255, 0)
         self.penInactive = fn.mkPen(255,   0, 0) 
         self.penHover    = fn.mkPen(255, 255, 0)   
         self.penActive.setWidth(1)

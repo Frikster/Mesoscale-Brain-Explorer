@@ -2,6 +2,7 @@
 
 import pickle
 import types
+import uuid
 
 import matplotlib
 import numpy as np
@@ -155,7 +156,7 @@ class MultiRoiViewBox(pg.ViewBox):
         for r in self.rois:
             r.setActive(True)
 
-    def addPolyLineROI(self, handlePositions, name=None):
+    def addPolyLineROI(self, handlePositions, name):
         roi = PolyLineROIcustom(handlePositions=handlePositions, removable=True)
         roi.setName(name)
         self.addItem(roi)                      # Add roi to viewbox
@@ -163,7 +164,7 @@ class MultiRoiViewBox(pg.ViewBox):
         self.selectROI(roi)
         self.setCurrentROIindex(roi)
         roi.translatable = True
-        #roi.setAcceptedMouseButtons(QtCore.Qt.LeftButton or QtCore.Qt.RightButton)        
+        #roi.setAcceptedMouseButtons(QtCore.Qt.LeftButton or QtCore.Qt.RightButton)
         roi.setActive(True)      
         for seg in roi.segments:
             seg.setSelectable(True)
@@ -490,25 +491,26 @@ class MultiRoiViewBox(pg.ViewBox):
                 nid+=1
         return nid
 
-    def copyROI(self, offset=0.0):
+    def copyROI(self, roi_selected):
         """ Copy current ROI. Offset from original for visibility """
         if self.currentROIindex!=None:
             osFract = 0.05              
             roi     = self.rois[self.currentROIindex]
+            assert(roi==roi_selected)
             # For rectangular ROI, offset by a fraction of the rotated size
             if type(roi)==RectROIcustom: 
                 roiState = roi.getState()
                 pos      = roiState['pos']
                 size     = roiState['size']
                 angle    = roiState['angle']
-                dx,dy    = np.array(size)*osFract               
+                dx, dy    = np.array(size)*osFract
                 ang      = np.radians(angle)
                 cosa     = np.cos(ang)
                 sina     = np.sin(ang)
                 dxt      = dx*cosa - dy*sina
                 dyt      = dx*sina + dy*cosa
-                offset   = QtCore.QPointF(dxt,dyt) 
-                self.addROI(pos+offset,size,angle)
+                offset   = QtCore.QPointF(dxt, dyt)
+                self.addROI(pos+offset, size, angle)
             # For a polyline ROI, offset by a fraction of the bounding rectangle
             if type(roi)==PolyLineROIcustom:                             
                 br        = roi.shape().boundingRect()
@@ -516,10 +518,14 @@ class MultiRoiViewBox(pg.ViewBox):
                 osx,osy   = size * osFract
                 offset    = QtCore.QPointF(osx, osy)
                 hps       = [i[-1] for i in roi.getSceneHandlePositions(index=None)]                
-                hpsOffset = [self.mapSceneToView(hp)+offset for hp in hps] 
-                self.addPolyLineROI(hpsOffset)
+                hpsOffset = [self.mapSceneToView(hp)+offset for hp in hps]
+                name = str(uuid.uuid4())
+                self.addPolyLineROI(hpsOffset, name)
+                roi_copy = [r for r in self.rois if r.name == name]
+                assert(len(roi_copy) == 1)
+                roi_copy = roi_copy[0]
+                self.roi_placed.emit(roi_copy)
 
-     # todo: This recieves the ROI object when clicking save. Recieves path when making new ROi
     def saveROI(self, fileName=''):
         """ Save the highlighted ROI to file """
         if self.currentROIindex!=None:
