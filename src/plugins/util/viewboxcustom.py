@@ -66,6 +66,7 @@ class MultiRoiViewBox(pg.ViewBox):
     hovering = QtCore.pyqtSignal(float, float)
     roi_placed = QtCore.pyqtSignal(PolyLineROIcustom)
 
+
     def __init__(self, parent=None, border=None, lockAspect=False,
                  enableMouse=True, invertY=False, enableMenu=True, name=None):
         pg.ViewBox.__init__(self, parent, border, lockAspect,
@@ -489,7 +490,7 @@ class MultiRoiViewBox(pg.ViewBox):
                 nid+=1
         return nid
 
-    def copyROI(self,offset=0.0):
+    def copyROI(self, offset=0.0):
         """ Copy current ROI. Offset from original for visibility """
         if self.currentROIindex!=None:
             osFract = 0.05              
@@ -511,22 +512,26 @@ class MultiRoiViewBox(pg.ViewBox):
             # For a polyline ROI, offset by a fraction of the bounding rectangle
             if type(roi)==PolyLineROIcustom:                             
                 br        = roi.shape().boundingRect()
-                size      = np.array([br.width(),br.height()])
+                size      = np.array([br.width(), br.height()])
                 osx,osy   = size * osFract
-                offset    = QtCore.QPointF(osx,osy)                
+                offset    = QtCore.QPointF(osx, osy)
                 hps       = [i[-1] for i in roi.getSceneHandlePositions(index=None)]                
                 hpsOffset = [self.mapSceneToView(hp)+offset for hp in hps] 
                 self.addPolyLineROI(hpsOffset)
-     
+
+     # todo: This recieves the ROI object when clicking save. Recieves path when making new ROi
     def saveROI(self, fileName=''):
-        """ Save the highlighted ROI to file """    
+        """ Save the highlighted ROI to file """
         if self.currentROIindex!=None:
             roi = self.rois[self.currentROIindex]
+            if roi == fileName:
+                self.roi_placed.emit(roi)
+                return
             if not fileName:
-              fileName = QtGui.QFileDialog.getSaveFileName(None,self.tr("Save ROI"),QtCore.QDir.currentPath(),self.tr("ROI (*.roi)"))
+              fileName = QtGui.QFileDialog.getSaveFileName(None, self.tr("Save ROI"), QtCore.QDir.currentPath(), self.tr("ROI (*.roi)"))
               # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
-              if isinstance(fileName,types.TupleType): fileName = fileName[0]
-              if hasattr(QtCore,'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)            
+              if isinstance(fileName, types.TupleType): fileName = fileName[0]
+              if hasattr(QtCore, 'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)
             if not fileName=='':
                 if type(roi) == RectROIcustom:
                     roiState = roi.saveState()
@@ -535,11 +540,11 @@ class MultiRoiViewBox(pg.ViewBox):
                 elif type(roi)==PolyLineROIcustom: 
                     roiState = {}
                     hps   = [self.mapSceneToView(i[-1]) for i in roi.getSceneHandlePositions(index=None)]                                                      
-                    hps   = [[hp.x(),hp.y()] for hp in hps]
+                    hps   = [[hp.x(), hp.y()] for hp in hps]
                     roiState['type'] = 'PolyLineROIcustom'
                     roiState['handlePositions'] = hps
                     roiState['name'] = roi.name
-                pickle.dump( roiState, open( fileName, "wb" ) )
+                pickle.dump(roiState, open(fileName, "wb"))
 
     def addRoi(self, roipath, roiname, roimode='static'):
       roistate = pickle.load(open(roipath, 'rb'))
