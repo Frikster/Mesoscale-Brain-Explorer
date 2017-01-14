@@ -148,7 +148,7 @@ class Widget(QWidget):
 
             num_frames = len(frames_mmap)-cut_off_end-cut_off_start
             name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = str(name_before + '_' + 'cut_off')
+            name_after = str(name_before + '_' + 'cut-off')
             path = str(os.path.join(self.project.path, name_after) + '.npy')
             fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
             frames = np.load(path, mmap_mode='r+')
@@ -156,8 +156,8 @@ class Widget(QWidget):
                 callback(i / float(len(frames_mmap)))
                 frames[i] = frame[:, :]
             callback(1)
-            #frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project(video_path, self.project, None, 'cut_off', 'video')
+            # frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
+            pfs.save_project(video_path, self.project, None, 'cut-off', 'video')
             pfs.refresh_all_list(self.project, self.video_list)
         global_callback(1)
 

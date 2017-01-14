@@ -538,7 +538,7 @@ class MultiRoiViewBox(pg.ViewBox):
               # Fix for PyQt/PySide compatibility. PyQt returns a QString, whereas PySide returns a tuple (first entry is filename as string)        
               if isinstance(fileName, types.TupleType): fileName = fileName[0]
               if hasattr(QtCore, 'QString') and isinstance(fileName, QtCore.QString): fileName = str(fileName)
-            if not fileName=='':
+            if not fileName == '':
                 if type(roi) == RectROIcustom:
                     roiState = roi.saveState()
                     roiState['type'] = 'RectROIcustom'

@@ -5,6 +5,7 @@ import sys
 
 import PyQt4
 import numpy as np
+from scipy import ndimage
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from scipy import signal
@@ -89,10 +90,8 @@ class Widget(QWidget):
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
-        self.f_low = QDoubleSpinBox()
-        self.f_high = QDoubleSpinBox()
-        self.frame_rate = QSpinBox()
-        self.temp_filter_pb = QPushButton('&Apply Filter')
+        self.kernal_size = QSpinBox()
+        self.spat_filter_pb = QPushButton('&Apply Filter')
 
         self.setup_ui()
         self.selected_videos = []
@@ -110,7 +109,7 @@ class Widget(QWidget):
             for f in filenames:
                 self.video_list.model().appendRow(QStandardItem(f))
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-        self.temp_filter_pb.clicked.connect(self.filter_clicked)
+        self.spat_filter_pb.clicked.connect(self.filter_clicked)
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -130,20 +129,11 @@ class Widget(QWidget):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         vbox.addWidget(self.video_list)
-        vbox.addWidget(QLabel('Low Bandpass (Hz)'))
-        self.f_low.setMinimum(0.0)
-        self.f_low.setValue(0.3)
-        vbox.addWidget(self.f_low)
-        vbox.addWidget(QLabel('High Bandpass (Hz)'))
-        self.f_high.setMinimum(0.0)
-        self.f_high.setValue(3.0)
-        vbox.addWidget(self.f_high)
-        vbox.addWidget(QLabel('Frame Rate (Hz)'))
-        self.frame_rate.setMinimum(0.0)
-        self.frame_rate.setMaximum(1000)
-        self.frame_rate.setValue(30)
-        vbox.addWidget(self.frame_rate)
-        vbox.addWidget(self.temp_filter_pb)
+        vbox.addWidget(QLabel('Kernal Size'))
+        self.kernal_size.setMinimum(1)
+        self.kernal_size.setValue(8)
+        vbox.addWidget(self.kernal_size)
+        vbox.addWidget(self.spat_filter_pb)
 
         self.right.setLayout(vbox)
         splitter = QSplitter(Qt.Horizontal)
@@ -182,7 +172,7 @@ class Widget(QWidget):
     #     self.view.show(frame)
 
     def filter_clicked(self):
-        # todo: butterworth could go here
+        # todo: other spatial filters could be defined here
         # progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
         # progress.setAutoClose(True)
         # progress.setMinimumDuration(0)
@@ -190,29 +180,18 @@ class Widget(QWidget):
         # def callback(x):
         #     progress.setValue(x * 100)
         #     QApplication.processEvents()
-        self.temporal_filter()
+        self.spatial_filter()
 
-    def cheby_filter(self, frames, low_limit, high_limit, frame_rate):
-        nyq = frame_rate / 2.0
-        low_limit = low_limit / nyq
-        high_limit = high_limit / nyq
-        order = 4
-        rp = 0.1 # Ripple in the passband. Maximum allowable ripple
-        Wn = [low_limit, high_limit]
+    def generate_mean_filter_kernel(self, size):
+        kernel = 1.0 / (size * size) * np.array([[1] * size] * size)
+        return kernel
 
-        b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
-        print("Filtering...")
-        frames = signal.filtfilt(b, a, frames, axis=0)
-        # non-working parallized version
-        # def filt(pixel, b, a):
-        #     return signal.filtfilt(b, a, pixel)
-        # frames = parmap.map(filt, frames.T, b, a)
-        # for i in range(frames.shape[-1]):
-        #    frames[:, i] = 'signal.filtfilt(b, a, frames[:, i])
-        print("Done!")
-        return frames
+    def filter2_test_j(self, frame, kernal_size):
+        kernel = self.generate_mean_filter_kernel(kernal_size)
+        framek = ndimage.convolve(frame, kernel, mode='constant', cval=0.0)
+        return frame - framek
 
-    def temporal_filter(self):
+    def spatial_filter(self):
         global_progress = QProgressDialog('Total Progress Filtering Selection', 'Abort', 0, 100, self)
         global_progress.setAutoClose(True)
         global_progress.setMinimumDuration(0)
@@ -220,15 +199,8 @@ class Widget(QWidget):
         def global_callback(x):
             global_progress.setValue(x * 100)
             QApplication.processEvents()
-        assert(self.f_low.value() < self.f_high.value())
-        frame_rate = self.frame_rate.value()
-        f_low = self.f_low.value()
-        f_high = self.f_high.value()
-        #frames_mmap = np.load(self.video_path, mmap_mode='c')
-        #out = np.empty([frames_mmap.shape[1], frames_mmap.shape[2]])
-        #temporal_filter_beams_nb(out, frames_mmap)
-        #frames = np.array(frames_mmap)
 
+        kernal_size = self.kernal_size.value()
         total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
             global_callback(i / total)
@@ -238,14 +210,11 @@ class Widget(QWidget):
             def callback(x):
                 progress.setValue(x * 100)
                 QApplication.processEvents()
-            callback(0.01)
             frames = fileloader.load_file(video_path)
-            callback(0.1)
-            avg_frames = np.mean(frames, axis=0)
-            callback(0.2)
-            frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
-            callback(0.9)
-            frames += avg_frames
+            self.kernal_size.setMaximum(np.sqrt(frames[0].size))
+            for frame_no, frame in enumerate(frames):
+                frames[frame_no] = self.filter2_test_j(frame, kernal_size)
+                callback(frame_no / len(frames))
             if not self.project:
                 filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
                                                                    str(QSettings().value('last_load_data_path')),
@@ -256,14 +225,14 @@ class Widget(QWidget):
                 msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
                 msgBox.exec_()
             else:
-                pfs.save_project(video_path, self.project, frames, 'temporal-filter', 'video')
+                pfs.save_project(video_path, self.project, frames, 'spatial-filter', 'video')
                 pfs.refresh_all_list(self.project, self.video_list)
             callback(1)
         global_callback(1)
 
 class MyPlugin:
     def __init__(self, project=None):
-        self.name = 'Temporal Filter'
+        self.name = 'Spatial Filter'
         self.widget = Widget(project)
 
     def run(self):
