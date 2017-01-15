@@ -141,14 +141,15 @@ class Widget(QWidget):
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(QLabel('Choose colormap:'))
-    # colormap list should be dealt with in a seperate script
+    # todo: colormap list should be dealt with in a seperate script
     self.cm_comboBox.addItem("jet")
     self.cm_comboBox.addItem("viridis")
     self.cm_comboBox.addItem("inferno")
     self.cm_comboBox.addItem("plasma")
     self.cm_comboBox.addItem("magma")
+    self.cm_comboBox.addItem("coolwarm")
+    self.cm_comboBox.addItem("PRGn")
     self.cm_comboBox.addItem("seismic")
-    self.cm_comboBox.addItem("rainbow")
     vbox.addWidget(self.cm_comboBox)
     vbox.addWidget(self.max_checkbox)
     vbox.addWidget(QLabel('Choose upper limit of colormap:'))
