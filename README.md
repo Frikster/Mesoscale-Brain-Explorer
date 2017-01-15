@@ -26,7 +26,16 @@ python3.5 pipegui.py
 ```
 
 ## User Manual
-Coming Soon... (with pictures and videos)
+The following tutorial series steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
+
+### Seed/ROI Placement csv/txt format
+For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns
+
+| 1) ROI Name        | 2) Length           | 3) X Coordinate  | 4) Y Coordinate
+| ------------- |:-------------:| -----:|
+| L-V1      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
 
 ## For Developers
 If you are developing on Ubuntu simply follow the installation 
