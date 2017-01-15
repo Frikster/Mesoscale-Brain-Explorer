@@ -13,7 +13,7 @@ General
 * Application often shows as not responding during heavy processing
 * If you hold down the down/up key on the pipeline list plugins pop up in a new window
 * Prototype code contains future warnings (uses to be deprecated APIs)
-* Project corruption warning nt very descriptive
+* Project corruption warning not very descriptive
 * cant delete file if you import and then open it in video player and then try to delete
 
 Main User-interface
@@ -41,9 +41,8 @@ Evoked Triggered Average
 
 FileExporter
 ------------------
-* Exporting to avi does not work
+* Exporting to avi creates contour-ridden videos except for files that started as uint8
 * Switching between types changes filename
-* Untested
 
 ROI Creator
 ------------------
@@ -58,6 +57,7 @@ Set Coordinate System
 Connectivity Diagram
 ----------------
 * No warning appears when trying to craete a plot with seeds outside the ROI
+* No option for (better) other colormaps
 
 SPC Map
 ------------------
