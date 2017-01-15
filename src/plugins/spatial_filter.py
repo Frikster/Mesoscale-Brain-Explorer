@@ -189,7 +189,7 @@ class Widget(QWidget):
     def filter2_test_j(self, frame, kernal_size):
         kernel = self.generate_mean_filter_kernel(kernal_size)
         framek = ndimage.convolve(frame, kernel, mode='constant', cval=0.0)
-        return frame - framek
+        return framek
 
     def spatial_filter(self):
         global_progress = QProgressDialog('Total Progress Filtering Selection', 'Abort', 0, 100, self)
