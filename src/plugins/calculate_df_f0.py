@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, os
+import sys, os, time
 
 import numpy as np
 from PyQt4.QtCore import *
@@ -127,36 +127,64 @@ class Widget(QWidget):
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
 
-    def calculate_df_f0(self):
-        global_progress = QProgressDialog('Total Progress Computing df/f0 for Selection', 'Abort', 0, 100, self)
-        global_progress.setAutoClose(True)
-        global_progress.setMinimumDuration(0)
-        def global_callback(x):
-            global_progress.setValue(x * 100)
-            QApplication.processEvents()
+    def progress_dialog_abort(self):
+        self.global_progress.cancel()
+        self.progress.cancel()
+        print('ABORT')
 
+    def calculate_df_f0(self):
+        self.global_progress = QProgressDialog('Total Progress Computing df/f0 for Selection', 'Abort', 0, 100, self)
+        self.global_progress.canceled.connect(self.progress_dialog_abort)
+        self.global_progress.setAutoClose(True)
+        self.global_progress.setMinimumDuration(0)
+        def global_callback(x):
+            self.global_progress.setValue(x * 100)
+            QApplication.processEvents()
         total = len(self.selected_videos)
         for i, video_path in enumerate(self.selected_videos):
             global_callback(i / total)
-            progress = QProgressDialog('Total Progress Computing df/f0 for ' + video_path, 'Abort', 0, 100, self)
-            progress.setAutoClose(True)
-            progress.setMinimumDuration(0)
+            self.progress = QProgressDialog('Total Progress Computing df/f0 for ' + video_path, 'Abort', 0, 100, self)
+            self.progress.canceled.connect(self.progress_dialog_abort)
+            self.progress.setAutoClose(True)
+            self.progress.setMinimumDuration(0)
             def callback(x):
-                progress.setValue(x * 100)
+                self.progress.setValue(x * 100)
                 QApplication.processEvents()
+                print(self.progress.wasCanceled())
+
+            start = time.time()
             frames = fileloader.load_file(video_path)
-            callback(0.3)
+            elapsed_fileloader = (time.time() - start)
+            time.time()
+            callback(0.01)
             if len(self.video_list2.selectedIndexes()) == 0:
+                start = time.time()
                 baseline = np.mean(frames, axis=0)
+                elapsed_mean = (time.time() - start)
             else:
+                start = time.time()
                 baseline = np.mean(fileloader.load_file(self.video_list2_vidpath), axis=0)
-            callback(0.6)
+                elapsed_mean = (time.time() - start)
+            callback(0.05)
+            start = time.time()
             frames = np.divide(np.subtract(frames, baseline), baseline)
-            callback(0.9)
+            elapsed_divide = (time.time() - start)
+            callback(0.15)
+            start = time.time()
             where_are_NaNs = np.isnan(frames)
+            elapsed_NaN = (time.time() - start)
+            callback(0.19)
+            start = time.time()
             frames[where_are_NaNs] = 0
-            pfs.save_project(video_path, self.project, frames, 'df_d0', 'video')
+            elapsed_where_are_NaNs = (time.time() - start)
+            callback(0.2)
+            start = time.time()
+            pfs.save_project(video_path, self.project, frames, 'df-f0', 'video')
+            elapsed_save_project = (time.time() - start)
+            callback(0.99)
+            start = time.time()
             pfs.refresh_all_list(self.project, self.video_list)
+            elapsed_refresh_all_list = (time.time() - start)
             callback(1)
         global_callback(1)
 

@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import uuid
 import csv
 from .util import project_functions as pfs
+from pyqtgraph.Qt import QtGui
 
 import itertools
 
@@ -39,9 +40,9 @@ def calc_connectivity(video_path, image, rois):
 
 # todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
-    def __init__(self, selected_videos, image, rois, parent=None, progress_callback=None):
+    def __init__(self, selected_videos, image, rois, cm_type, parent=None, progress_callback=None):
         super(ConnectivityModel, self).__init__(parent)
-        self.cm_type = 'jet'
+        self.cm_type = cm_type
         self.rois = rois
         self.matrix_list = []
         avg_data = []
@@ -132,11 +133,11 @@ class ConnectivityTable(QTableView):
         self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
-    def __init__(self, selected_videos, image, rois, parent=None, progress_callback=None):
+    def __init__(self, selected_videos, image, rois, cm_type, parent=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__(parent)
         self.setWindowTitle('Connectivity Diagram')
         self.setup_ui()
-        self.model = ConnectivityModel(selected_videos, image, rois, None, progress_callback)
+        self.model = ConnectivityModel(selected_videos, image, rois, cm_type, None, progress_callback)
         self.table.setModel(self.model)
 
     def setup_ui(self):
@@ -180,6 +181,7 @@ class Widget(QWidget):
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
         self.roi_list = QListView()
+        self.cm_comboBox = QtGui.QComboBox(self)
 
         self.setup_ui()
 
@@ -234,6 +236,18 @@ class Widget(QWidget):
         self.roi_list.setDragDropMode(QAbstractItemView.DragDrop)
         self.roi_list.setDragDropOverwriteMode(False)
         vbox.addWidget(self.roi_list)
+        vbox.addWidget(QLabel('Choose colormap:'))
+        # todo: colormap list should be dealt with in a seperate script
+        self.cm_comboBox.addItem("jet")
+        self.cm_comboBox.addItem("coolwarm")
+        self.cm_comboBox.addItem("PRGn")
+        self.cm_comboBox.addItem("seismic")
+        self.cm_comboBox.addItem("viridis")
+        self.cm_comboBox.addItem("inferno")
+        self.cm_comboBox.addItem("plasma")
+        self.cm_comboBox.addItem("magma")
+        vbox.addWidget(self.cm_comboBox)
+        self.cm_comboBox.activated[str].connect(self.cm_choice)
         pb = QPushButton('Connectivity &Diagram')
         pb.clicked.connect(self.connectivity_triggered)
         vbox.addWidget(pb)
@@ -256,6 +270,9 @@ class Widget(QWidget):
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
+
+    def cm_choice(self, cm_choice):
+        self.cm_type = cm_choice
 
     # def selected_video_changed(self, selected, deselected):
     #     if not selected.indexes():
@@ -304,8 +321,9 @@ class Widget(QWidget):
         elif not rois:
             qtutil.critical('Select Roi(s).')
         else:
+
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
-                                   rois, self, callback)
+                                   rois, self.cm_type, self, callback)
             callback(1)
             win.show()
             self.open_dialogs.append(win)

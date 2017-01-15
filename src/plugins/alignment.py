@@ -142,12 +142,17 @@ class Widget(QWidget):
         #     self.project.files.append(f)
         # self.project.save()
 
-    def compute_shifts(self, template_frame, frames, progress_callback):
+    def compute_shifts(self, template_frame, frames, progress_shifts):
+        def callback_shifts(x):
+            progress_shifts.setValue(x * 100)
+            QApplication.processEvents()
         results = []
         for i, frame in enumerate(frames):
-            progress_callback(i / float(len(frames)))
+            if progress_shifts.wasCanceled():
+                return
+            callback_shifts(i / float(len(frames)))
             results = results + [ird.translation(template_frame, frame)]
-        progress_callback(1)
+        callback_shifts(1)
         return results
 
     def apply_shifts(self, frames, shifts, progress_callback):
@@ -176,9 +181,6 @@ class Widget(QWidget):
             progress_shifts = QProgressDialog('Finding best shifts for ' + filename, 'Abort', 0, 100, self)
             progress_shifts.setAutoClose(True)
             progress_shifts.setMinimumDuration(0)
-            def callback_shifts(x):
-                progress_shifts.setValue(x * 100)
-                QApplication.processEvents()
             progress_apply = QProgressDialog('Applying shifts for ' + filename, 'Abort', 0, 100, self)
             progress_apply.setAutoClose(True)
             progress_apply.setMinimumDuration(0)
@@ -186,7 +188,9 @@ class Widget(QWidget):
                 progress_apply.setValue(x * 100)
                 QApplication.processEvents()
             frames = fileloader.load_file(filename)
-            shifts = self.compute_shifts(reference_frame, frames, callback_shifts)
+            shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
+            if progress_shifts.wasCanceled():
+                return
             shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
             pfs.refresh_all_list(self.project, self.video_list)
