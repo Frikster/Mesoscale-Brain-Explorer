@@ -229,7 +229,7 @@ class Widget(QWidget):
     else:
       new_filename = os.path.basename(filename)
       new_filename = os.path.join(self.project.path, new_filename)
-      if filename != new_filename:
+      if os.path.normpath(filename) != os.path.normpath(new_filename):
           qtutil.info('Copying .npy from '+ filename + ' to ' + new_filename +
                       '. You can do this manually for large files to see a progress bar')
           copyfile(filename, new_filename)

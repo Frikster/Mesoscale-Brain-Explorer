@@ -135,7 +135,7 @@ class ConnectivityTable(QTableView):
 class ConnectivityDialog(QDialog):
     def __init__(self, selected_videos, image, rois, cm_type, parent=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__(parent)
-        self.setWindowTitle('Connectivity Diagram')
+        self.setWindowTitle('Connectivity Matrix')
         self.setup_ui()
         self.model = ConnectivityModel(selected_videos, image, rois, cm_type, None, progress_callback)
         self.table.setModel(self.model)

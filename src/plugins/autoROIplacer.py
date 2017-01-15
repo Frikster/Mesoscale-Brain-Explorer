@@ -117,6 +117,7 @@ class Widget(QWidget):
 
     model = RoiItemModel()
     # todo: this wont update that specific changed value
+    self.view.vb.roi_placed.connect(self.update_project_roi)
     model.textChanged.connect(self.update_project_roi)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
