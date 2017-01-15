@@ -26,16 +26,27 @@ python3.5 pipegui.py
 ```
 
 ## User Manual
-The following tutorial series steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
+The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
 
 ### Seed/ROI Placement csv/txt format
 For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns
 
-| 1) ROI Name        | 2) Length           | 3) X Coordinate  | 4) Y Coordinate
-| ------------- |:-------------:| -----:|
-| L-V1      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
+| 1) ROI Name   | 2) Length     | 3) X Coordinate  | 4) Y Coordinate |
+| ------------- | ------------- | ---------------- | ----------------|
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
+| L-V1          | 1             | -2500.0          |  -2500.0        |
 
 ## For Developers
 If you are developing on Ubuntu simply follow the installation 
