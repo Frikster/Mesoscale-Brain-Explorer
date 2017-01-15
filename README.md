@@ -29,7 +29,7 @@ python3.5 pipegui.py
 The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
 
 ### Seed/ROI Placement csv/txt format
-For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns
+For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns (These are actual coordinates we use):
 
 | 1) ROI Name   | 2) Length     | 3) X Coordinate  | 4) Y Coordinate |
 | ------------- | ------------- | ---------------- | ----------------|
@@ -47,6 +47,8 @@ For the Seed/ROI Placement plugins a specific format is *required* for your coor
 | R-M2          | 1             |  1000.0          |   2500.0        |
 | R-RS          | 1             |  500.0           |  -2500.0        |
 | R-AC          | 1             |  500.0           |      0.0        |
+
+For your coordinates, there *must* be 4 columns if you are importing for the ROI Placement plugin. Otherwise, there *must* be 3 with the length column omitted for the Seed Placement plugin (Seeds have length 1). Next, for the column names the "1)" *must* exist for the column with ROI names, a "2)" for the length column, a "3)" for X Coordinates and "4)" for the Y Coordinate. For seeds omit the length column. Thus "2)" for X Coordinate and "3)" for Y Coordinate columns. Your coordinates can be named whatever you please. 
 
 ## For Developers
 If you are developing on Ubuntu simply follow the installation 
