@@ -140,7 +140,6 @@ class Widget(QWidget):
     pb = QPushButton('Crop to poly ROI for selected files')
     pb.clicked.connect(self.crop_clicked)
     vbox.addWidget(pb)
-    # todo: add deletion to this plugin?
     # pb = QPushButton('Delete selected ROIs')
     # pb.clicked.connect(self.delete_roi)
     # vbox.addWidget(pb)
@@ -311,7 +310,6 @@ class Widget(QWidget):
       combined_mask = np.sum(arrRegion_masks, axis=0)
       callback(0.8)
       # Make all rows with all zeros na
-      # todo: figure out where zeros are converted to na. In BMD it isn't here...
       # combined_mask[(combined_mask == 0)] = None
       self.mask = combined_mask
       # TODO: save mask as well

@@ -50,7 +50,6 @@ class Exporter(QWidget):
   
   def export_tif(self, filepath, filename, export_dtype):
     frames = fileloader.load_file(filepath)
-    #todo: include option in export to select dtype (only 16 and 32 work in imageJ)
     frames = frames.astype(export_dtype)
     tiff.imsave(filename, frames)
   

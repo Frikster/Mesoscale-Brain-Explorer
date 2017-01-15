@@ -377,7 +377,6 @@ class Widget(QWidget):
             # # empty space in top left
             # rois_names = [''] + rois_names
             # avg_matrix = [rois_names] + avg_matrix
-            # #todo: get rid of TEST
             #
             # with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
             #     writer = csv.writer(csvfile, delimiter=',')

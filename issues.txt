@@ -41,9 +41,8 @@ Evoked Triggered Average
 
 FileExporter
 ------------------
-* Exporting to avi does not work
+* Exporting to avi creates contour-ridden videos except for files that started as uint8
 * Switching between types changes filename
-* Untested
 
 ROI Creator
 ------------------
@@ -58,6 +57,7 @@ Set Coordinate System
 Connectivity Diagram
 ----------------
 * No warning appears when trying to craete a plot with seeds outside the ROI
+* No option for (better) other colormaps
 
 SPC Map
 ------------------
