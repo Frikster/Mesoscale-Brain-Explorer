@@ -26,6 +26,7 @@ python3.5 pipegui.py
 ```
 
 ## User Manual
+### Overview Tutorial
 The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
 
 ### Seed/ROI Placement csv/txt format
