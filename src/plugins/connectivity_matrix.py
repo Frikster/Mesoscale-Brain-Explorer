@@ -184,6 +184,7 @@ class Widget(QWidget):
         self.cm_comboBox = QtGui.QComboBox(self)
 
         self.setup_ui()
+        self.cm_type = self.cm_comboBox.itemText(0)
 
         self.open_dialogs = []
         self.selected_videos = []
@@ -248,7 +249,7 @@ class Widget(QWidget):
         self.cm_comboBox.addItem("magma")
         vbox.addWidget(self.cm_comboBox)
         self.cm_comboBox.activated[str].connect(self.cm_choice)
-        pb = QPushButton('Connectivity &Diagram')
+        pb = QPushButton('Connectivity &Matrix')
         pb.clicked.connect(self.connectivity_triggered)
         vbox.addWidget(pb)
         pb = QPushButton('Save all open matrices to csv')
@@ -306,7 +307,7 @@ class Widget(QWidget):
             self.view.vb.addRoi(roipath, roiname)
 
     def connectivity_triggered(self):
-        progress = QProgressDialog('Generating Connectivity Diagram...', 'Abort', 0, 100, self)
+        progress = QProgressDialog('Generating Connectivity Matrix...', 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)
         def callback(x):

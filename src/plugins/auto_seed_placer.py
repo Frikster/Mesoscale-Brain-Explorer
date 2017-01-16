@@ -124,7 +124,6 @@ class Widget(QWidget):
         model = SeedItemModel()
         # todo: this wont update that specific changed value
         model.textChanged.connect(self.update_project_seed)
-        self.view.vb.roi_placed.connect(self.update_project_seed)
         self.seed_list.setModel(model)
         self.seed_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
@@ -275,13 +274,14 @@ class Widget(QWidget):
         seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
         self.data = {self.headers[0]: seed_names, self.headers[1]: seed_coord_x, self.headers[2]: seed_coord_y}
         # for now only support having one seed_table associated per project
+        text_file_path_for_project = os.path.join(self.project.path, os.path.basename(text_file_path))
         if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
             if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
                 if not (os.path.normpath(text_file_path) ==
-                            os.path.normpath(os.path.join(self.project.path, os.path.basename(text_file_path)))):
-                    copyfile(text_file_path, os.path.join(self.project.path, os.path.basename(text_file_path)))
+                            os.path.normpath(text_file_path_for_project)):
+                    copyfile(text_file_path, text_file_path_for_project)
                 self.project.files.append({
-                    'path': text_file_path,
+                    'path': text_file_path_for_project,
                     'type': 'seed_table',
                     'source_video': self.video_path,
                     'name': os.path.basename(text_file_path)
@@ -291,7 +291,7 @@ class Widget(QWidget):
                 for i, item in enumerate(self.project.files):
                     if item['path'] == text_file_path:
                         self.project.files[i] = {
-                            'path': text_file_path,
+                            'path': text_file_path_for_project,
                             'type': 'seed_table',
                             'source_video': self.video_path,
                             'name': os.path.basename(text_file_path)
@@ -302,7 +302,7 @@ class Widget(QWidget):
             for i, item in enumerate(self.project.files):
                 if item['type'] == 'seed_table':
                     self.project.files[i] = {
-                        'path': text_file_path,
+                        'path': text_file_path_for_project,
                         'type': 'seed_table',
                         'source_video': self.video_path,
                         'name': os.path.basename(text_file_path)
