@@ -82,5 +82,7 @@ pip3.5 install "numpy-1.11.2+mkl-cp35-cp35m-win_amd64.whl" PyQt4-4.11.4-cp35-non
 This may take a while to complete. 
 Once done, use your favourite IDE to modify the code
 
+Note that you may get the following error: `ImportError: DLL load failed: The specified procedure could not be found.` If you do download https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/msvcp140.dll and place it in the same site-package folder that contains QtCore4.dll. This is usually C:\Python35\Lib\site-packages\PyQt4\ if you installed Python to C:\Python35.
+
 ### Custom Plugin Tutorial
 Coming soon... (with pictures and videos)
