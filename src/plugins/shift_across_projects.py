@@ -284,7 +284,7 @@ class FileDialog(QtGui.QFileDialog):
                 view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
 
 class MyPlugin:
-    def __init__(self, project):
+    def __init__(self, project, plugin_position):
         self.name = 'Shift Across Projects'
         self.widget = Widget(project)
     def run(self):

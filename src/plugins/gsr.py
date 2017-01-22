@@ -131,7 +131,7 @@ class Widget(QWidget):
     global_callback(1)
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'GSR'
     self.widget = Widget(project)
   

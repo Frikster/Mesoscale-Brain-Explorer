@@ -436,7 +436,7 @@ class AutoSeedCoords(QTableWidget):
 
 
 class MyPlugin:
-    def __init__(self, project):
+    def __init__(self, project, plugin_position):
         self.name = 'Auto seed placer'
         self.widget = Widget(project)
 

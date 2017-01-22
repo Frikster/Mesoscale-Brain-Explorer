@@ -224,7 +224,7 @@ class Widget(QWidget):
       scipy.misc.toimage(stddev_col).save(path_without_ext + '.jpg')
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Standard deviation map'
     self.widget = Widget(project)
 

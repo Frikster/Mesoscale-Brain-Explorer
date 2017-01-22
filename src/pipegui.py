@@ -29,7 +29,7 @@ def clear_layout(layout):
     del item
 
 class PipelineView(QListView):
-  active_plugin_changed = pyqtSignal(str)
+  active_plugin_changed = pyqtSignal(str, int)
 
   def __init__(self, parent=None):
     super(PipelineView, self).__init__(parent)
@@ -41,7 +41,8 @@ class PipelineView(QListView):
   def currentChanged(self, current, previous):
     super(PipelineView, self).currentChanged(current, previous)
     plugin_name = str(current.data(Qt.UserRole))
-    self.active_plugin_changed.emit(plugin_name)
+    plugin_position = current.row()
+    self.active_plugin_changed.emit(plugin_name, plugin_position)
 
 class ToolButton(QToolButton):
   def __init__(self, parent=None):
@@ -116,12 +117,12 @@ class MainWindow(QMainWindow):
         plugins[name] = p
     return plugins
 
-  def load_plugin(self, module):
+  def load_plugin(self, module, plugin_position=None):
     try:
       m = importlib.import_module(module)
       if not hasattr(m, 'MyPlugin'):
         return None
-      p = m.MyPlugin(self.project)
+      p = m.MyPlugin(self.project, plugin_position)
       # p.run()
     except:
       print('Failed to import \'{}\'.'.format(module))
@@ -148,7 +149,7 @@ class MainWindow(QMainWindow):
 
     self.pl_frame = QFrame()
 
-    self.sidebar.pl_list.active_plugin_changed[str].connect(self.set_plugin)
+    self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
     self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
     splitter = QSplitter(self)
@@ -245,8 +246,8 @@ class MainWindow(QMainWindow):
     self.project_menu.setEnabled(False)
     self.enable(False)
   
-  def set_plugin(self, plugin_name):
-    p = self.load_plugin('plugins.' + str(plugin_name))
+  def set_plugin(self, plugin_name, plugin_position):
+    p = self.load_plugin('plugins.' + str(plugin_name), plugin_position)
     if not p:
       return
     self.current_plugin = plugin_name

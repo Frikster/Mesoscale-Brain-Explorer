@@ -440,7 +440,7 @@ class AutoROICoords(QTableWidget):
 
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Auto ROI placer'
     self.widget = Widget(project)
   

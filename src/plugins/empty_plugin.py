@@ -85,7 +85,7 @@ class Widget(QWidget):
       print('Do custom stuff. Coding required.')
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Empty Plugin'
     self.widget = Widget(project)
 

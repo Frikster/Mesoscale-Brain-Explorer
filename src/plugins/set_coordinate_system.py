@@ -212,7 +212,7 @@ class Widget(QWidget):
     #self.save()
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Set coordinate system'
     self.widget = Widget(project)
 

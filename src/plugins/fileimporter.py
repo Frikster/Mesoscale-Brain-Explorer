@@ -3,6 +3,7 @@
 import os
 import sys
 import traceback
+import functools
 from shutil import copyfile
 
 import numpy as np
@@ -16,13 +17,6 @@ import tifffile as tiff
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
 
-template = {'Scale Factor': 1.00,
-            'Channel': 2,
-            'Width': 256,
-            'Height': 256,
-            'Number of channels': 3,
-            'dtype': 'uint8'}
-
 
 class NotConvertedError(Exception):
   pass
@@ -32,19 +26,29 @@ class FileAlreadyInProjectError(Exception):
     self.filename = filename
 
 class Widget(QWidget):
-  def __init__(self, project, parent=None):
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
     if not project:
       return
 
+    self.plugin_position = plugin_position
     self.project = project
     self.setup_ui()
+    if isinstance(plugin_position, int):
+        self.params = project.pipeline[self.plugin_position]
+        assert(self.params['name'] == 'fileimporter')
+        self.setup_param_signals()
+        self.setup_params()
 
     self.listview.setModel(QStandardItemModel())
     for f in self.project.files:
       if f['type'] == 'video':
         self.listview.model().appendRow(QStandardItem(f['path']))
+
+  def setup_params(self):
+    self.scale_factor.setValue(self.params['Scale Factor'])
+
 
   def setup_ui(self):
     vbox = QVBoxLayout()
@@ -76,10 +80,8 @@ class Widget(QWidget):
     self.scale_factor.setSingleStep(0.1)
     self.scale_factor.setMinimum(0.01)
     self.scale_factor.setMaximum(1.00)
-    self.scale_factor.setValue(1.00)
+    self.scale_factor.setValue(1.0)
     grid.addWidget(self.scale_factor, 1, 1)
-
-
 
     grid.addWidget(QLabel('Channel:'), 2, 0)
     self.channel = QSpinBox()
@@ -137,8 +139,15 @@ class Widget(QWidget):
     vbox.addStretch()
     self.setLayout(vbox)
 
+  def setup_param_signals(self):
+      self.scale_factor.valueChanged[float].connect(functools.partial(self.update_plugin_params, 'Scale Factor'))
+
+
   def update_plugin_params(self, key, val):
-      pass
+      self.params[key] = val
+      self.project.pipeline[self.plugin_position] = self.params
+
+
 
   def convert_raw(self, filename):
     rescale_value = float(self.scale_factor.value())
@@ -323,9 +332,9 @@ class Widget(QWidget):
     return ndarray
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Import Image Stacks'
-    self.widget = Widget(project)
+    self.widget = Widget(project, plugin_position)
 
   def run(self):
     pass

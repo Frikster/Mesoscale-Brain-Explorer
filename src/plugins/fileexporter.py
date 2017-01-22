@@ -238,7 +238,7 @@ class Widget(QWidget):
   #   self.export(f)
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Export files'
     self.widget = Widget(project)
 

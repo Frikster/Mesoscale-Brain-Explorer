@@ -163,7 +163,7 @@ class Widget(QWidget):
 
 
 class MyPlugin:
-    def __init__(self, project):
+    def __init__(self, project, plugin_position):
         self.name = 'Cut off'
         self.widget = Widget(project)
 

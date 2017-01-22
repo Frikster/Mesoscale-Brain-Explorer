@@ -67,7 +67,7 @@ class Widget(QWidget):
     self.open_dialogs.append(dialog)
 
 class MyPlugin:
-  def __init__(self, project):
+  def __init__(self, project, plugin_position):
     self.name = 'Play video'
     self.widget = Widget(project)
   

@@ -189,7 +189,7 @@ class Widget(QWidget):
         global_callback(1)
 
 class MyPlugin:
-    def __init__(self, project=None):
+    def __init__(self, project=None, plugin_position=None):
         self.name = 'Calculate df over f0'
         self.widget = Widget(project)
 
