@@ -24,8 +24,6 @@ template = {'Scale Factor': 1.00,
             'dtype': 'uint8'}
 
 
-
-
 class NotConvertedError(Exception):
   pass
 

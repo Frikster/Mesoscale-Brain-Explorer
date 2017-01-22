@@ -224,7 +224,8 @@ class MainWindow(QMainWindow):
     QSettings().setValue('path_of_last_project', project.path)
 
     pipeline = []
-    for plugin_name in self.project.pipeline:
+    for plugin_dict in self.project.pipeline:
+      plugin_name = plugin_dict['name']
       for plugin in self.plugins:
         if plugin == plugin_name:
            pipeline.append((plugin, self.plugins[plugin].name))

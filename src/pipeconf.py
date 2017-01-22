@@ -20,7 +20,7 @@ class PipelineModel(QStandardItemModel):
 
   def flags(self, index):
     if not index.isValid() or index.row() >= self.rowCount() or index.model() != self:
-       return Qt.ItemIsDropEnabled #we allow drops outside the items
+       return Qt.ItemIsDropEnabled  # we allow drops outside the items
     return super(PipelineModel, self).flags(index) & (~Qt.ItemIsDropEnabled)
 
   def removeRows(self, row, count, parent):

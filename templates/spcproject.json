@@ -2,20 +2,54 @@
   "files": [],
   "unit_per_pixel": 1,
   "pipeline": [
-    "fileimporter",
-    "cut_off",
-    "alignment",
-	"set_coordinate_system",
-    "roi_creator",
-    "temporal_filter",
-    "calculate_df_f0",
-    "gsr",
-    "auto_seed_placer",
-    "spc_map",
-    "autoROIplacer",
-    "connectivity_matrix",
-    "roi_activity_plot",
-    "fileexporter"
+    {
+		"name":"fileimporter",
+		"Scale Factor": 1.00,
+        "Channel": 2,
+        "Width": 256,
+        "Height": 256,
+        "Number of channels": 3,
+        "dtype": "uint8"
+	},
+	{
+		"name":"cut_off"
+	},
+	{
+		"name":"alignment"
+	},
+	{
+		"name":"set_coordinate_system"
+	},
+	{
+		"name":"roi_creator"
+	},
+	{
+		"name":"temporal_filter"
+	},
+	{
+		"name":"calculate_df_f0"
+	},
+	{
+		"name":"gsr"
+	},
+	{
+		"name":"auto_seed_placer"
+	},
+	{
+		"name":"spc_map"
+	},
+	{
+		"name":"autoROIplacer"
+	},
+	{
+		"name":"connectivity_matrix"
+	},
+	{
+		"name":"roi_activity_plot"
+	},
+	{
+		"name":"fileexporter"
+	}   
   ],
   "name": "",
   "origin": [
