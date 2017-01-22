@@ -16,6 +16,15 @@ import tifffile as tiff
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
 
+template = {'Scale Factor': 1.00,
+            'Channel': 2,
+            'Width': 256,
+            'Height': 256,
+            'Number of channels': 3,
+            'dtype': 'uint8'}
+
+
+
 
 class NotConvertedError(Exception):
   pass
@@ -129,6 +138,9 @@ class Widget(QWidget):
 
     vbox.addStretch()
     self.setLayout(vbox)
+
+  def update_plugin_params(self, key, val):
+      pass
 
   def convert_raw(self, filename):
     rescale_value = float(self.scale_factor.value())
