@@ -42,9 +42,9 @@ class MyGraphicsView(pg.GraphicsView):
 
     self.centralWidget.setLayout(l)
  
-  def show(self, frame):
+  def show(self, frame, min=None, max=None):
     self.shape = frame.shape
-    self.vb.showImage(frame)
+    self.vb.showImage(frame, min, max)
     self.update()
 
   def _update_rect(self):

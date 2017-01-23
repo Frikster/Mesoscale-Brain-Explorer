@@ -77,8 +77,8 @@ class Widget(QWidget):
 
     grid.addWidget(QLabel('Scale Factor:'), 1, 0)
     self.scale_factor = QDoubleSpinBox()
-    self.scale_factor.setSingleStep(0.1)
-    self.scale_factor.setMinimum(0.01)
+    self.scale_factor.setSingleStep(0.25)
+    self.scale_factor.setMinimum(0.25)
     self.scale_factor.setMaximum(1.00)
     self.scale_factor.setValue(1.0)
     grid.addWidget(self.scale_factor, 1, 1)

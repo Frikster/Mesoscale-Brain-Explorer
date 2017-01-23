@@ -100,13 +100,15 @@ class PlayerDialog(QDialog):
     self.setup_ui()
 
     self.fp = np.load(filename, mmap_mode='r')
+    self.global_min = np.min(self.fp)
+    self.global_max = np.max(self.fp)
     self.slider.setMaximum(len(self.fp)-1)
     self.show_frame(0)
 
   def show_frame(self, frame_num):
     frame = self.fp[frame_num]
     self.label_frame.setText(str(frame_num) + ' / ' + str(len(self.fp)-1))
-    self.view.show(frame)
+    self.view.show(frame, self.global_min, self.global_max)
 
   def setup_ui(self):
     vbox = QVBoxLayout()

@@ -624,13 +624,16 @@ class MultiRoiViewBox(pg.ViewBox):
         return
       self.img.setRect(QtCore.QRectF(x1, y1, x2, y2))
        
-    def showImage(self, arr):
+    def showImage(self, arr, min=None, max=None):
         arr = arr.astype("float64")
         if arr is None:
             self.img = None
             return
         if self.img==None:
-            self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
+            if min and max:
+                self.img = pg.ImageItem(arr, levels=(min, max), autoLevels=False)
+            else:
+                self.img = pg.ImageItem(arr, autoRange=False, autoLevels=False)
             self.addItem(self.img)
         # Add/readd crosshair
         if self.crosshair_visible:
@@ -638,7 +641,10 @@ class MultiRoiViewBox(pg.ViewBox):
           self.addItem(self.hLine, ignoreBounds=True)
         proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         self.scene().sigMouseMoved.connect(self.mouseMoved)
-        self.img.setImage(arr)
+        if min and max:
+            self.img.setImage(arr, levels=(min, max))
+        else:
+            self.img.setImage(arr)
         self.updateView()
 
 
