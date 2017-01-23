@@ -2,10 +2,13 @@
 
 import os
 
+import csv
+import uuid
 import numpy as np
 import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+import qtutil
 
 from .util import fileloader
 from .util import project_functions as pfs
@@ -15,6 +18,21 @@ class Color:
   def __init__(self, name, rgb):
     self.name = name
     self.rgb = rgb
+
+brewer_colors = [
+ Color('light_blue',(166,206,227)),
+ Color('dark_blue',(31,120,180)),
+ Color('light_green',(178,223,138)),
+ Color('dark_green',(51,160,44)),
+ Color('light_red',(251,154,153)),
+ Color('dark_red',(227,26,28)),
+ Color('light_orange',(253,191,111)),
+ Color('dark_orange',(255,127,0)),
+ Color('light_purple',(202,178,214)),
+ Color('dark_purple',(106,61,154)),
+ Color('yellow',(255,255,153)),
+ Color('brown',(177,89,40))
+]
 
 kelly_colors = [
   Color('vivid_yellow', (255, 179, 0)),
@@ -36,6 +54,34 @@ kelly_colors = [
 ]
 
 def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress_callback):
+  frames = fileloader.load_file(video_path)
+  #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+  # plot_out = os.path.join(os.path.dirname(video_path), plot_title + str(uuid.uuid4()))
+  plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
+
+  roi_names = []
+  ps = []
+  for i, roi in enumerate(rois):
+    progress_callback(i / len(rois))
+    mask = roi.getROIMask(frames, image, axes=(1, 2))
+    size = np.count_nonzero(mask)
+    roi_frames = frames * mask[np.newaxis, :, :]
+    roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+    p = roi_frames / size
+    ps = ps + [p]
+    roi_names = roi_names + [roi.name]
+
+  ps = [list(p) for p in ps]
+  ps_rows = list(zip(*ps))
+  with open(plot_out, 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(roi_names)
+    for i, row in enumerate(ps_rows):
+        progress_callback(i / len(rois))
+        writer.writerow([str(p) for p in row])
+  progress_callback(1)
+
   win = pg.GraphicsWindow(title=win_title)
   win.resize(1000, 600)
   #win.setWindowTitle('Activity across frames')
@@ -46,19 +92,27 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
 
   pg.setConfigOptions(antialias=True)
 
-  frames = fileloader.load_file(video_path)
-  #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-
+  warning_issued = False
   for i, roi in enumerate(rois):
-    progress_callback(i / len(rois))
+    #progress_callback(i / len(rois))
     mask = roi.getROIMask(frames, image, axes=(1, 2))
     size = np.count_nonzero(mask)
     roi_frames = frames * mask[np.newaxis, :, :]
     roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
     p = roi_frames / size
-    color = kelly_colors[i].rgb
+    if i < len(brewer_colors):
+        color = brewer_colors[i].rgb
+    else:
+        if not warning_issued:
+            qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. Please be careful'
+                           'with how you interpret your data')
+            warning_issued = True
+        if i < len(brewer_colors) + len(kelly_colors):
+            color = kelly_colors[i-len(brewer_colors)].rgb
+        else:
+            qtutil.critical('Colour limit reached. Please plot your data over multiple plots or output solely to csv')
+            return win
     plot.plot(p, pen=color, name=roi.name)
-  progress_callback(1)
 
   return win
 
