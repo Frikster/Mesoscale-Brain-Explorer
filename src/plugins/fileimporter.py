@@ -158,7 +158,7 @@ class Widget(QWidget):
     rescale_height = int(height * rescale_value)
     channels = int(self.sb_channel.value())
     channel = int(self.channel.value())
-    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+    path = os.path.splitext(os.path.basename(filename))[0] + '_channel_' + str(channel) + '.npy'
     path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
@@ -192,7 +192,7 @@ class Widget(QWidget):
 
   def convert_tif(self, filename):
     rescale_value = float(self.scale_factor.value())
-    channel = int(self.channel.value())
+    #channel = int(self.channel.value())
 
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
