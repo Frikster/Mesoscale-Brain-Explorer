@@ -54,7 +54,6 @@ class Sidebar(QWidget):
 
   def __init__(self, parent=None):
     super(Sidebar, self).__init__(parent)
-
     self.setup_ui()
 
   def setup_ui(self):
@@ -259,7 +258,7 @@ class MainWindow(QMainWindow):
     self.clean_plugin()
     self.pl_frame.setLayout(lt)
 
-    p.run()
+    # p.run()
   
   def clean_plugin(self):
     if self.pl_frame.layout():

@@ -17,6 +17,21 @@ import tifffile as tiff
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
 
+class Labels:
+    scale_factor_label = "Scale Factor"
+    channel_label = "Channel"
+    width_label = "Width"
+    height_label = "Height"
+    no_channels_label = "Number of channels"
+    dtype_label = "dtype"
+
+class Defaults:
+    scale_factor_default = 1.00
+    channel_default = 2
+    width_default = 256
+    height_default = 256
+    no_channels_default = 3
+    dtype_default = 'uint8'
 
 class NotConvertedError(Exception):
   pass
@@ -31,9 +46,9 @@ class Widget(QWidget):
 
     if not project:
       return
-
     self.plugin_position = plugin_position
     self.project = project
+
     self.setup_ui()
     if isinstance(plugin_position, int):
         self.params = project.pipeline[self.plugin_position]
@@ -47,7 +62,22 @@ class Widget(QWidget):
         self.listview.model().appendRow(QStandardItem(f['path']))
 
   def setup_params(self):
-    self.scale_factor.setValue(self.params['Scale Factor'])
+    if len(self.params) == 1:
+        self.update_plugin_params(Labels.scale_factor_label, 1.00)
+        self.update_plugin_params(Labels.channel_label, 2)
+        self.update_plugin_params(Labels.width_label, 256)
+        self.update_plugin_params(Labels.height_label, 256)
+        self.update_plugin_params(Labels.no_channels_label, 3)
+        self.update_plugin_params(Labels.dtype_label, "uint8")
+
+    # "Scale Factor": 1.00,
+    # "Channel": 2,
+    # "Width": 256,
+    # "Height": 256,
+    # "Number of channels": 3,
+    # "dtype": "uint8"
+
+    self.scale_factor.setValue(self.params[Labels.scale_factor_label])
 
 
   def setup_ui(self):
@@ -56,7 +86,7 @@ class Widget(QWidget):
     ## Related to importing Raws
     self.setWindowTitle('Import Raw File')
 
-    #vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
+    # vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
 
     grid = QGridLayout()
     grid.addWidget(QLabel('Set channel and scale factor used for all imported data'), 0, 0)

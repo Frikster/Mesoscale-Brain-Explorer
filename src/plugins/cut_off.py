@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import functools
 
 import numpy as np
 from PyQt4.QtCore import *
@@ -11,12 +12,15 @@ from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
+class Labels:
+    start_cut_off_label = 'Cut off from start'
 
 class Widget(QWidget):
-    def __init__(self, project, parent=None):
+    def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
         if not project:
             return
+        self.plugin_position = plugin_position
         self.project = project
 
         # define ui components and global data
@@ -28,6 +32,11 @@ class Widget(QWidget):
         self.right_cut_off = QSpinBox()
 
         self.setup_ui()
+        if isinstance(plugin_position, int):
+            self.params = project.pipeline[self.plugin_position]
+            assert (self.params['name'] == 'cut_off')
+            self.setup_param_signals()
+            self.setup_params()
 
         self.open_dialogs = []
         self.selected_videos = []
@@ -41,6 +50,9 @@ class Widget(QWidget):
                 continue
             self.video_list.model().appendRow(QStandardItem(f['name']))
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
+    def setup_params(self):
+        self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -61,7 +73,7 @@ class Widget(QWidget):
         #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
         max_cut_off = 5000
-        vbox.addWidget(QLabel('Cut off from start'))
+        vbox.addWidget(QLabel(Labels.start_cut_off_label))
         self.left_cut_off.setMinimum(0)
         self.left_cut_off.setMaximum(max_cut_off)
         self.left_cut_off.setValue(0)
@@ -84,6 +96,14 @@ class Widget(QWidget):
         hbox_global = QHBoxLayout()
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
+
+    def setup_param_signals(self):
+        self.left_cut_off.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                        Labels.start_cut_off_label))
+
+    def update_plugin_params(self, key, val):
+        self.params[key] = val
+        self.project.pipeline[self.plugin_position] = self.params
 
     # def selected_video_changed(self, selection):
     #     if not selection.indexes():
@@ -165,7 +185,10 @@ class Widget(QWidget):
 class MyPlugin:
     def __init__(self, project, plugin_position):
         self.name = 'Cut off'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
 
     def run(self):
-        pass
+        # todo: code for preparing plugin for automation goes here
+        self.widget.cut_off()
+        # todo: return output paths(?) for next plugin in pipeline
+

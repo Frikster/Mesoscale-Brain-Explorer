@@ -28,7 +28,7 @@ class PipelineModel(QStandardItemModel):
     return super(PipelineModel, self).removeRows(row, count, parent)
 
   def insertRows(self, row, count, parent):
-    #print('insert', row, count)
+    # print('insert', row, count)
     return super(PipelineModel, self).insertRows(row, count, parent)
 
   def get_plugin_names(self):

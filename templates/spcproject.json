@@ -3,13 +3,7 @@
   "unit_per_pixel": 1,
   "pipeline": [
     {
-		"name":"fileimporter",
-		"Scale Factor": 1.00,
-        "Channel": 2,
-        "Width": 256,
-        "Height": 256,
-        "Number of channels": 3,
-        "dtype": "uint8"
+		"name":"fileimporter"
 	},
 	{
 		"name":"cut_off"
