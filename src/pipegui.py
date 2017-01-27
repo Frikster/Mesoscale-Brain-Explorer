@@ -160,8 +160,8 @@ class MainWindow(QMainWindow):
     splitter.addWidget(self.sidebar)
     splitter.addWidget(self.pl_frame)
 
-    #splitter.setStretchFactor(0, 0)
-    #splitter.setStretchFactor(1, 1)
+    # splitter.setStretchFactor(0, 0)
+    # splitter.setStretchFactor(1, 1)
 
     self.setCentralWidget(splitter)
 

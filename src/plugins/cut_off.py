@@ -52,6 +52,9 @@ class Widget(QWidget):
         self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
     def setup_params(self):
+        if len(self.params) == 1:
+            self.update_plugin_params(Labels.start_cut_off_label, 0)
+
         self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
 
     def video_triggered(self, index):

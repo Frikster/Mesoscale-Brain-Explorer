@@ -176,7 +176,7 @@ class Widget(QWidget):
   def update_plugin_params(self, key, val):
       self.params[key] = val
       self.project.pipeline[self.plugin_position] = self.params
-
+      self.project.save()
 
 
   def convert_raw(self, filename):
