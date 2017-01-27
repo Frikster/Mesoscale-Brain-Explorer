@@ -222,7 +222,7 @@ class Widget(QWidget):
 
   def convert_tif(self, filename):
     rescale_value = float(self.scale_factor.value())
-    #channel = int(self.channel.value())
+    # channel = int(self.channel.value())
 
     path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
@@ -299,20 +299,23 @@ class Widget(QWidget):
     return filename
 
   def import_files(self, filenames):
+    imported_paths = []
     for filename in filenames:
       if filename in [f['path'] for f in self.project.files]:
         continue
       try:
-        filename = self.import_file(filename)
+        imported_path = self.import_file(filename)
       except NotConvertedError:
-        qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
+        qtutil.warning('Skipping file \'{}\' since not converted.'.format(imported_path))
       except FileAlreadyInProjectError as e:
-        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
+        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.imported_path))
       except:
-        qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
+        qtutil.critical('Import of \'{}\' failed:\n'.format(imported_path) +\
           traceback.format_exc())
       else:
-        self.listview.model().appendRow(QStandardItem(filename))
+        self.listview.model().appendRow(QStandardItem(imported_path))
+        imported_paths = imported_paths + [imported_path]
+    return imported_paths
 
   def new_video(self):
     filenames = QFileDialog.getOpenFileNames(
@@ -321,7 +324,7 @@ class Widget(QWidget):
     if not filenames:
       return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
-    self.import_files(filenames)
+    return self.import_files(filenames)
 
   def bin_ndarray(self, ndarray, new_shape, progress_callback, operation='sum'):
     """
@@ -366,8 +369,8 @@ class MyPlugin:
     self.name = 'Import Image Stacks'
     self.widget = Widget(project, plugin_position)
 
-  def run(self):
-    pass
+  def run(self, input_paths = None):
+    return self.widget.new_video()
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)

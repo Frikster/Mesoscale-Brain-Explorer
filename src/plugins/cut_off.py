@@ -142,9 +142,14 @@ class Widget(QWidget):
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
 
-    def cut_off(self):
+    def cut_off(self, input_paths = None):
         if not self.selected_videos:
-            return
+            if not input_paths:
+                return
+            else:
+                selected_videos = input_paths
+        else:
+            selected_videos = self.selected_videos
 
         progress_global = QProgressDialog('Creating cut offs...', 'Abort', 0, 100, self)
         progress_global.setAutoClose(True)
@@ -154,8 +159,8 @@ class Widget(QWidget):
             progress_global.setValue(x * 100)
             QApplication.processEvents()
 
-        total = len(self.selected_videos)
-        for global_i, video_path in enumerate(self.selected_videos):
+        total = len(selected_videos)
+        for global_i, video_path in enumerate(selected_videos):
             global_callback(global_i / total)
             frames_mmap = np.load(video_path, mmap_mode='c')
             cut_off_start = self.left_cut_off.value()
@@ -190,8 +195,8 @@ class MyPlugin:
         self.name = 'Cut off'
         self.widget = Widget(project, plugin_position)
 
-    def run(self):
+    def run(self, input_paths):
         # todo: code for preparing plugin for automation goes here
-        self.widget.cut_off()
+        self.widget.cut_off(input_paths)
         # todo: return output paths(?) for next plugin in pipeline
 

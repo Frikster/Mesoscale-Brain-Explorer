@@ -168,7 +168,6 @@ class Project:
   def set_pipeline(self, data):
     pipeline_dict = []
     for i in range(len(data)):
-        # todo: cant assume new data is same length as old (adding or removing a single plugin)
         if i < len(self.pipeline) and data[i] == self.pipeline[i]['name']:
             pipeline_dict = pipeline_dict + [self.pipeline[i]]
         else:

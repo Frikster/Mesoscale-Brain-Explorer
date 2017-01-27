@@ -51,6 +51,7 @@ class ToolButton(QToolButton):
 class Sidebar(QWidget):
   open_pipeconf_requested = pyqtSignal()
   open_datadialog_requested = pyqtSignal()
+  automate_pipeline_requested = pyqtSignal()
 
   def __init__(self, parent=None):
     super(Sidebar, self).__init__(parent)
@@ -63,11 +64,19 @@ class Sidebar(QWidget):
 
     self.pl_list = PipelineView()
     self.pl_list.setIconSize(QSize(18, 18))
+    self.pl_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.pl_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     vbox.addWidget(QLabel('Pipeline:'))
     vbox.addWidget(self.pl_list)
+
+    #todo: automation testing button. Remove/replace
+    pb = QPushButton('&Automation')
+    pb.clicked.connect(self.automate_pipeline_requested)
+    vbox.addWidget(pb)
    
     vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
 
     pb = QPushButton('&Configure Pipeline')
     pb.clicked.connect(self.open_pipeconf_requested)
@@ -75,6 +84,8 @@ class Sidebar(QWidget):
     pb = QPushButton('&Manage Data')
     pb.clicked.connect(self.open_datadialog_requested)
     vbox.addWidget(pb)
+
+
 
     vbox.setStretch(0, 0)
     vbox.setStretch(1, 0)
@@ -145,6 +156,7 @@ class MainWindow(QMainWindow):
     self.sidebar = Sidebar()
     self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
     self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
+    self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
 
     self.pl_frame = QFrame()
 
@@ -280,6 +292,22 @@ class MainWindow(QMainWindow):
   def open_datadialog(self):
     self.datadialog.update(self.project)
     self.datadialog.exec_()
+
+  def automate_pipeline(self):
+      # order by index
+      ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
+      p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+      input_paths = p.run()
+      for q_model_index in ordered_q_model_indexes[1:]:
+          p = self.plugins[q_model_index.data(Qt.UserRole)]
+          output_paths = p.run(input_paths)
+          input_paths = output_paths
+
+
+      # self.sidebar.pl_list.selectedIndexes()[0].data(Qt.UserRole)
+      #
+      # self.sidebar.pl_list.selectedIndexes()[0].row()
+      # self.sidebar.pl_list.model().data(self.sidebar.pl_list.selectedIndexes()[0])
 
   def about(self):
     author = 'Cornelis Dirk Haupt'
