@@ -10,12 +10,22 @@ from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
+class Labels:
+    pass
+    # start_cut_off_label = 'Cut off from start'
+    # end_cut_off_label = 'Cut off from end'
+
+class Defaults:
+    pass
+    # start_cut_off_default = 0
+    # end_cut_off_default = 0
 
 class Widget(QWidget):
-    def __init__(self, project, parent=None):
+    def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
         if not project:
             return
+        self.plugin_position = plugin_position
         self.project = project
 
         # define widgets and data
@@ -205,7 +215,7 @@ class Widget(QWidget):
 class MyPlugin:
     def __init__(self, project, plugin_position):
         self.name = 'Alignment'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
 
     def run(self):
         pass

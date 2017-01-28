@@ -233,7 +233,7 @@ class Widget(QWidget):
 class MyPlugin:
     def __init__(self, project=None, plugin_position=None):
         self.name = 'Spatial Filter'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
 
     def run(self):
         pass

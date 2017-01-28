@@ -65,11 +65,12 @@ class RoiItemModel(QAbstractListModel):
                 break
 
 class Widget(QWidget):
-  def __init__(self, project, parent=None):
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
     if not project:
       return
+    self.plugin_position = plugin_position
     self.project = project
 
    # define ui components and global data
@@ -330,7 +331,7 @@ class Widget(QWidget):
 class MyPlugin:
   def __init__(self, project=None, plugin_position=None):
     self.name = 'Create ROIs'
-    self.widget = Widget(project)
+    self.widget = Widget(project, plugin_position)
   
   def run(self):
     pass

@@ -13,10 +13,11 @@ import qtutil
 
 
 class Widget(QWidget):
-    def __init__(self, project, parent=None):
+    def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
         if not project:
             return
+        self.plugin_position = plugin_position
         self.project = project
         self.setup_ui()
         self.update_tables()
@@ -70,7 +71,7 @@ class Widget(QWidget):
 class MyPlugin:
     def __init__(self, project, plugin_position):
         self.name = 'Evoked Average'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
 
     def run(self):
         pass
