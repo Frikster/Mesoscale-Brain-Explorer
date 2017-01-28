@@ -31,7 +31,7 @@ class Defaults:
     width_default = 256
     height_default = 256
     no_channels_default = 3
-    dtype_default = 'uint8'
+    dtype_default = 0 #index
 
 class NotConvertedError(Exception):
   pass
@@ -63,12 +63,12 @@ class Widget(QWidget):
 
   def setup_params(self):
     if len(self.params) == 1:
-        self.update_plugin_params(Labels.scale_factor_label, 1.00)
-        self.update_plugin_params(Labels.channel_label, 2)
-        self.update_plugin_params(Labels.width_label, 256)
-        self.update_plugin_params(Labels.height_label, 256)
-        self.update_plugin_params(Labels.no_channels_label, 3)
-        self.update_plugin_params(Labels.dtype_label, "uint8")
+        self.update_plugin_params(Labels.scale_factor_label, Defaults.scale_factor_default)
+        self.update_plugin_params(Labels.channel_label, Defaults.channel_default)
+        self.update_plugin_params(Labels.width_label, Defaults.width_default)
+        self.update_plugin_params(Labels.height_label, Defaults.height_default)
+        self.update_plugin_params(Labels.no_channels_label, Defaults.no_channels_default)
+        self.update_plugin_params(Labels.dtype_label, Defaults.dtype_default)
 
     # "Scale Factor": 1.00,
     # "Channel": 2,
@@ -78,7 +78,11 @@ class Widget(QWidget):
     # "dtype": "uint8"
 
     self.scale_factor.setValue(self.params[Labels.scale_factor_label])
-
+    self.channel.setValue(self.params[Labels.channel_label])
+    self.sb_width.setValue(self.params[Labels.width_label])
+    self.sb_height.setValue(self.params[Labels.height_label])
+    self.sb_channel.setValue(self.params[Labels.no_channels_label])
+    self.cb_dtype.setCurrentIndex(self.params[Labels.dtype_label])
 
   def setup_ui(self):
     vbox = QVBoxLayout()
@@ -97,7 +101,7 @@ class Widget(QWidget):
     # self.rescale_width.setMaximum(1024)
     # self.rescale_width.setValue(256)
     # grid.addWidget(self.rescale_width, 0, 1)
-    #
+
     # grid.addWidget(QLabel('Height:'), 1, 0)
     # self.rescale_height = QSpinBox()
     # self.rescale_height.setMinimum(1)
@@ -170,8 +174,13 @@ class Widget(QWidget):
     self.setLayout(vbox)
 
   def setup_param_signals(self):
-      self.scale_factor.valueChanged[float].connect(functools.partial(self.update_plugin_params, 'Scale Factor'))
-
+      self.scale_factor.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      Labels.scale_factor_label))
+      self.channel.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.channel_label))
+      self.sb_width.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.width_label))
+      self.sb_height.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.height_label))
+      self.sb_channel.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.no_channels_label))
+      self.cb_dtype.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params, Labels.dtype_label))
 
   def update_plugin_params(self, key, val):
       self.params[key] = val
@@ -279,7 +288,7 @@ class Widget(QWidget):
       new_filename = os.path.basename(filename)
       new_filename = os.path.join(self.project.path, new_filename)
       if os.path.normpath(filename) != os.path.normpath(new_filename):
-          qtutil.info('Copying .npy from '+ filename + ' to ' + new_filename +
+          qtutil.info('Copying .npy from ' + filename + ' to ' + new_filename +
                       '. You can do this manually for large files to see a progress bar')
           copyfile(filename, new_filename)
       filename = new_filename

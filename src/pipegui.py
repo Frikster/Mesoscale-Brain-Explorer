@@ -70,7 +70,7 @@ class Sidebar(QWidget):
     vbox.addWidget(QLabel('Pipeline:'))
     vbox.addWidget(self.pl_list)
 
-    #todo: automation testing button. Remove/replace
+    # todo: automation testing button. Remove/replace
     pb = QPushButton('&Automation')
     pb.clicked.connect(self.automate_pipeline_requested)
     vbox.addWidget(pb)

@@ -14,6 +14,11 @@ from .util.qt import MyListView
 
 class Labels:
     start_cut_off_label = 'Cut off from start'
+    end_cut_off_label = 'Cut off from end'
+
+class Defaults:
+    start_cut_off_default = 0
+    end_cut_off_default = 0
 
 class Widget(QWidget):
     def __init__(self, project, plugin_position, parent=None):
@@ -54,8 +59,10 @@ class Widget(QWidget):
     def setup_params(self):
         if len(self.params) == 1:
             self.update_plugin_params(Labels.start_cut_off_label, 0)
+            self.update_plugin_params(Labels.end_cut_off_label, 0)
 
         self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
+        self.right_cut_off.setValue(self.params[Labels.end_cut_off_label])
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -81,7 +88,7 @@ class Widget(QWidget):
         self.left_cut_off.setMaximum(max_cut_off)
         self.left_cut_off.setValue(0)
         vbox.addWidget(self.left_cut_off)
-        vbox.addWidget(QLabel('Cut off from end'))
+        vbox.addWidget(QLabel(Labels.end_cut_off_label))
         self.right_cut_off.setMinimum(0)
         self.right_cut_off.setMaximum(max_cut_off)
         self.right_cut_off.setValue(0)
@@ -103,10 +110,14 @@ class Widget(QWidget):
     def setup_param_signals(self):
         self.left_cut_off.valueChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                         Labels.start_cut_off_label))
+        self.right_cut_off.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                        Labels.end_cut_off_label))
+
 
     def update_plugin_params(self, key, val):
         self.params[key] = val
         self.project.pipeline[self.plugin_position] = self.params
+        self.project.save()
 
     # def selected_video_changed(self, selection):
     #     if not selection.indexes():
@@ -198,5 +209,11 @@ class MyPlugin:
     def run(self, input_paths):
         # todo: code for preparing plugin for automation goes here
         self.widget.cut_off(input_paths)
-        # todo: return output paths(?) for next plugin in pipeline
+        # todo notes:
+        # automation consists of class Labels, Defaults,
+        # setupParams (defaults and set from self.params)
+        # setup_param_signals which links to update_plugin_params
+        # and finally run with plugin_position param
+
+
 
