@@ -17,7 +17,14 @@ def save_project(video_path, project, frames, manip, file_type):
     assert(len(file_before) == 1)
     file_before = file_before[0]
 
-    name_after = str(name_before + '_' + manip)
+    # check if one with same name already exists and don't overwrite if it does
+    name_after = str(name_before + '_' + manip + '.')
+    name_after_copy = str(name_before + '_' + manip + '(')
+    file_after = [files for files in project.files if name_after in files['name'] or name_after_copy in files['name']]
+
+    if len(file_after) > 0:
+        name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
+
     path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
         if os.path.isfile(path):

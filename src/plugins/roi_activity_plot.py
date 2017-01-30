@@ -78,7 +78,7 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(roi_names)
     for i, row in enumerate(ps_rows):
-        progress_callback(i / len(rois))
+        #progress_callback(i / len(rois))
         writer.writerow([str(p) for p in row])
   progress_callback(1)
 

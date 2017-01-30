@@ -257,7 +257,7 @@ class MainWindow(QMainWindow):
     self.project_menu.setEnabled(False)
     self.enable(False)
   
-  def set_plugin(self, plugin_name, plugin_position):
+  def set_plugin(self, plugin_name, plugin_position=None):
     p = self.load_plugin('plugins.' + str(plugin_name), plugin_position)
     if not p:
       return

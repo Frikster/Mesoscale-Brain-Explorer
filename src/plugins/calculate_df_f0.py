@@ -106,7 +106,6 @@ class Widget(QWidget):
             return
         index = self.video_list2.selectedIndexes()[0]
         self.video_list2_vidpath = str(os.path.normpath(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy'))
-        print('')
 
     # def selected_video_changed(self, selected, deselected):
     #     if not selected.indexes():
