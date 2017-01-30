@@ -12,7 +12,7 @@ from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
 
 class Widget(QWidget):
-  def __init__(self, project, parent=None):
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
     if not project:
@@ -92,7 +92,6 @@ class Widget(QWidget):
     hbox_global = QHBoxLayout()
     hbox_global.addWidget(splitter)
     self.setLayout(hbox_global)
-    self.setEnabled(False)
 
   def refresh_video_list_via_combo_box(self, trigger_item=None):
       pfs.refresh_video_list_via_combo_box(self, trigger_item)
@@ -214,7 +213,7 @@ class Widget(QWidget):
 class MyPlugin:
   def __init__(self, project, plugin_position):
     self.name = 'Set coordinate system'
-    self.widget = Widget(project)
+    self.widget = Widget(project, plugin_position)
 
   def run(self):
     self.widget.update()
