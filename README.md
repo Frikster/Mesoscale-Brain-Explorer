@@ -32,22 +32,57 @@ The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mP
 ### Seed/ROI Placement csv/txt format
 For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns.  Coordinates were adapted from the [Allen Mouse Brain Connectivity Atlas](http://connectivity.brain-map.org/). We previously [mapped functional and anatomical coordinates of transgenic mice using sensory stimulation](https://www.ncbi.nlm.nih.gov/pubmed/22435052) in combination with in vivo large-scale cortical mapping using Channelrhodopsin-2 stimulation to confirm the coordinates.
 
-| 1) ROI Name   | 2) Length     | 3) X Coordinate  | 4) Y Coordinate |
+| 1) ROI Name   | 2) Length     | 3) X Coord (ML)  | 4) Y Coord (AP) |
 | ------------- | ------------- | ---------------- | ----------------|
-| L-V1          | 1             | -2500.0          |  -2500.0        |
-| L-BC          | 1             | -3500.0          |  -1000.0        |
-| L-HL          | 1             | -2000.0          |     -0.0        |
-| L-M1          | 1             | -1500.0          |   1750.0        |
-| L-M2          | 1             | -1000.0          |   2500.0        |
-| L-RS          | 1             | -500.0           |  -2500.0        |
-| L-AC          | 1             | -500.0           |      0.0        |
-| R-V1          | 1             |  2500.0          |  -2500.0        |
-| R-BC          | 1             |  3500.0          |  -1000.0        |
-| R-HL          | 1             |  2000.0          |     -0.0        |
-| R-M1          | 1             |  1500.0          |   1750.0        |
-| R-M2          | 1             |  1000.0          |   2500.0        |
-| R-RS          | 1             |  500.0           |  -2500.0        |
-| R-AC          | 1             |  500.0           |      0.0        |
+| L-A          | 1             | -2293.2          |  -2496.2        |
+| L-AC          | 1             | -97.951          |  1853.6        |
+| L-AL          | 1             | -3827.1          |  -3339.3        |
+| L-AM          | 1             | -1647.9          |   -2696        |
+| L-AU          | 1             | -4530.4          |   -2901        |
+| L-BC          | 1             | -3456.9           |  -1727        |
+| L-FL          | 1             | -2452.6           |  -566.8        |
+| L-HL          | 1             |  -1694.2          |  -1145.7        |
+| L-L          | 1             |  -3712.6          |  -4261.5        |
+| L-LI          | 1             |  -4058.6          |  -4229.3        |
+| L-M1          | 1             |  -1860.3          |   641.81        |
+| L-M2          | 1             |  -870.02          |   1420.5        |
+| L-MO          | 1             |  -3491.7           |  587.12        |
+| L-NO          | 1             |  -3800.1           |   -477.33     |
+| L-PL          | 1             | -3516.1          |  -5214.6        |
+| L-PM          | 1             | -1621.7          |  -3624.7        |
+| L-POR          | 1             | -4223.1          |     -4755      |
+| L-RL          | 1             | -3171.2          |   -2849        |
+| L-RS          | 1             |  -620.43          |   -2885.8        |
+| L-S2          | 1             | -4397.7           |  -1202.7        |
+| L-TEA          | 1             | -4565.7           |   -4162.2        |
+| L-TR          | 1             |  -1864.4          |  -2020.4        |
+| L-UN          | 1             |  -2797.9          |  -971.12        |
+| L-V1          | 1             |  -2516.8          |   -4267.8        |
+| R-A          | 1             |  2293.2          |  -2496.2        |
+| R-AC          | 1             |  97.951          |  1853.6        |
+| R-AL          | 1             |  3827.1          |  -3339.3        |
+| R-AM          | 1             | 1647.9          |   -2696        |
+| R-AU          | 1             | 4530.4          |   -2901        |
+| R-BC          | 1             | 3456.9           |  -1727        |
+| R-FL          | 1             | 2452.6           |  -566.8        |
+| R-HL          | 1             |  1694.2          |  -1145.7        |
+| R-L          | 1             |  3712.6          |  -4261.5        |
+| R-LI          | 1             |  4058.6          |  -4229.3        |
+| R-M1          | 1             |  1860.3          |   641.81        |
+| R-M2          | 1             |  870.02          |   1420.5        |
+| R-MO          | 1             |  3491.7           |  587.12        |
+| R-NO          | 1             |  3800.1           |   -477.33     |
+| R-PL          | 1             | 3516.1          |  -5214.6        |
+| R-PM          | 1             | 1621.7          |  -3624.7        |
+| R-POR          | 1             | 4223.1          |     -4755      |
+| R-RL          | 1             | 3171.2          |   -2849        |
+| R-RS          | 1             |  620.43          |   -2885.8        |
+| R-S2          | 1             | 4397.7           |  -1202.7        |
+| R-TEA          | 1             | 4565.7           |   -4162.2        |
+| R-TR          | 1             |  1864.4          |  -2020.4        |
+| R-UN          | 1             |  2797.9          |  -971.12        |
+| R-V1          | 1             |  2516.8          |   -4267.8        |
+
 
 For your coordinates, there *must* be 4 columns if you are importing for the ROI Placement plugin. Otherwise, there *must* be 3 with the length column omitted for the Seed Placement plugin (Seeds have length 1). Next, for the column names the "1)" *must* exist for the column with ROI names, a "2)" for the length column, a "3)" for X Coordinates and "4)" for the Y Coordinate. For seeds omit the length column. Thus "2)" for X Coordinate and "3)" for Y Coordinate columns. Your coordinates can be named whatever you please. 
 
