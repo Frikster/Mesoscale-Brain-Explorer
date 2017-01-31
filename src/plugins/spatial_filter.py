@@ -62,7 +62,7 @@ from .util.mygraphicsview import MyGraphicsView
 #         output[:, i, j] = frames_beam
 
 class Widget(QWidget):
-    def __init__(self, project, parent=None):
+    def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
 
         # self.temporal_filter_beams_nb = nb.jit(nb.float64[:, :, :]
