@@ -83,9 +83,9 @@ class RoiItemModel(QAbstractListModel):
     return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
 
   def removeRow(self, roi_to_remove):
-    for roi in self.rois:
+    for i, roi in enumerate(self.rois):
       if roi == roi_to_remove:
-        del roi
+        del self.rois[i]
         break
 
 class Widget(QWidget):
@@ -276,6 +276,27 @@ class Widget(QWidget):
           if not text_file_path:
               return
           QSettings().setValue('last_load_text_path', os.path.dirname(text_file_path))
+          self.text_file_path = text_file_path
+
+      # Remove all ROI's from list
+      rois = [r for r in self.roi_list.model().rois]
+      for roi in rois:
+          self.roi_list.model().removeRow(roi)
+
+      # Delete all auto_ROIs from file
+      for auto_roi in [fileinfo for fileinfo in self.project.files if fileinfo['type'] == 'auto_roi']:
+          try:
+              os.remove(auto_roi['path'])
+          except:
+              qtutil.critical('Could not delete previous ROI '
+                              + auto_roi['path'] + '. Please delete manually before continuing')
+              return
+          # detach
+          self.project.files[:] = [
+              f for f in self.project.files
+              if f['path'] != auto_roi['path']
+              ]
+          self.project.save()
 
       roi_table = [] # numpy way: np.empty(shape=(4, ))
       with open(text_file_path, 'rt', encoding='ascii') as csvfile:
@@ -292,22 +313,6 @@ class Widget(QWidget):
       self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
       text_file_path_for_project = os.path.join(self.project.path, os.path.basename(text_file_path))
-
-      # Delete all auto_ROIs
-      for auto_roi in [fileinfo for fileinfo in self.project.files if fileinfo['type'] == 'auto_roi']:
-          try:
-              os.remove(auto_roi['path'])
-          except:
-              qtutil.critical('Could not delete previous ROI '
-                              + auto_roi['path'] + '. Please delete manually before continuing')
-              return
-          # detach
-          self.project.files[:] = [
-              f for f in self.project.files
-              if f['path'] != auto_roi['path']
-              ]
-          self.project.save()
-          # self.reload_plugins.emit()
 
       # for now only support having one roi_table associated per project
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
