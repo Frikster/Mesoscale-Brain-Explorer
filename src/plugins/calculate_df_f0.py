@@ -40,17 +40,18 @@ class Widget(QWidget):
             if f['type'] != 'video':
                 continue
             self.video_list.model().appendRow(QStandardItem(f['name']))
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
         self.video_list2.setModel(QStandardItemModel())
         self.video_list2.selectionModel().selectionChanged[QItemSelection,
                                                           QItemSelection].connect(self.selected_f0_video_changed)
         self.video_list2.doubleClicked.connect(self.video_list2.clearSelection)
+        self.clear()
+
         for f in project.files:
             if f['type'] != 'video':
                 continue
             self.video_list2.model().appendRow(QStandardItem(f['name']))
-        self.video_list2.setCurrentIndex(self.video_list2.model().index(0, 0))
         self.df_d0_pb.clicked.connect(self.calculate_df_f0)
 
     def clear(self):
