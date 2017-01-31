@@ -58,8 +58,8 @@ class Widget(QWidget):
 
     def setup_params(self):
         if len(self.params) == 1:
-            self.update_plugin_params(Labels.start_cut_off_label, 0)
-            self.update_plugin_params(Labels.end_cut_off_label, 0)
+            self.update_plugin_params(Labels.start_cut_off_label, Defaults.start_cut_off_default)
+            self.update_plugin_params(Labels.end_cut_off_label, Defaults.end_cut_off_default)
 
         self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
         self.right_cut_off.setValue(self.params[Labels.end_cut_off_label])
@@ -86,12 +86,12 @@ class Widget(QWidget):
         vbox.addWidget(QLabel(Labels.start_cut_off_label))
         self.left_cut_off.setMinimum(0)
         self.left_cut_off.setMaximum(max_cut_off)
-        self.left_cut_off.setValue(0)
+        self.left_cut_off.setValue(Defaults.start_cut_off_default)
         vbox.addWidget(self.left_cut_off)
         vbox.addWidget(QLabel(Labels.end_cut_off_label))
         self.right_cut_off.setMinimum(0)
         self.right_cut_off.setMaximum(max_cut_off)
-        self.right_cut_off.setValue(0)
+        self.right_cut_off.setValue(Defaults.end_cut_off_default)
         vbox.addWidget(self.right_cut_off)
         pb = QPushButton('Cut off frames')
         pb.clicked.connect(self.cut_off)
