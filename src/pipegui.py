@@ -294,6 +294,9 @@ class MainWindow(QMainWindow):
     self.datadialog.exec_()
 
   def automate_pipeline(self):
+      qtutil.info('Coming Soon')
+      return
+
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
       p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
