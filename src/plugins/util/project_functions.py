@@ -24,6 +24,8 @@ def save_project(video_path, project, frames, manip, file_type):
 
     if len(file_after) > 0:
         name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
+    else:
+        name_after = str(name_before + '_' + manip)
 
     path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
