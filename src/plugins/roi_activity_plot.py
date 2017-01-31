@@ -149,7 +149,7 @@ class Widget(QWidget):
     for f in project.files:
       if f['type'] == 'video':
         self.video_list.model().appendRow(QStandardItem(f['name']))
-      elif f['type'] == 'roi':
+      elif f['type'] == 'roi' or f['type'] == 'auto_roi':
         item = QStandardItem(f['name'])
         item.setData(f['path'], Qt.UserRole)
         self.roi_list.model().appendRow(item)

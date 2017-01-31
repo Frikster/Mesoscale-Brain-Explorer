@@ -5,6 +5,7 @@ import csv
 import os
 from shutil import copyfile
 
+import functools
 import numpy as np
 import qtutil
 from PyQt4 import QtCore
@@ -98,6 +99,7 @@ class Widget(QWidget):
     # define widgets
     self.headers = None
     self.data = None
+    self.text_file_path = None
     self.view = MyGraphicsView(self.project)
     self.table_widget = AutoROICoords(self.data, 0, 4)
     self.left = QFrame()
@@ -125,7 +127,7 @@ class Widget(QWidget):
     self.selected_roi_changed_flag = 0
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                     QItemSelection].connect(self.selected_roi_changed)
-    roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
+    roi_names = [f['name'] for f in project.files if f['type'] == 'auto_roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
         model.appendRoi(roi_name)
@@ -134,13 +136,19 @@ class Widget(QWidget):
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
           self.data = None
           self.headers = None
+          self.text_file_path = None
       else:
-          text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
-                            if self.project.files[x]['type'] == 'roi_table']
-          assert (len(text_file_path) == 1)
-          text_file_path = text_file_path[0]
+          # text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+          #                    if self.project.files[x]['type'] == 'roi_table']
+          # assert (len(text_file_path) == 1)
+          # text_file_path = text_file_path[0]
+          # self.load_ROI_table(text_file_path)
+          self.text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+                             if self.project.files[x]['type'] == 'roi_table']
+          assert (len(self.text_file_path) == 1)
+          self.text_file_path = self.text_file_path[0]
           roi_table = []  # numpy way: np.empty(shape=(4, ))
-          with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+          with open(self.text_file_path, 'rt', encoding='ascii') as csvfile:
               roi_table_it = csv.reader(csvfile, delimiter=',')
               for row in roi_table_it:
                   roi_table = roi_table + [row]
@@ -153,12 +161,12 @@ class Widget(QWidget):
           roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
           self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
                        self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
-          if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+          if self.text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
               self.project.files.append({
-                  'path': text_file_path,
+                  'path': self.text_file_path,
                   'type': 'roi_table',
                   'source_video': self.video_path,
-                  'name': os.path.basename(text_file_path)
+                  'name': os.path.basename(self.text_file_path)
               })
           self.table_widget.clear()
           self.table_widget.setRowCount(len(self.data[self.headers[0]]))
@@ -189,13 +197,14 @@ class Widget(QWidget):
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
-    pb = QPushButton('Load anatomical coordinates (relative to selected origin)')
+    pb = QPushButton('Load ROIs (origin required)')
     pb.clicked.connect(self.load_ROI_table)
     vbox.addWidget(pb)
     vbox.addWidget(self.table_widget)
     self.table_widget.itemChanged.connect(self.update_auto_rois)
-    pb = QPushButton('Add these ROIs to project')
-    pb.clicked.connect(self.auto_ROI)
+    pb = QPushButton('Update ROIs')
+    pb.clicked.connect(self.load_ROI_table_intermediate)
+
     vbox.addWidget(pb)
     # vbox2 = QVBoxLayout()
     # w = QWidget()
@@ -252,13 +261,21 @@ class Widget(QWidget):
     for roi_to_add in rois_to_add:
       self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
 
-  def load_ROI_table(self):
-      text_file_path = QFileDialog.getOpenFileName(
-          self, 'Load images', QSettings().value('last_load_text_path'),
-          'Video files (*.csv *.txt)')
-      if not text_file_path:
+  def load_ROI_table_intermediate(self):
+      if self.text_file_path:
+        self.load_ROI_table(self.text_file_path)
+
+  def load_ROI_table(self, text_file_path=None):
+      if not self.isActiveWindow():
           return
-      QSettings().setValue('last_load_text_path', os.path.dirname(text_file_path))
+
+      if not text_file_path:
+          text_file_path = QFileDialog.getOpenFileName(
+              self, 'Load images', QSettings().value('last_load_text_path'),
+              'Video files (*.csv *.txt)')
+          if not text_file_path:
+              return
+          QSettings().setValue('last_load_text_path', os.path.dirname(text_file_path))
 
       roi_table = [] # numpy way: np.empty(shape=(4, ))
       with open(text_file_path, 'rt', encoding='ascii') as csvfile:
@@ -275,31 +292,48 @@ class Widget(QWidget):
       self.data = {self.headers[0]: roi_names, self.headers[1]: roi_sizes,
       self.headers[2]: roi_coord_x, self.headers[3]: roi_coord_y}
       text_file_path_for_project = os.path.join(self.project.path, os.path.basename(text_file_path))
+
+      # Delete all auto_ROIs
+      for auto_roi in [fileinfo for fileinfo in self.project.files if fileinfo['type'] == 'auto_roi']:
+          try:
+              os.remove(auto_roi['path'])
+          except:
+              qtutil.critical('Could not delete previous ROI '
+                              + auto_roi['path'] + '. Please delete manually before continuing')
+              return
+          # detach
+          self.project.files[:] = [
+              f for f in self.project.files
+              if f['path'] != auto_roi['path']
+              ]
+          self.project.save()
+          # self.reload_plugins.emit()
+
       # for now only support having one roi_table associated per project
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
-        if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
-            if not (os.path.normpath(text_file_path) ==
-                        os.path.normpath(text_file_path_for_project)):
-                copyfile(text_file_path, text_file_path_for_project)
-            self.project.files.append({
-            'path': text_file_path_for_project,
-            'type': 'roi_table',
-            'source_video': self.video_path,
-            'name': os.path.basename(text_file_path)
-          })
-        else:
-          # Replace old values if the same file with different values is given
-          for i, item in enumerate(self.project.files):
-              if item['path'] == text_file_path_for_project:
-                  self.project.files[i] = {
-                  'path': text_file_path_for_project,
-                  'type': 'roi_table',
-                  'source_video': self.video_path,
-                  'name': os.path.basename(text_file_path)
-              }
+        # if text_file_path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
+        try:
+            copyfile(text_file_path, text_file_path_for_project)
+        except:
+            qtutil.critical('Could not copy '
+                            + text_file_path + ' to ' + text_file_path_for_project +
+                            '. Please do this manually and try again')
+        self.project.files.append({
+        'path': text_file_path_for_project,
+        'type': 'roi_table',
+        'source_video': self.video_path,
+        'name': os.path.basename(text_file_path)
+        })
       else:
           # Replace old table with new one
-          # todo: remove duplicates
+          if not (os.path.normpath(text_file_path) ==
+                      os.path.normpath(text_file_path_for_project)):
+              try:
+                copyfile(text_file_path, text_file_path_for_project)
+              except:
+                  qtutil.critical('Could not copy '
+                                  + text_file_path + ' to ' + text_file_path_for_project +
+                                  '. Please do this manually and try again')
           for i, item in enumerate(self.project.files):
               if item['type'] == 'roi_table':
                   self.project.files[i] = {
@@ -371,22 +405,28 @@ class Widget(QWidget):
       return
 
     path = os.path.join(self.project.path, name + '.roi')
+    #if self.view.vb.isActive():
     self.view.vb.saveROI(path)
     # TODO check if saved, notifiy user of save and save location (really needed if they can simply export?)
     if path not in [self.project.files[x]['path'] for x in range(len(self.project.files))]:
       self.project.files.append({
         'path': path,
-        'type': 'roi',
+        'type': 'auto_roi',
         'source_video': self.video_path,
         'name': name
       })
     else:
       for i, file in enumerate(self.project.files):
         if file['path'] == path:
-          self.project.files[i]['source_video'] = self.video_path
+          self.project.files[i] = {
+              'path': path,
+              'type': 'auto_roi',
+              'source_video': self.video_path,
+              'name': name
+          }
     self.project.save()
 
-    roi_names = [f['name'] for f in self.project.files if f['type'] == 'roi']
+    roi_names = [f['name'] for f in self.project.files if f['type'] == 'auto_roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
         self.roi_list.model().appendRoi(roi_name)
