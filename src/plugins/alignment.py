@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 
 import imreg_dft as ird
+import functools
 import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
+from .util import mse_ui_elements as mue
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
 class Labels:
-    pass
+    reference_frame_index_label = "Reference frame"
     # start_cut_off_label = 'Cut off from start'
     # end_cut_off_label = 'Cut off from end'
 
 class Defaults:
-    pass
+    video_list_index_default = 0
     # start_cut_off_default = 0
     # end_cut_off_default = 0
 
@@ -29,21 +31,29 @@ class Widget(QWidget):
         self.project = project
 
         # define widgets and data
+        self.selected_videos = []
+        self.shown_video_path = None
         self.left = QFrame()
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
-        self.video_list = MyListView()
+        self.video_list = mue.Video_Selector()
+        # self.video_list = MyListView()
         self.ref_no = QSpinBox()
-
-        self.setup_ui()
-
-        self.selected_videos = []
-        self.shown_video_path = None
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
         self.video_list.doubleClicked.connect(self.video_triggered)
-        pfs.refresh_all_list(self.project, self.video_list)
+
+        self.setup_ui()
+        if isinstance(plugin_position, int):
+            self.params = project.pipeline[self.plugin_position]
+            assert (self.params['name'] == 'alignment')
+            self.setup_param_signals()
+            self.setup_params()
+            pfs.refresh_all_list(self.project, self.video_list, self.params[Labels.reference_frame_index_label][0])
+
+
+
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -96,6 +106,29 @@ class Widget(QWidget):
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
+
+    def setup_params(self):
+        if len(self.params) == 1:
+            self.update_plugin_params(Labels.reference_frame_index_label, Defaults.video_list_index_default)
+        pass
+        # self.video_list.currentChanged(self.video_list.model().index(
+        #     self.params[Labels.reference_frame_index_label][0], 0), self.video_list.model().index(0, 0))
+        #self.video_list.currentChanged()
+        #self.video_list.setCurrentIndex(self.params[Labels.reference_frame_index_label])
+
+    def setup_param_signals(self):
+        self.video_list.selectionModel().selectionChanged.connect(
+            functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+        # This gets you the name and index connected to whatever function
+        # self.video_list.active_vid_changed[str, int].connect(
+        #     functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+
+    def intermediate_update_plugin_params(self, key, selected, deselected):
+        val = [v.row() for v in self.video_list.selectedIndexes()]
+        self.update_plugin_params(key, val)
+
+    def update_plugin_params(self, key, val):
+        pfs.update_plugin_params(self, key, val)
 
     def compute_ref_frame(self):
         if not self.selected_videos:
@@ -217,5 +250,5 @@ class MyPlugin:
         self.name = 'Alignment'
         self.widget = Widget(project, plugin_position)
 
-    def run(self):
+    def run(self, input_paths):
         pass

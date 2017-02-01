@@ -59,7 +59,7 @@ def change_origin(project, video_path, origin):
     project.save()
 
 # Always ensure all reference_frames come first in the list
-def refresh_all_list(project, video_list, last_manips_to_display=['All']):
+def refresh_all_list(project, video_list, index, last_manips_to_display=['All']):
     video_list.model().clear()
     for f in project.files:
         item = QStandardItem(f['name'])
@@ -77,7 +77,7 @@ def refresh_all_list(project, video_list, last_manips_to_display=['All']):
         elif f['manipulations'] != []:
             if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
                 video_list.model().appendRow(item)
-    video_list.setCurrentIndex(video_list.model().index(0, 0))
+    video_list.setCurrentIndex(video_list.model().index(index, 0))
 
 def refresh_video_list(project, video_list, last_manips_to_display=['All']):
     video_list.model().clear()
@@ -166,4 +166,9 @@ def video_triggered(widget, index):
     filename = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
     dialog = PlayerDialog(widget.project, filename, widget)
     dialog.show()
-    #widget.open_dialogs.append(dialog)
+    # widget.open_dialogs.append(dialog)
+
+def update_plugin_params(widget, key, val):
+    widget.params[key] = val
+    widget.project.pipeline[widget.plugin_position] = widget.params
+    widget.project.save()

@@ -85,8 +85,6 @@ class Sidebar(QWidget):
     pb.clicked.connect(self.open_datadialog_requested)
     vbox.addWidget(pb)
 
-
-
     vbox.setStretch(0, 0)
     vbox.setStretch(1, 0)
     vbox.setStretch(2, 0)
@@ -294,8 +292,8 @@ class MainWindow(QMainWindow):
     self.datadialog.exec_()
 
   def automate_pipeline(self):
-      qtutil.info('Coming Soon')
-      return
+      # qtutil.info('Coming Soon')
+      # return
 
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
