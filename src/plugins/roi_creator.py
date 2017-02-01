@@ -11,10 +11,15 @@ from PyQt4.QtGui import *
 from .util import fileloader
 from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
-
+import functools
 sys.path.append('..')
 import qtutil
 
+class Labels:
+    reference_frame_index_label = "ROIs"
+
+class Defaults:
+    video_list_index_default = [0]
 
 # todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
@@ -73,28 +78,19 @@ class Widget(QWidget):
     self.plugin_position = plugin_position
     self.project = project
 
-   # define ui components and global data
+    # define ui components and global data
     self.view = MyGraphicsView(self.project)
     self.video_list = QListView()
     self.roi_list = QListView()
     self.left = QFrame()
     self.right = QFrame()
 
-    self.setup_ui()
-
-    self.selected_videos = []
-
     self.video_list.setModel(QStandardItemModel())
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
     self.video_list.doubleClicked.connect(self.video_triggered)
-    for f in project.files:
-      if f['type'] != 'video':
-        continue
-      self.video_list.model().appendRow(QStandardItem(f['name']))
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
-    model = RoiItemModel() 
+    model = RoiItemModel()
     model.textChanged.connect(self.roi_item_changed)
     self.roi_list.setModel(model)
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -102,6 +98,23 @@ class Widget(QWidget):
     self.selected_roi_changed_flag = 0
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
+
+    self.setup_ui()
+    if isinstance(plugin_position, int):
+      self.params = project.pipeline[self.plugin_position]
+      assert (self.params['name'] == 'roi_creator')
+      self.setup_param_signals()
+      self.setup_params()
+
+    self.selected_videos = []
+
+
+    for f in project.files:
+      if f['type'] != 'video':
+        continue
+      self.video_list.model().appendRow(QStandardItem(f['name']))
+    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       model.appendRoi(roi_name)
@@ -173,6 +186,22 @@ class Widget(QWidget):
 
   def selected_video_changed(self, selected, deselected):
       pfs.selected_video_changed_multi(self, selected, deselected)
+
+  def setup_params(self):
+      if len(self.params) == 1:
+          self.update_plugin_params(Labels.reference_frame_index_label, Defaults.video_list_index_default)
+      pass
+
+  def setup_param_signals(self):
+      self.roi_list.selectionModel().selectionChanged.connect(
+          functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+
+  def intermediate_update_plugin_params(self, key, selected, deselected):
+      val = [v.row() for v in self.roi_list.selectedIndexes()]
+      self.update_plugin_params(key, val)
+
+  def update_plugin_params(self, key, val):
+      pfs.update_plugin_params(self, key, val)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
