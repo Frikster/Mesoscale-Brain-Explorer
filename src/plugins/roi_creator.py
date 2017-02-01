@@ -19,7 +19,14 @@ class Labels:
     reference_frame_index_label = "ROIs"
 
 class Defaults:
-    video_list_index_default = [0]
+    video_list_index_default = []
+
+# class myQStringListModel(QStringListModel):
+#     def __init__(self, parent=None):
+#         super(myQStringListModel, self).__init__(parent)
+#
+#     def createIndex(self, *args, **kwargs):
+
 
 # todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
@@ -79,6 +86,7 @@ class Widget(QWidget):
     self.project = project
 
     # define ui components and global data
+    self.selected_videos = []
     self.view = MyGraphicsView(self.project)
     self.video_list = QListView()
     self.roi_list = QListView()
@@ -99,15 +107,6 @@ class Widget(QWidget):
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
 
-    self.setup_ui()
-    if isinstance(plugin_position, int):
-      self.params = project.pipeline[self.plugin_position]
-      assert (self.params['name'] == 'roi_creator')
-      self.setup_param_signals()
-      self.setup_params()
-
-    self.selected_videos = []
-
 
     for f in project.files:
       if f['type'] != 'video':
@@ -120,6 +119,13 @@ class Widget(QWidget):
       model.appendRoi(roi_name)
     #self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_project_roi)
+
+    self.setup_ui()
+    if isinstance(plugin_position, int):
+      self.params = project.pipeline[self.plugin_position]
+      assert (self.params['name'] == 'roi_creator')
+      self.setup_param_signals()
+      self.setup_params()
 
   def video_triggered(self, index):
       pfs.video_triggered(self, index)
@@ -190,7 +196,12 @@ class Widget(QWidget):
   def setup_params(self):
       if len(self.params) == 1:
           self.update_plugin_params(Labels.reference_frame_index_label, Defaults.video_list_index_default)
-      pass
+      roi_indices = self.params[Labels.reference_frame_index_label]
+      theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
+                          roi_indices]
+      for Qindex in theQIndexObjects:
+          self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+
 
   def setup_param_signals(self):
       self.roi_list.selectionModel().selectionChanged.connect(
