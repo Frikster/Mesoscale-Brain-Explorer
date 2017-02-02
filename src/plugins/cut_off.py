@@ -121,6 +121,10 @@ class Widget(QWidget):
                                   if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
         for item in manip_items:
             item.setCheckState(Qt.Checked)
+        not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                       if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+        for item in not_checked:
+            item.setCheckState(Qt.Unchecked)
         self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
         self.right_cut_off.setValue(self.params[Labels.end_cut_off_label])
 
@@ -245,7 +249,7 @@ class MyPlugin:
         self.name = 'Cut off'
         self.widget = Widget(project, plugin_position)
 
-    def run(self, input_paths):
+    def run(self, input_paths = None):
         self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
         self.widget.cut_off(input_paths)
         # todo notes:

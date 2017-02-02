@@ -378,7 +378,7 @@ class MyPlugin:
     self.name = 'Import Image Stacks'
     self.widget = Widget(project, plugin_position)
 
-  def run(self, input_paths = None):
+  def run(self):
     return self.widget.new_video()
 
 if __name__ == '__main__':
