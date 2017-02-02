@@ -15,6 +15,19 @@ def load_npy(filename):
   # frames[np.isnan(frames)] = 0
   return frames
 
+def get_name_after_no_overwrite(name_before, manip, project):
+    """check if a file with same name already exists and *don't* overwrite if it does"""
+    name_after = str(name_before + '_' + manip + '.')
+    name_after_copy = str(name_before + '_' + manip + '(')
+    file_after = [files for files in project.files if name_after in files['path'] or name_after_copy in files['name']]
+
+    if len(file_after) > 0:
+        name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
+    else:
+        name_after = str(name_before + '_' + manip)
+
+    return name_after
+
 def save_file(path, data):
   if os.path.isfile(path):
     os.remove(path)

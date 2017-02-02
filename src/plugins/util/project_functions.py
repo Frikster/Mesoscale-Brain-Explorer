@@ -9,6 +9,7 @@ from PyQt4.QtGui import *
 
 from .fileloader import load_reference_frame
 from .mse_ui_elements import CheckableComboBox, PlayerDialog
+from . import fileloader
 
 
 def save_project(video_path, project, frames, manip, file_type):
@@ -17,6 +18,7 @@ def save_project(video_path, project, frames, manip, file_type):
     assert(len(file_before) == 1)
     file_before = file_before[0]
 
+    fileloader.get_name_after_no_overwrite(name_before, manip, project)
     # check if one with same name already exists and don't overwrite if it does
     name_after = str(name_before + '_' + manip + '.')
     name_after_copy = str(name_before + '_' + manip + '(')
@@ -89,7 +91,7 @@ def change_origin(project, video_path, origin):
 #         video_list.setCurrentIndex(video_list.model().index(indices[0], 0))
 
 
-def refresh_list(project, ui_list, indices, types, last_manips_to_display=['All']):
+def refresh_list(project, ui_list, indices, types, last_manips_to_display):
     ui_list.model().clear()
     for type in types:
         for f in project.files:

@@ -222,7 +222,8 @@ class Widget(QWidget):
 
             num_frames = len(frames_mmap)-cut_off_end-cut_off_start
             name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = str(name_before + '_' + 'cut-off')
+            name_after = fileloader.get_name_after_no_overwrite(name_before, 'cut-off', self.project)
+            # name_after = str(name_before + '_' + 'cut-off')
             path = str(os.path.join(self.project.path, name_after) + '.npy')
             fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
             frames = np.load(path, mmap_mode='r+')
@@ -234,6 +235,7 @@ class Widget(QWidget):
             pfs.save_project(video_path, self.project, None, 'cut-off', 'video')
             pfs.refresh_list(self.project, self.video_list,
                              self.params[Labels.video_list_indices_label],
+                             Defaults.list_display_type,
                              self.params[Labels.last_manips_to_display_label])
         global_callback(1)
 
