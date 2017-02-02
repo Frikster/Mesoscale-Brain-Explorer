@@ -20,7 +20,7 @@ def save_project(video_path, project, frames, manip, file_type):
     # check if one with same name already exists and don't overwrite if it does
     name_after = str(name_before + '_' + manip + '.')
     name_after_copy = str(name_before + '_' + manip + '(')
-    file_after = [files for files in project.files if name_after in files['name'] or name_after_copy in files['name']]
+    file_after = [files for files in project.files if name_after in files['path'] or name_after_copy in files['name']]
 
     if len(file_after) > 0:
         name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
@@ -48,6 +48,8 @@ def save_project(video_path, project, frames, manip, file_type):
             'manipulations': str([manip]),
             'name': name_after
         })
+    file_after_test = [files for files in project.files if files['name'] == name_after]
+    assert (len(file_after_test) == 1)
     project.save()
 
 def change_origin(project, video_path, origin):
@@ -59,39 +61,56 @@ def change_origin(project, video_path, origin):
     project.save()
 
 # Always ensure all reference_frames come first in the list
-def refresh_all_list(project, video_list, index, last_manips_to_display=['All']):
-    video_list.model().clear()
-    for f in project.files:
-        item = QStandardItem(f['name'])
-        item.setDropEnabled(False)
-        if f['type'] != 'ref_frame':
-            continue
-        video_list.model().appendRow(item)
-    for f in project.files:
-        item = QStandardItem(f['name'])
-        item.setDropEnabled(False)
-        if f['type'] != 'video':
-            continue
-        if 'All' in last_manips_to_display:
-            video_list.model().appendRow(item)
-        elif f['manipulations'] != []:
-            if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
-                video_list.model().appendRow(item)
-    video_list.setCurrentIndex(video_list.model().index(index, 0))
+# def refresh_all_list(project, video_list, indices, last_manips_to_display=['All']):
+#     video_list.model().clear()
+#     for f in project.files:
+#         item = QStandardItem(f['name'])
+#         item.setDropEnabled(False)
+#         if f['type'] != 'ref_frame':
+#             continue
+#         video_list.model().appendRow(item)
+#     for f in project.files:
+#         item = QStandardItem(f['name'])
+#         item.setDropEnabled(False)
+#         if f['type'] != 'video':
+#             continue
+#         if 'All' in last_manips_to_display:
+#             video_list.model().appendRow(item)
+#         elif f['manipulations'] != []:
+#             if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+#                 video_list.model().appendRow(item)
+#
+#     if len(indices) > 1:
+#         theQIndexObjects = [video_list.model().createIndex(rowIndex, 0) for rowIndex in
+#                             indices]
+#         for Qindex in theQIndexObjects:
+#             video_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+#     else:
+#         video_list.setCurrentIndex(video_list.model().index(indices[0], 0))
 
-def refresh_video_list(project, video_list, last_manips_to_display=['All']):
-    video_list.model().clear()
-    for f in project.files:
-        item = QStandardItem(f['name'])
-        item.setDropEnabled(False)
-        if f['type'] != 'video':
-            continue
-        if 'All' in last_manips_to_display:
-            video_list.model().appendRow(QStandardItem(item))
-        elif f['manipulations'] != []:
-            if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
-                video_list.model().appendRow(item)
-    video_list.setCurrentIndex(video_list.model().index(0, 0))
+
+def refresh_list(project, ui_list, indices, types, last_manips_to_display=['All']):
+    ui_list.model().clear()
+    for type in types:
+        for f in project.files:
+            item = QStandardItem(f['name'])
+            item.setDropEnabled(False)
+            if f['type'] != type:
+                continue
+            if 'All' in last_manips_to_display:
+                ui_list.model().appendRow(QStandardItem(item))
+            elif f['manipulations'] != []:
+                if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+                    ui_list.model().appendRow(item)
+
+    if len(indices) > 1:
+        theQIndexObjects = [ui_list.model().createIndex(rowIndex, 0) for rowIndex in
+                            indices]
+        for Qindex in theQIndexObjects:
+            ui_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+    else:
+        ui_list.setCurrentIndex(ui_list.model().index(indices[0], 0))
+
 
 def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=False):
     if trigger_item != 0:
@@ -102,10 +121,9 @@ def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=Fals
         if widget.toolbutton.model().item(i, 0).checkState() != 0:
             last_manips_to_display = last_manips_to_display + [widget.toolbutton.itemText(i)]
     if not ref_version:
-        refresh_video_list(widget.project, widget.video_list, last_manips_to_display)
+        refresh_list(widget.project, widget.video_list, [0], ['ref_frame', 'video'], last_manips_to_display)
     else:
-        refresh_all_list(widget.project, widget.video_list, last_manips_to_display)
-
+        refresh_list(widget.project, widget.video_list, [0], ['video'], last_manips_to_display)
 
 def get_project_file_from_key_item(project, key, item):
     file = [files for files in project.files if os.path.normpath(files[key]) == os.path.normpath(item)]
@@ -143,7 +161,7 @@ def get_list_of_project_manips(project):
 
 
 def selected_video_changed_multi(widget, selected, deselected):
-    if not widget.video_list.selectedIndexes():
+    if not widget.video_list.selectedIndexes() or not widget.video_list.currentIndex().data(Qt.DisplayRole):
         return
     # for index in deselected.indexes():
     #     vidpath = str(os.path.join(widget.project.path,
