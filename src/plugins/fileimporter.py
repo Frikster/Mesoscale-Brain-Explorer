@@ -328,14 +328,16 @@ class Widget(QWidget):
         imported_paths = imported_paths + [imported_path]
     return imported_paths
 
-  def new_video(self):
-    filenames = QFileDialog.getOpenFileNames(
-      self, 'Load images', QSettings().value('last_load_data_path'),
-      'Video files (*.npy *.tif *.raw)')
-    if not filenames:
-      return
-    QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
-
+  def new_video(self, input_paths = None):
+    if not input_paths:
+        filenames = QFileDialog.getOpenFileNames(
+          self, 'Load images', QSettings().value('last_load_data_path'),
+          'Video files (*.npy *.tif *.raw)')
+        if not filenames:
+          return
+        QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
+    else:
+        filenames = input_paths
     proj_file_names = [self.project.files[i]['name'] for i in range(len(self.project.files))]
     new_file_names = [os.path.splitext(os.path.basename(filename))[0] for filename in filenames]
     tester = [name for name in proj_file_names if name in new_file_names]
@@ -347,7 +349,14 @@ class Widget(QWidget):
         return
     return self.import_files(filenames)
 
-
+  def get_input_paths(self):
+      filenames = QFileDialog.getOpenFileNames(
+          self, 'Load images', QSettings().value('last_load_data_path'),
+          'Video files (*.npy *.tif *.raw)')
+      if not filenames:
+          return
+      QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
+      return filenames
 
   def bin_ndarray(self, ndarray, new_shape, progress_callback, operation='sum'):
     """
@@ -394,6 +403,9 @@ class MyPlugin:
 
   def run(self):
     return self.widget.new_video()
+
+  def get_input_paths(self):
+    return self.widget.get_input_paths()
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)

@@ -229,15 +229,15 @@ class Widget(QWidget):
             reference_frame_file = self.selected_videos
             if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
                     len(reference_frame_file):
-                qCritical("Please only select a single reference frame for each alignment plugin used."
+                qutil.critical("Please only select a single reference frame for each alignment plugin used."
                           "Automation will now close.")
                 return
 
         if len(reference_frame_file) == 0:
-            qCritical("No reference frame selected")
+            qtutil.critical("No reference frame selected")
             return
         if len(reference_frame_file) > 1:
-            qCritical("Multiple reference frames selected. Please only pick one")
+            qtutil.critical("Multiple reference frames selected. Please only pick one")
             return
         assert(len(reference_frame_file) == 1)
         reference_frame_file = reference_frame_file[0]
@@ -327,4 +327,9 @@ class MyPlugin:
         self.widget = Widget(project, plugin_position)
 
     def run(self, input_paths):
-        self.widget.align_clicked(input_paths)
+        return self.widget.align_clicked(input_paths)
+
+    def get_input_paths(self):
+        fs = self.widget.project.files
+        indices = self.widget.params[Labels.video_list_indices_label]
+        return [fs[i]['path'] for i in range(len(fs)) if i in indices]

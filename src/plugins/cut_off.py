@@ -13,7 +13,7 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
 class Labels:
-    video_list_indices_label = 'self.video_list_indices'
+    video_list_indices_label = 'video_list_indices'
     last_manips_to_display_label = 'last_manips_to_display'
     start_cut_off_label = 'Cut off from start'
     end_cut_off_label = 'Cut off from end'
@@ -43,6 +43,8 @@ class Widget(QWidget):
         self.left_cut_off = QSpinBox()
         self.right_cut_off = QSpinBox()
 
+        self.video_list_indices = []
+        self.toolbutton_values = []
         self.open_dialogs = []
         self.selected_videos = []
         self.shown_video_path = None
@@ -193,13 +195,13 @@ class Widget(QWidget):
     #     self.view.show(frame)
 
     def cut_off(self, input_paths = None):
-        if not self.selected_videos:
-            if not input_paths:
+        if not input_paths:
+            if not self.selected_videos:
                 return
             else:
-                selected_videos = input_paths
+                selected_videos = self.selected_videos
         else:
-            selected_videos = self.selected_videos
+            selected_videos = input_paths
 
         progress_global = QProgressDialog('Creating cut offs...', 'Abort', 0, 100, self)
         progress_global.setAutoClose(True)
@@ -209,6 +211,7 @@ class Widget(QWidget):
             progress_global.setValue(x * 100)
             QApplication.processEvents()
 
+        output_paths = []
         total = len(selected_videos)
         for global_i, video_path in enumerate(selected_videos):
             global_callback(global_i / total)
@@ -235,6 +238,7 @@ class Widget(QWidget):
                 callback(i / float(len(frames_mmap)))
                 frames[i] = frame[:, :]
             callback(1)
+            output_paths = output_paths + [path]
             # frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
             pfs.save_project(video_path, self.project, None, 'cut-off', 'video')
             pfs.refresh_list(self.project, self.video_list,
@@ -242,7 +246,7 @@ class Widget(QWidget):
                              Defaults.list_display_type,
                              self.params[Labels.last_manips_to_display_label])
         global_callback(1)
-
+        return output_paths
 
 class MyPlugin:
     def __init__(self, project, plugin_position):
@@ -251,12 +255,17 @@ class MyPlugin:
 
     def run(self, input_paths = None):
         self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
-        self.widget.cut_off(input_paths)
+        return self.widget.cut_off(input_paths)
         # todo notes:
         # automation consists of class Labels, Defaults,
         # setupParams (defaults and set from self.params)
         # setup_param_signals which links to update_plugin_params
         # and finally run with plugin_position param
+        # input and output paths
 
+    def get_input_paths(self):
+        fs = self.widget.project.files
+        indices = self.widget.params[Labels.video_list_indices_label]
+        return [fs[i]['path'] for i in range(len(fs)) if i in indices]
 
 

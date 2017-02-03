@@ -299,8 +299,8 @@ class MainWindow(QMainWindow):
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
       p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
-      input_paths = p.run()
-      for q_model_index in ordered_q_model_indexes[1:]:
+      input_paths = p.get_input_paths()
+      for q_model_index in ordered_q_model_indexes:
           p = self.plugins[q_model_index.data(Qt.UserRole)]
           output_paths = p.run(input_paths)
           input_paths = output_paths
