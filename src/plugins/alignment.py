@@ -183,7 +183,7 @@ class Widget(QWidget):
     def update_plugin_params(self, key, val):
         pfs.update_plugin_params(self, key, val)
 
-    def compute_ref_frame(self): #todo: correct compute reference frame
+    def compute_ref_frame(self):
         if not self.selected_videos:
             qtutil.critical("No files selected")
             return

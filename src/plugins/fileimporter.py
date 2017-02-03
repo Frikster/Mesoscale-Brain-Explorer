@@ -197,7 +197,9 @@ class Widget(QWidget):
     rescale_height = int(height * rescale_value)
     channels = int(self.sb_channel.value())
     channel = int(self.channel.value())
-    path = os.path.splitext(os.path.basename(filename))[0] + '_channel_' + str(channel) + '.npy'
+    # todo: figure out whether channel goes in path name or somehow in
+    # path = os.path.splitext(os.path.basename(filename))[0] + '_channel_' + str(channel) + '.npy'
+    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
     path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
@@ -315,11 +317,11 @@ class Widget(QWidget):
       try:
         imported_path = self.import_file(filename)
       except NotConvertedError:
-        qtutil.warning('Skipping file \'{}\' since not converted.'.format(imported_path))
+        qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
       except FileAlreadyInProjectError as e:
-        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.imported_path))
+        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
       except:
-        qtutil.critical('Import of \'{}\' failed:\n'.format(imported_path) +\
+        qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
           traceback.format_exc())
       else:
         self.listview.model().appendRow(QStandardItem(imported_path))
@@ -333,7 +335,19 @@ class Widget(QWidget):
     if not filenames:
       return
     QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
+
+    proj_file_names = [self.project.files[i]['name'] for i in range(len(self.project.files))]
+    new_file_names = [os.path.splitext(os.path.basename(filename))[0] for filename in filenames]
+    tester = [name for name in proj_file_names if name in new_file_names]
+
+    if tester:
+        qtutil.critical("These files already exist in the project: "
+                        + str(tester) +
+                        " Please change their names if you want to import them")
+        return
     return self.import_files(filenames)
+
+
 
   def bin_ndarray(self, ndarray, new_shape, progress_callback, operation='sum'):
     """
