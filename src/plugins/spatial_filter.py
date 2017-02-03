@@ -210,11 +210,14 @@ class Widget(QWidget):
             def callback(x):
                 progress.setValue(x * 100)
                 QApplication.processEvents()
-            frames = fileloader.load_file(video_path)
+            frames_original = fileloader.load_file(video_path)
+            frames = np.zeros((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]))
             self.kernal_size.setMaximum(np.sqrt(frames[0].size))
-            for frame_no, frame in enumerate(frames):
-                frames[frame_no] = self.filter2_test_j(frame, kernal_size)
+            for frame_no, frame_original in enumerate(frames_original):
+                frames[frame_no] = self.filter2_test_j(frame_original, kernal_size)
                 callback(frame_no / len(frames))
+            frames = frames_original - frames
+
             if not self.project:
                 filename = PyQt4.QtGui.QFileDialog.getSaveFileName(self, 'Choose save location',
                                                                    str(QSettings().value('last_load_data_path')),

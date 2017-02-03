@@ -20,7 +20,7 @@ def save_project(video_path, project, frames, manip, file_type):
     # check if one with same name already exists and don't overwrite if it does
     name_after = str(name_before + '_' + manip + '.')
     name_after_copy = str(name_before + '_' + manip + '(')
-    file_after = [files for files in project.files if name_after in files['name'] or name_after_copy in files['name']]
+    file_after = [files for files in project.files if name_after in files['path'] or name_after_copy in files['name']]
 
     if len(file_after) > 0:
         name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
@@ -48,6 +48,8 @@ def save_project(video_path, project, frames, manip, file_type):
             'manipulations': str([manip]),
             'name': name_after
         })
+    file_after_test = [files for files in project.files if files['name'] == name_after]
+    assert (len(file_after_test) == 1)
     project.save()
 
 def change_origin(project, video_path, origin):
