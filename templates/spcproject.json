@@ -6,6 +6,9 @@
 		"name":"fileimporter"
 	},
 	{
+		"name":"spatial_filter"
+	},
+	{
 		"name":"cut_off"
 	},
 	{

@@ -61,6 +61,15 @@ from .util.mygraphicsview import MyGraphicsView
 #         frames_beam += avg_beam
 #         output[:, i, j] = frames_beam
 
+class Labels:
+    video_list_indices_label = 'video_list_indices'
+    last_manips_to_display_label = 'last_manips_to_display'
+
+class Defaults:
+    video_list_indices_default = [0]
+    last_manips_to_display_default = ['All']
+    list_display_type = ['video']
+
 class Widget(QWidget):
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -70,6 +79,7 @@ class Widget(QWidget):
         #                                   nopython=True)(temporal_filter_beams)
         if not project:
             return
+        self.plugin_position = plugin_position
         if project == "standalone":
             filenames = QFileDialog.getOpenFileNames(
                 self, 'Load data', str(QSettings().value('last_load_data_path')),
@@ -93,7 +103,8 @@ class Widget(QWidget):
         self.kernal_size = QSpinBox()
         self.spat_filter_pb = QPushButton('&Apply Filter')
 
-        self.setup_ui()
+        self.video_list_indices = []
+        self.toolbutton_values = []
         self.selected_videos = []
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged[QItemSelection,
@@ -108,8 +119,20 @@ class Widget(QWidget):
         else:
             for f in filenames:
                 self.video_list.model().appendRow(QStandardItem(f))
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
         self.spat_filter_pb.clicked.connect(self.filter_clicked)
+
+        self.setup_ui()
+        if isinstance(plugin_position, int):
+            self.params = project.pipeline[self.plugin_position]
+            assert (self.params['name'] == 'spatial_filter')
+            self.setup_param_signals()
+            try:
+                self.setup_params()
+            except:
+                self.setup_params(reset=True)
+            pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                             Defaults.list_display_type, self.toolbutton_values)
+
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -144,6 +167,48 @@ class Widget(QWidget):
         hbox_global = QHBoxLayout()
         hbox_global.addWidget(splitter)
         self.setLayout(hbox_global)
+
+    def setup_params(self, reset=False):
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
+            self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
+        self.video_list_indices = self.params[Labels.video_list_indices_label]
+        self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
+        manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                                  if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
+        for item in manip_items:
+            item.setCheckState(Qt.Checked)
+        not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                       if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+        for item in not_checked:
+            item.setCheckState(Qt.Unchecked)
+
+
+    def setup_param_signals(self):
+        self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
+        self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
+
+    def prepare_video_list_for_update(self, selected, deselected):
+        val = [v.row() for v in self.video_list.selectedIndexes()]
+        self.update_plugin_params(Labels.video_list_indices_label, val)
+
+    def prepare_toolbutton_for_update(self, trigger_item):
+        val = self.params[Labels.last_manips_to_display_label]
+        selected = self.toolbutton.itemText(trigger_item)
+        if selected not in val:
+            val = val + [selected]
+            if trigger_item != 0:
+                val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
+        else:
+            val = [manip for manip in val if manip != selected]
+
+        self.update_plugin_params(Labels.last_manips_to_display_label, val)
+
+
+    def update_plugin_params(self, key, val):
+        pfs.update_plugin_params(self, key, val)
+
+
 
     def refresh_video_list_via_combo_box(self, trigger_item=None):
         pfs.refresh_video_list_via_combo_box(self, trigger_item)
@@ -213,8 +278,8 @@ class Widget(QWidget):
             frames_original = fileloader.load_file(video_path)
             frames = np.zeros((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]))
             self.kernal_size.setMaximum(np.sqrt(frames[0].size))
-            for frame_no, frame in enumerate(frames):
-                frames[frame_no] = self.filter2_test_j(frame, kernal_size)
+            for frame_no, frame_original in enumerate(frames_original):
+                frames[frame_no] = self.filter2_test_j(frame_original, kernal_size)
                 callback(frame_no / len(frames))
             frames = frames_original - frames
 
@@ -229,7 +294,10 @@ class Widget(QWidget):
                 msgBox.exec_()
             else:
                 pfs.save_project(video_path, self.project, frames, 'spatial-filter', 'video')
-                pfs.refresh_list(self.project, self.video_list)
+                pfs.refresh_list(self.project, self.video_list,
+                                 self.params[Labels.video_list_indices_label],
+                                 Defaults.list_display_type,
+                                 self.params[Labels.last_manips_to_display_label])
             callback(1)
         global_callback(1)
 
