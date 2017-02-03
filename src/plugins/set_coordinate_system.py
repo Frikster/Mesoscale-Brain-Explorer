@@ -35,7 +35,7 @@ class Widget(QWidget):
     self.video_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_video_changed)
     self.video_list.doubleClicked.connect(self.video_triggered)
-    pfs.refresh_video_list(self.project, self.video_list)
+    pfs.refresh_list(self.project, self.video_list)
 
     # for f in project.files:
     #   if f['type'] != 'video':

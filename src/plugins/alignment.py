@@ -3,6 +3,7 @@
 import imreg_dft as ird
 import functools
 import numpy as np
+import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -13,14 +14,13 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
 class Labels:
-    reference_frame_index_label = "Reference frame"
-    # start_cut_off_label = 'Cut off from start'
-    # end_cut_off_label = 'Cut off from end'
+    video_list_indices_label = 'self.video_list_indices'
+    last_manips_to_display_label = 'last_manips_to_display'
 
 class Defaults:
-    video_list_index_default = 0
-    # start_cut_off_default = 0
-    # end_cut_off_default = 0
+    video_list_indices_default = [0]
+    last_manips_to_display_default = ['All']
+    list_display_type = ['ref_frame', 'video']
 
 class Widget(QWidget):
     def __init__(self, project, plugin_position, parent=None):
@@ -33,12 +33,17 @@ class Widget(QWidget):
         # define widgets and data
         self.selected_videos = []
         self.shown_video_path = None
+        self.shown_video_path = None
         self.left = QFrame()
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
         self.video_list = mue.Video_Selector()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         # self.video_list = MyListView()
-        self.ref_no = QSpinBox()
+        self.ref_no_min = QSpinBox()
+        self.ref_no_max = QSpinBox()
+        self.reference_frame = None
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
@@ -49,11 +54,12 @@ class Widget(QWidget):
             self.params = project.pipeline[self.plugin_position]
             assert (self.params['name'] == 'alignment')
             self.setup_param_signals()
-            self.setup_params()
-            pfs.refresh_all_list(self.project, self.video_list, self.params[Labels.reference_frame_index_label][0])
-
-
-
+            try:
+                self.setup_params()
+            except:
+                self.setup_params(reset=True)
+            pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                             Defaults.list_display_type, self.toolbutton_values)
 
     def video_triggered(self, index):
         pfs.video_triggered(self, index)
@@ -64,8 +70,6 @@ class Widget(QWidget):
         self.left.setLayout(vbox_view)
 
         vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
         vbox.addWidget(self.toolbutton)
         vbox.addWidget(QLabel('Choose video:'))
@@ -73,12 +77,27 @@ class Widget(QWidget):
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-        max_cut_off = 5000
-        vbox.addWidget(QLabel('Choose frame used for reference averaged across all selected  files'))
-        self.ref_no.setMinimum(0)
-        self.ref_no.setMaximum(max_cut_off)
-        self.ref_no.setValue(400)
-        vbox.addWidget(self.ref_no)
+
+        def min_handler(max_of_min):
+            self.ref_no_min.setMaximum(max_of_min)
+        def max_handler(min_of_max):
+            self.ref_no_max.setMinimum(min_of_max)
+        self.ref_no_min.valueChanged[int].connect(max_handler)
+        self.ref_no_max.valueChanged[int].connect(min_handler)
+        hbox = QHBoxLayout()
+        vbox.addWidget(QLabel('Set range averaged over to compute reference frame'))
+        self.ref_no_min.setMinimum(0)
+        self.ref_no_min.setMaximum(405)
+        self.ref_no_min.setValue(400)
+        hbox.addWidget(self.ref_no_min)
+        to = QLabel('to')
+        to.setAlignment(Qt.AlignCenter)
+        hbox.addWidget(to)
+        self.ref_no_max.setMaximum(100000)
+        self.ref_no_max.setValue(405)
+        hbox.addWidget(self.ref_no_max)
+        vbox.addLayout(hbox)
+
         pb = QPushButton('&Compute Reference Frame')
         pb.clicked.connect(self.compute_ref_frame)
         vbox.addWidget(pb)
@@ -102,62 +121,118 @@ class Widget(QWidget):
         # self.setLayout(hbox)
 
     def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item, ref_version=True)
+        pfs.refresh_video_list_via_combo_box(self, Defaults.list_display_type, trigger_item)
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def setup_params(self):
-        if len(self.params) == 1:
-            self.update_plugin_params(Labels.reference_frame_index_label, Defaults.video_list_index_default)
-        pass
-        # self.video_list.currentChanged(self.video_list.model().index(
+    def setup_params(self, reset=False):
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
+            self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
+        self.video_list_indices = self.params[Labels.video_list_indices_label]
+        self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
+        manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                                  if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
+        for item in manip_items:
+            item.setCheckState(Qt.Checked)
+        not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                       if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+        for item in not_checked:
+            item.setCheckState(Qt.Unchecked)
+            # The following works but doesn't set the brain image to pyqtgraph scene.
+        #ref_frame_indices = self.params[Labels.reference_frame_index_label]
+        # if len(ref_frame_indices) > 1:
+        #     theQIndexObjects = [self.video_list.model().createIndex(rowIndex, 0) for rowIndex in
+        #                         ref_frame_indices]
+        #     for Qindex in theQIndexObjects:
+        #         self.video_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+        # else:
+        #     self.video_list.setCurrentIndex(self.video_list.model().index(ref_frame_indices[0], 0))
+
+    # self.video_list.currentChanged(self.video_list.model().index(
         #     self.params[Labels.reference_frame_index_label][0], 0), self.video_list.model().index(0, 0))
         #self.video_list.currentChanged()
         #self.video_list.setCurrentIndex(self.params[Labels.reference_frame_index_label])
 
     def setup_param_signals(self):
-        self.video_list.selectionModel().selectionChanged.connect(
-            functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+        self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
+        self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
         # This gets you the name and index connected to whatever function
         # self.video_list.active_vid_changed[str, int].connect(
-        #     functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+        #     functools.partial(self.prepare_video_list_for_update, Labels.reference_frame_index_label))
 
-    def intermediate_update_plugin_params(self, key, selected, deselected):
+    def prepare_video_list_for_update(self, selected, deselected):
         val = [v.row() for v in self.video_list.selectedIndexes()]
-        self.update_plugin_params(key, val)
+        if not val:
+            val = Defaults.video_list_indices_default
+        self.update_plugin_params(Labels.video_list_indices_label, val)
+
+    def prepare_toolbutton_for_update(self, trigger_item):
+        val = self.params[Labels.last_manips_to_display_label]
+        selected = self.toolbutton.itemText(trigger_item)
+        if selected not in val:
+            val = val + [selected]
+            if trigger_item != 0:
+                val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
+        else:
+            val = [manip for manip in val if manip != selected]
+
+        self.update_plugin_params(Labels.last_manips_to_display_label, val)
 
     def update_plugin_params(self, key, val):
         pfs.update_plugin_params(self, key, val)
 
-    def compute_ref_frame(self):
+    def compute_ref_frame(self): #todo: correct compute reference frame
         if not self.selected_videos:
-            qCritical("No files selected")
+            qtutil.critical("No files selected")
             return
 
-        ref_no = self.ref_no.value()
+        if len(self.selected_videos) > 1:
+            qtutil.critical("Select only one file to compute the reference frame from")
+            return
+
+        if 'ref_frame' in self.selected_videos[0]:
+            qtutil.critical("Cannot compute reference frame of reference frame")
+            return
+
+        ref_no_min = self.ref_no_min.value()
+        ref_no_max = self.ref_no_max.value()
 
         # find size, assuming all files in project have the same size
         frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
+        reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
+        self.reference_frame = np.mean(reference_frame_range, axis=0)
+
         frame_no, h, w = frames_mmap.shape
+        # summed_reference_frame = np.zeros((h, w))
+        # divide_frame = np.full((h, w), len(self.selected_videos))
+        # for video_path in self.selected_videos:
+        #     frames_mmap = np.load(video_path, mmap_mode='c')
+        #     reference_frame = np.array(frames_mmap[ref_no])
+        #     summed_reference_frame = np.add(summed_reference_frame, reference_frame)
+        #
+        # summed_reference_frame = np.divide(summed_reference_frame, divide_frame)
+        self.reference_frame = np.reshape(self.reference_frame, (1, h, w))
+        pfs.save_project(self.selected_videos[0], self.project, self.reference_frame, 'ref_frame', 'ref_frame')
+        pfs.refresh_list(self.project, self.video_list,
+                         self.params[Labels.video_list_indices_label],
+                         Defaults.list_display_type,
+                         self.params[Labels.last_manips_to_display_label])
 
-        summed_reference_frame = np.zeros((h, w))
-        divide_frame = np.full((h, w), len(self.selected_videos))
-        for video_path in self.selected_videos:
-            frames_mmap = np.load(video_path, mmap_mode='c')
-            reference_frame = np.array(frames_mmap[ref_no])
-            summed_reference_frame = np.add(summed_reference_frame, reference_frame)
+    def align_clicked(self, input_files = None):
+        if not input_files:
+            filenames = self.selected_videos
+            reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+        else:
+            filenames = input_files
+            reference_frame_file = self.selected_videos
+            if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
+                    len(reference_frame_file):
+                qCritical("Please only select a single reference frame for each alignment plugin used."
+                          "Automation will now close.")
+                return
 
-        summed_reference_frame = np.divide(summed_reference_frame, divide_frame)
-        self.reference_frame = np.reshape(summed_reference_frame, (1, h, w))
-        pfs.save_project(video_path, self.project, self.reference_frame, 'ref_frame', 'ref_frame')
-
-        # Refresh showing reference_frame
-        pfs.refresh_all_list(self.project, self.video_list)
-
-    def align_clicked(self):
-        filenames = self.selected_videos
-        reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
         if len(reference_frame_file) == 0:
             qCritical("No reference frame selected")
             return
@@ -170,7 +245,7 @@ class Widget(QWidget):
         assert ('ref_frame' in reference_frame_file)
         reference_frame = np.load(reference_frame_file)[0]
         not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
-        self.align_videos(not_reference_frames, reference_frame)
+        return self.align_videos(not_reference_frames, reference_frame)
 
         # for filename in filenames:
         #     if filename in [f['path'] for f in self.project.files]:
@@ -236,7 +311,8 @@ class Widget(QWidget):
                 return
             shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
-            pfs.refresh_all_list(self.project, self.video_list)
+            pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                             Defaults.list_display_type, self.toolbutton_values)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)
@@ -251,4 +327,4 @@ class MyPlugin:
         self.widget = Widget(project, plugin_position)
 
     def run(self, input_paths):
-        pass
+        self.widget.align_clicked(input_paths)

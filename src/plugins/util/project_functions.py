@@ -10,7 +10,7 @@ from PyQt4.QtGui import *
 from .fileloader import load_reference_frame
 from .mse_ui_elements import CheckableComboBox, PlayerDialog
 from . import fileloader
-
+from . import constants
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -114,7 +114,7 @@ def refresh_list(project, ui_list, indices, types, last_manips_to_display):
         ui_list.setCurrentIndex(ui_list.model().index(indices[0], 0))
 
 
-def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=False):
+def refresh_video_list_via_combo_box(widget, list_display_type, trigger_item=None):
     if trigger_item != 0:
         widget.toolbutton.model().item(0, 0).setCheckState(Qt.Unchecked)
 
@@ -122,10 +122,7 @@ def refresh_video_list_via_combo_box(widget, trigger_item=None, ref_version=Fals
     for i in range(widget.toolbutton.count()):
         if widget.toolbutton.model().item(i, 0).checkState() != 0:
             last_manips_to_display = last_manips_to_display + [widget.toolbutton.itemText(i)]
-    if not ref_version:
-        refresh_list(widget.project, widget.video_list, [0], ['ref_frame', 'video'], last_manips_to_display)
-    else:
-        refresh_list(widget.project, widget.video_list, [0], ['video'], last_manips_to_display)
+    refresh_list(widget.project, widget.video_list, [0], list_display_type, last_manips_to_display)
 
 def get_project_file_from_key_item(project, key, item):
     file = [files for files in project.files if os.path.normpath(files[key]) == os.path.normpath(item)]
@@ -154,8 +151,9 @@ def flatten(foo):
         else:
             yield x
 
+#todo: fix toolbutton...
 def get_list_of_project_manips(project):
-    vid_files = [f for f in project.files if f['type'] == 'video']
+    vid_files = [f for f in project.files if f['type'] in constants.TOOLBUTTON_TYPES]
     list_of_manips = [x['manipulations'] for x in vid_files if x['manipulations'] != []]
     list_of_manips = [ast.literal_eval(l) for l in list_of_manips]
     list_of_manips = list(flatten(list_of_manips))

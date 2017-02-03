@@ -167,7 +167,7 @@ class Widget(QWidget):
     #     frame = fileloader.load_reference_frame(self.video_path)
     #     self.view.show(frame)
     def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+        pfs.refresh_video_list_via_combo_box(self, Defaults.list_display_type, trigger_item)
 
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)

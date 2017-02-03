@@ -115,6 +115,7 @@ class MainWindow(QMainWindow):
       except:
         qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
 
+
   def load_plugins(self):
     plugins = collections.OrderedDict()
     filenames = [f for f in sorted(os.listdir('plugins')) if f.endswith('.py')]
@@ -127,16 +128,16 @@ class MainWindow(QMainWindow):
 
   def load_plugin(self, module, plugin_position=None):
     try:
-      m = importlib.import_module(module)
-      if not hasattr(m, 'MyPlugin'):
-        return None
-      p = m.MyPlugin(self.project, plugin_position)
-      # p.run()
+        m = importlib.import_module(module)
+        if not hasattr(m, 'MyPlugin'):
+          return None
+        p = m.MyPlugin(self.project, plugin_position)
+        # p.run()
     except:
-      print('Failed to import \'{}\'.'.format(module))
-      raise
+        print('Failed to import \'{}\'.'.format(module))
+        raise
     else:
-      return p
+        return p
 
   def reload_pipeline_plugins(self):
     for plugin_name in self.pipeline_model.get_plugin_names():
