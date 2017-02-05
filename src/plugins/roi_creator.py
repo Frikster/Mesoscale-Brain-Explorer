@@ -16,10 +16,15 @@ sys.path.append('..')
 import qtutil
 
 class Labels:
-    reference_frame_index_label = "ROIs"
+    roi_list_indices_label = "ROIs"
+    video_list_indices_label = 'video_list_indices'
+    last_manips_to_display_label = 'last_manips_to_display'
 
 class Defaults:
-    video_list_index_default = []
+    roi_list_indices_default = [0]
+    video_list_indices_default = [0]
+    last_manips_to_display_default = ['All']
+    list_display_type = ['ref_frame', 'video']
 
 # class myQStringListModel(QStringListModel):
 #     def __init__(self, parent=None):
@@ -28,7 +33,6 @@ class Defaults:
 #     def createIndex(self, *args, **kwargs):
 
 
-# todo: Explain this model to me in depth
 class RoiItemModel(QAbstractListModel):
     textChanged = pyqtSignal(str, str)
 
@@ -87,6 +91,7 @@ class Widget(QWidget):
 
     # define ui components and global data
     self.selected_videos = []
+    #self.selected_rois = []
     self.view = MyGraphicsView(self.project)
     self.video_list = QListView()
     self.roi_list = QListView()
@@ -107,25 +112,27 @@ class Widget(QWidget):
     self.roi_list.selectionModel().selectionChanged[QItemSelection,
       QItemSelection].connect(self.selected_roi_changed)
 
-
     for f in project.files:
       if f['type'] != 'video':
         continue
       self.video_list.model().appendRow(QStandardItem(f['name']))
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
     roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
     for roi_name in roi_names:
       model.appendRoi(roi_name)
-    #self.roi_list.setCurrentIndex(model.index(0, 0))
     self.view.vb.roi_placed.connect(self.update_project_roi)
 
     self.setup_ui()
     if isinstance(plugin_position, int):
-      self.params = project.pipeline[self.plugin_position]
-      assert (self.params['name'] == 'roi_creator')
-      self.setup_param_signals()
-      self.setup_params()
+        self.params = project.pipeline[self.plugin_position]
+        assert (self.params['name'] == 'roi_creator')
+        self.setup_param_signals()
+        try:
+            self.setup_params()
+        except:
+            self.setup_params(reset=True)
+        pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                         Defaults.list_display_type, self.toolbutton_values)
 
   def video_triggered(self, index):
       pfs.video_triggered(self, index)
@@ -193,23 +200,55 @@ class Widget(QWidget):
   def selected_video_changed(self, selected, deselected):
       pfs.selected_video_changed_multi(self, selected, deselected)
 
-  def setup_params(self):
-      if len(self.params) == 1:
-          self.update_plugin_params(Labels.reference_frame_index_label, Defaults.video_list_index_default)
-      roi_indices = self.params[Labels.reference_frame_index_label]
+  def setup_params(self, reset=False):
+      if len(self.params) == 1 or reset:
+          self.update_plugin_params(Labels.roi_list_indices_label, Defaults.roi_list_indices_default)
+          self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
+          self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
+
+      roi_indices = self.params[Labels.roi_list_indices_label]
       theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
                           roi_indices]
       for Qindex in theQIndexObjects:
           self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
-
+      self.video_list_indices = self.params[Labels.video_list_indices_label]
+      self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
+      manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                     if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
+      for item in manip_items:
+          item.setCheckState(Qt.Checked)
+      not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+                     if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+      for item in not_checked:
+          item.setCheckState(Qt.Unchecked)
 
   def setup_param_signals(self):
-      self.roi_list.selectionModel().selectionChanged.connect(
-          functools.partial(self.intermediate_update_plugin_params, Labels.reference_frame_index_label))
+      self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
+      self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
 
-  def intermediate_update_plugin_params(self, key, selected, deselected):
+      self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+
+  def prepare_video_list_for_update(self, selected, deselected):
+      val = [v.row() for v in self.video_list.selectedIndexes()]
+      if not val:
+          val = Defaults.video_list_indices_default
+      self.update_plugin_params(Labels.video_list_indices_label, val)
+
+  def prepare_toolbutton_for_update(self, trigger_item):
+      val = self.params[Labels.last_manips_to_display_label]
+      selected = self.toolbutton.itemText(trigger_item)
+      if selected not in val:
+          val = val + [selected]
+          if trigger_item != 0:
+              val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
+      else:
+          val = [manip for manip in val if manip != selected]
+
+      self.update_plugin_params(Labels.last_manips_to_display_label, val)
+
+  def prepare_roi_list_for_update(self, selected, deselected):
       val = [v.row() for v in self.roi_list.selectedIndexes()]
-      self.update_plugin_params(key, val)
+      self.update_plugin_params(Labels.roi_list_indices_label, val)
 
   def update_plugin_params(self, key, val):
       pfs.update_plugin_params(self, key, val)
@@ -233,6 +272,8 @@ class Widget(QWidget):
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+    if len(rois_selected) == 1 and rois_selected[0] == 'None':
+        return
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:

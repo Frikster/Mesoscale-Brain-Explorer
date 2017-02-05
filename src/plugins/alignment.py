@@ -14,7 +14,7 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
 class Labels:
-    video_list_indices_label = 'self.video_list_indices'
+    video_list_indices_label = 'video_list_indices'
     last_manips_to_display_label = 'last_manips_to_display'
 
 class Defaults:

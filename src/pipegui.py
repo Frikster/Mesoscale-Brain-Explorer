@@ -77,7 +77,6 @@ class Sidebar(QWidget):
    
     vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-
     pb = QPushButton('&Configure Pipeline')
     pb.clicked.connect(self.open_pipeconf_requested)
     vbox.addWidget(pb)
