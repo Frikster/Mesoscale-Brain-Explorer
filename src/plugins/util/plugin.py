@@ -27,23 +27,22 @@ class Plugin_default:
     def automation_error_message(self):
         return "Plugin " + self.name + " is not suitable for automation."
 
-class Widget_default(QWidget):
-    class Labels:
+class Widget_default(object):
+    class Labels(object):
         video_list_indices_label = 'video_list_indices'
         last_manips_to_display_label = 'last_manips_to_display'
 
-    class Defaults:
+    class Defaults(object):
         video_list_indices_default = [0]
         last_manips_to_display_default = ['All']
         list_display_type = ['video']
 
     def __init__(self, project, plugin_position):
-        super(Widget_default, self).__init__()
+        #super(Widget_default, self).__init__()
         if not project:
             return
         self.plugin_position = plugin_position
         self.project = project
-        self.labels = self.get_labe
 
         # define ui components and global data
         self.view = MyGraphicsView(self.project)
@@ -60,7 +59,6 @@ class Widget_default(QWidget):
         self.shown_video_path = None
 
         self.setup_ui()
-        self.setup_signals()
         self.setup_signals()
         if isinstance(plugin_position, int):
             self.params = project.pipeline[self.plugin_position]
@@ -148,5 +146,5 @@ class Widget_default(QWidget):
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def execute_primary_function(self, input_paths = None):
-        pass
+    def execute_primary_function(self, func, input_paths=None):
+        func(input_paths)
