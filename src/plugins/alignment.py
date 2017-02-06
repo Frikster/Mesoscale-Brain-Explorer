@@ -2,11 +2,13 @@
 
 import imreg_dft as ird
 import numpy as np
+import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
+from .util import mse_ui_elements as mue
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
 
@@ -32,17 +34,18 @@ class Widget(QWidget):
         self.left = QFrame()
         self.right = QFrame()
         self.view = MyGraphicsView(self.project)
-        self.video_list = MyListView()
-        self.ref_no = QSpinBox()
-
-        self.setup_ui()
-
-        self.selected_videos = []
-        self.shown_video_path = None
+        self.video_list = mue.Video_Selector()
+        list_of_manips = pfs.get_list_of_project_manips(self.project)
+        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        # self.video_list = MyListView()
+        self.ref_no_min = QSpinBox()
+        self.ref_no_max = QSpinBox()
+        self.reference_frame = None
 
         self.video_list.setModel(QStandardItemModel())
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
         self.video_list.doubleClicked.connect(self.video_triggered)
+        self.setup_ui()
         pfs.refresh_all_list(self.project, self.video_list)
 
     def video_triggered(self, index):
@@ -63,12 +66,27 @@ class Widget(QWidget):
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
-        max_cut_off = 5000
-        vbox.addWidget(QLabel('Choose frame used for reference averaged across all selected  files'))
-        self.ref_no.setMinimum(0)
-        self.ref_no.setMaximum(max_cut_off)
-        self.ref_no.setValue(400)
-        vbox.addWidget(self.ref_no)
+
+        def min_handler(max_of_min):
+            self.ref_no_min.setMaximum(max_of_min)
+        def max_handler(min_of_max):
+            self.ref_no_max.setMinimum(min_of_max)
+        self.ref_no_min.valueChanged[int].connect(max_handler)
+        self.ref_no_max.valueChanged[int].connect(min_handler)
+        hbox = QHBoxLayout()
+        vbox.addWidget(QLabel('Set range averaged over to compute reference frame'))
+        self.ref_no_min.setMinimum(0)
+        self.ref_no_min.setMaximum(405)
+        self.ref_no_min.setValue(400)
+        hbox.addWidget(self.ref_no_min)
+        to = QLabel('to')
+        to.setAlignment(Qt.AlignCenter)
+        hbox.addWidget(to)
+        self.ref_no_max.setMaximum(100000)
+        self.ref_no_max.setValue(405)
+        hbox.addWidget(self.ref_no_max)
+        vbox.addLayout(hbox)
+
         pb = QPushButton('&Compute Reference Frame')
         pb.clicked.connect(self.compute_ref_frame)
         vbox.addWidget(pb)
@@ -99,37 +117,57 @@ class Widget(QWidget):
 
     def compute_ref_frame(self):
         if not self.selected_videos:
-            qCritical("No files selected")
+            qtutil.critical("No files selected")
             return
 
-        ref_no = self.ref_no.value()
+        if len(self.selected_videos) > 1:
+            qtutil.critical("Select only one file to compute the reference frame from")
+            return
+
+        if 'ref_frame' in self.selected_videos[0]:
+            qtutil.critical("Cannot compute reference frame of reference frame")
+            return
+
+        ref_no_min = self.ref_no_min.value()
+        ref_no_max = self.ref_no_max.value()
 
         # find size, assuming all files in project have the same size
         frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
+        reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
+        self.reference_frame = np.mean(reference_frame_range, axis=0)
+
         frame_no, h, w = frames_mmap.shape
-
-        summed_reference_frame = np.zeros((h, w))
-        divide_frame = np.full((h, w), len(self.selected_videos))
-        for video_path in self.selected_videos:
-            frames_mmap = np.load(video_path, mmap_mode='c')
-            reference_frame = np.array(frames_mmap[ref_no])
-            summed_reference_frame = np.add(summed_reference_frame, reference_frame)
-
-        summed_reference_frame = np.divide(summed_reference_frame, divide_frame)
-        self.reference_frame = np.reshape(summed_reference_frame, (1, h, w))
-        pfs.save_project(video_path, self.project, self.reference_frame, 'ref_frame', 'ref_frame')
-
+        # summed_reference_frame = np.zeros((h, w))
+        # divide_frame = np.full((h, w), len(self.selected_videos))
+        # for video_path in self.selected_videos:
+        #     frames_mmap = np.load(video_path, mmap_mode='c')
+        #     reference_frame = np.array(frames_mmap[ref_no])
+        #     summed_reference_frame = np.add(summed_reference_frame, reference_frame)
+        #
+        # summed_reference_frame = np.divide(summed_reference_frame, divide_frame)
+        self.reference_frame = np.reshape(self.reference_frame, (1, h, w))
+        pfs.save_project(self.selected_videos[0], self.project, self.reference_frame, 'ref_frame', 'ref_frame')
         # Refresh showing reference_frame
         pfs.refresh_all_list(self.project, self.video_list)
 
-    def align_clicked(self):
-        filenames = self.selected_videos
-        reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+    def align_clicked(self, input_files = None):
+        if not input_files:
+            filenames = self.selected_videos
+            reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+        else:
+            filenames = input_files
+            reference_frame_file = self.selected_videos
+            if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
+                    len(reference_frame_file):
+                qutil.critical("Please only select a single reference frame for each alignment plugin used."
+                          "Automation will now close.")
+                return
+
         if len(reference_frame_file) == 0:
-            qCritical("No reference frame selected")
+            qtutil.critical("No reference frame selected")
             return
         if len(reference_frame_file) > 1:
-            qCritical("Multiple reference frames selected. Please only pick one")
+            qtutil.critical("Multiple reference frames selected. Please only pick one")
             return
         assert(len(reference_frame_file) == 1)
         reference_frame_file = reference_frame_file[0]
@@ -137,7 +175,7 @@ class Widget(QWidget):
         assert ('ref_frame' in reference_frame_file)
         reference_frame = np.load(reference_frame_file)[0]
         not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
-        self.align_videos(not_reference_frames, reference_frame)
+        return self.align_videos(not_reference_frames, reference_frame)
 
         # for filename in filenames:
         #     if filename in [f['path'] for f in self.project.files]:
