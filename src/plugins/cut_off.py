@@ -38,10 +38,10 @@ class Widget(QWidget, WidgetDefault):
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
-        if not project:
+        if not project or not plugin_position:
             return
-        self.plugin_position = plugin_position
-        self.project = project
+        # self.plugin_position = plugin_position
+        # self.project = project
 
         # define ui components and global data
         # self.view = MyGraphicsView(self.project)
@@ -208,7 +208,7 @@ class Widget(QWidget, WidgetDefault):
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
 
-    def execute_primary_function(self, input_paths = None):
+    def execute_primary_function(self, input_paths=None):
         if not input_paths:
             if not self.selected_videos:
                 return
@@ -266,10 +266,9 @@ class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Cut off'
         self.widget = Widget(project, plugin_position)
-        if hasattr(self.widget, 'project'):
-            super().__init__(self.widget, self.widget.Labels, self.name)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
-    def run(self, input_paths = None):
+    def run(self, input_paths=None):
         self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
         return self.widget.execute_primary_function(input_paths)
         # todo notes:

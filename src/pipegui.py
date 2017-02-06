@@ -116,16 +116,17 @@ class MainWindow(QMainWindow):
 
 
   def load_plugins(self):
+    """This just gets all the plugins (no reference to pipeline)"""
     plugins = collections.OrderedDict()
     filenames = [f for f in sorted(os.listdir('plugins')) if f.endswith('.py')]
     for filename in filenames:
       name, ext = os.path.splitext(filename)
-      p = self.load_plugin('plugins.' + name)
+      p = self.load_plugin('plugins.' + name, None)
       if p:
         plugins[name] = p
     return plugins
 
-  def load_plugin(self, module, plugin_position=None):
+  def load_plugin(self, module, plugin_position):
     try:
         m = importlib.import_module(module)
         if not hasattr(m, 'MyPlugin'):
@@ -255,7 +256,7 @@ class MainWindow(QMainWindow):
     self.project_menu.setEnabled(False)
     self.enable(False)
   
-  def set_plugin(self, plugin_name, plugin_position=None):
+  def set_plugin(self, plugin_name, plugin_position):
     p = self.load_plugin('plugins.' + str(plugin_name), plugin_position)
     if not p:
       return

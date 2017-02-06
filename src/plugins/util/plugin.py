@@ -9,7 +9,8 @@ class PluginDefault:
     def __init__(self, widget, widget_labels_class, name):
         self.name = name
         self.widget = widget
-        self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
+        if hasattr(self.widget, 'project') and hasattr(self.widget, 'plugin_position'):
+            self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
         self.widget_labels = widget_labels_class
 
     def run(self, input_paths=None):
@@ -27,8 +28,8 @@ class PluginDefault:
         return "Plugin " + self.name + " is not suitable for automation."
 
 class PrimaryFunctionMissing(Exception):
-  def __init__(self, plugin_name):
-    self.filename = plugin_name
+  def __init__(self, message):
+    self.message = message
 
 class WidgetDefault(object):
     class Labels(object):
@@ -42,7 +43,7 @@ class WidgetDefault(object):
 
     def __init__(self, project, plugin_position):
         #super(WidgetDefault, self).__init__()
-        if not project:
+        if not project or not plugin_position:
             return
         self.plugin_position = plugin_position
         self.project = project
@@ -150,4 +151,5 @@ class WidgetDefault(object):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
     def execute_primary_function(self, input_paths=None):
-        raise PrimaryFunctionMissing()
+        raise PrimaryFunctionMissing("Your custom plugin does not have a primary function."
+                                     "Override this method")
