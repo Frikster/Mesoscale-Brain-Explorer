@@ -416,3 +416,9 @@ class MyPlugin:
   
   def run(self):
     pass
+
+  def get_input_paths(self):
+      fs = self.widget.project.files
+      indices = self.widget.params[Labels.video_list_indices_label]
+      return [fs[i]['path'] for i in range(len(fs)) if i in indices]
+

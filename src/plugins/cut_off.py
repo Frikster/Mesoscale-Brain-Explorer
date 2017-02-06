@@ -11,6 +11,8 @@ from .util import fileloader
 from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView
+from .util.plugin import Plugin_default
+from .util.plugin import Widget_default
 
 class Labels:
     video_list_indices_label = 'video_list_indices'
@@ -25,9 +27,24 @@ class Defaults:
     start_cut_off_default = 0
     end_cut_off_default = 0
 
+# todo: make subclass Widget_default
 class Widget(QWidget):
+    class Labels:
+        video_list_indices_label = 'video_list_indices'
+        last_manips_to_display_label = 'last_manips_to_display'
+        start_cut_off_label = 'Cut off from start'
+        end_cut_off_label = 'Cut off from end'
+
+    class Defaults:
+        video_list_indices_default = [0]
+        last_manips_to_display_default = ['All']
+        list_display_type = ['video']
+        start_cut_off_default = 0
+        end_cut_off_default = 0
+
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
+
         if not project:
             return
         self.plugin_position = plugin_position
@@ -268,4 +285,11 @@ class MyPlugin:
         indices = self.widget.params[Labels.video_list_indices_label]
         return [fs[i]['path'] for i in range(len(fs)) if i in indices]
 
+    def check_ready_for_automation(self):
+        lc = self.widget.left_cut_off.value()
+        rc = self.widget.right_cut_off.value()
+        return lc > 0 or rc > 0
 
+
+    def automation_error_message(self):
+        return "Cut off plugin cannot have both cut off paramaters set to 0."
