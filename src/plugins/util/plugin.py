@@ -52,6 +52,8 @@ class Widget_default(object):
         self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         self.left = QFrame()
         self.right = QFrame()
+        self.vbox_view = QVBoxLayout()
+        self.vbox = QVBoxLayout()
         self.video_list_indices = []
         self.toolbutton_values = []
         self.open_dialogs = []
@@ -74,19 +76,17 @@ class Widget_default(object):
         pfs.video_triggered(self, index)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.left.setLayout(vbox_view)
+        self.vbox_view.addWidget(self.view)
+        self.left.setLayout(self.vbox_view)
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Choose video:'))
+        self.vbox.addWidget(self.toolbutton)
+        self.vbox.addWidget(QLabel('Choose video:'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.video_list)
+        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        self.vbox.addWidget(self.video_list)
 
-        self.right.setLayout(vbox)
+        self.right.setLayout(self.vbox)
 
         splitter = QSplitter(Qt.Horizontal)
         splitter.setHandleWidth(3)
