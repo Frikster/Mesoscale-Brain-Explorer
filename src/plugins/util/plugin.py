@@ -3,18 +3,17 @@ from PyQt4.QtGui import *
 
 from .mygraphicsview import MyGraphicsView
 from .qt import MyListView
-
 from . import project_functions as pfs
 
-class Plugin_default:
-    def __init__(self, widget, widget_labels, name):
+class PluginDefault:
+    def __init__(self, widget, widget_labels_class, name):
         self.name = name
         self.widget = widget
-        self.widget_labels = widget_labels
+        self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
+        self.widget_labels = widget_labels_class
 
     def run(self, input_paths=None):
-        self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
-        return self.widget.cut_off(input_paths)
+        return WidgetDefault.execute_primary_function(self.widget. input_paths)
 
     def get_input_paths(self):
         fs = self.widget.project.files
@@ -27,7 +26,11 @@ class Plugin_default:
     def automation_error_message(self):
         return "Plugin " + self.name + " is not suitable for automation."
 
-class Widget_default(object):
+class PrimaryFunctionMissing(Exception):
+  def __init__(self, plugin_name):
+    self.filename = plugin_name
+
+class WidgetDefault(object):
     class Labels(object):
         video_list_indices_label = 'video_list_indices'
         last_manips_to_display_label = 'last_manips_to_display'
@@ -38,7 +41,7 @@ class Widget_default(object):
         list_display_type = ['video']
 
     def __init__(self, project, plugin_position):
-        #super(Widget_default, self).__init__()
+        #super(WidgetDefault, self).__init__()
         if not project:
             return
         self.plugin_position = plugin_position
@@ -146,5 +149,5 @@ class Widget_default(object):
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def execute_primary_function(self, func, input_paths=None):
-        func(input_paths)
+    def execute_primary_function(self, input_paths=None):
+        raise PrimaryFunctionMissing()
