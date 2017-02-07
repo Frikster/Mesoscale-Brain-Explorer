@@ -140,8 +140,8 @@ class MainWindow(QMainWindow):
         return p
 
   def reload_pipeline_plugins(self):
-    for plugin_name in self.pipeline_model.get_plugin_names():
-      p = self.load_plugin('plugins.' + plugin_name, None)
+    for i, plugin_name in enumerate(self.pipeline_model.get_plugin_names()):
+      p = self.load_plugin('plugins.' + plugin_name, i)
       if p:
         self.plugins[plugin_name] = p
     if self.current_plugin:
@@ -298,8 +298,19 @@ class MainWindow(QMainWindow):
 
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
+      # ensure all selected plugins are ready for automation
+      for q_model_index in ordered_q_model_indexes:
+          p = self.plugins[q_model_index.data(Qt.UserRole)]
+          if not p.check_ready_for_automation():
+            qtutil.critical(p.automation_error_message())
+            return
+
       p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
       input_paths = p.get_input_paths()
+      if not input_paths:
+          qtutil.critical("The first plugin in the pipeline does not have a set of input files selected")
+          return
+
       for q_model_index in ordered_q_model_indexes:
           p = self.plugins[q_model_index.data(Qt.UserRole)]
           output_paths = p.run(input_paths)

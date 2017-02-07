@@ -6,29 +6,6 @@ from .mygraphicsview import MyGraphicsView
 from .qt import MyListView
 
 
-class PluginDefault:
-    def __init__(self, widget, widget_labels_class, name):
-        self.name = name
-        self.widget = widget
-        if hasattr(self.widget, 'project') and hasattr(self.widget, 'plugin_position'):
-            self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
-        self.widget_labels = widget_labels_class
-
-    def run(self, input_paths=None):
-        return self.widget.execute_primary_function(input_paths)
-
-    def get_input_paths(self):
-        fs = self.widget.project.files
-        indices = self.widget.params[self.widget_labels.video_list_indices_label]
-        return [fs[i]['path'] for i in range(len(fs)) if i in indices]
-
-    def check_ready_for_automation(self):
-        return False
-
-    def automation_error_message(self):
-        return "Plugin " + self.name + " is not suitable for automation."
-
-
 class PrimaryFunctionMissing(Exception):
     def __init__(self, message):
         self.message = message
@@ -45,7 +22,7 @@ class WidgetDefault(object):
         list_display_type = ['video']
 
     def __init__(self, project, plugin_position):
-        if not project or not plugin_position:
+        if not project or not isinstance(plugin_position, int):
             return
         self.plugin_position = plugin_position
         self.project = project
@@ -155,3 +132,26 @@ class WidgetDefault(object):
     def execute_primary_function(self, input_paths=None):
         raise PrimaryFunctionMissing("Your custom plugin does not have a primary function."
                                      "Override this method")
+
+
+class PluginDefault:
+    def __init__(self, widget, widget_labels_class, name):
+        self.name = name
+        self.widget = widget
+        if hasattr(self.widget, 'project') and hasattr(self.widget, 'plugin_position'):
+            self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
+        self.widget_labels = widget_labels_class
+
+    def run(self, input_paths=None):
+        return self.widget.execute_primary_function(input_paths)
+
+    def get_input_paths(self):
+        fs = self.widget.project.files
+        indices = self.widget.params[self.widget_labels.video_list_indices_label]
+        return [fs[i]['path'] for i in range(len(fs)) if i in indices]
+
+    def check_ready_for_automation(self):
+        return False
+
+    def automation_error_message(self):
+        return "Plugin " + self.name + " is not suitable for automation."

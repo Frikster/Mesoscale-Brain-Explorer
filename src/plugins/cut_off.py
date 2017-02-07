@@ -23,7 +23,7 @@ class Widget(QWidget, WidgetDefault):
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
-        if not project or not plugin_position:
+        if not project or not isinstance(plugin_position, int):
             return
         self.left_cut_off = QSpinBox()
         self.right_cut_off = QSpinBox()
