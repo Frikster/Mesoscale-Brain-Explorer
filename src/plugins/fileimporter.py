@@ -401,8 +401,8 @@ class MyPlugin:
     self.name = 'Import Image Stacks'
     self.widget = Widget(project, plugin_position)
 
-  def run(self):
-    return self.widget.new_video()
+  def run(self, input_paths=None):
+    return self.widget.new_video(input_paths)
 
   def get_input_paths(self):
     return self.widget.get_input_paths()

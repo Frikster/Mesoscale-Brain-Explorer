@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
 
   def reload_pipeline_plugins(self):
     for plugin_name in self.pipeline_model.get_plugin_names():
-      p = self.load_plugin('plugins.' + plugin_name)
+      p = self.load_plugin('plugins.' + plugin_name, None)
       if p:
         self.plugins[plugin_name] = p
     if self.current_plugin:

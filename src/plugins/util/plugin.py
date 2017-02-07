@@ -1,9 +1,10 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from . import project_functions as pfs
 from .mygraphicsview import MyGraphicsView
 from .qt import MyListView
-from . import project_functions as pfs
+
 
 class PluginDefault:
     def __init__(self, widget, widget_labels_class, name):
@@ -14,7 +15,7 @@ class PluginDefault:
         self.widget_labels = widget_labels_class
 
     def run(self, input_paths=None):
-        return WidgetDefault.execute_primary_function(self.widget. input_paths)
+        return self.widget.execute_primary_function(input_paths)
 
     def get_input_paths(self):
         fs = self.widget.project.files
@@ -27,9 +28,11 @@ class PluginDefault:
     def automation_error_message(self):
         return "Plugin " + self.name + " is not suitable for automation."
 
+
 class PrimaryFunctionMissing(Exception):
-  def __init__(self, message):
-    self.message = message
+    def __init__(self, message):
+        self.message = message
+
 
 class WidgetDefault(object):
     class Labels(object):
@@ -42,7 +45,6 @@ class WidgetDefault(object):
         list_display_type = ['video']
 
     def __init__(self, project, plugin_position):
-        #super(WidgetDefault, self).__init__()
         if not project or not plugin_position:
             return
         self.plugin_position = plugin_position
