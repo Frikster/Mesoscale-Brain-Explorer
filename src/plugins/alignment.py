@@ -230,7 +230,7 @@ class Widget(QWidget, WidgetDefault):
             reference_frame_file = self.selected_videos
             if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
                     len(reference_frame_file):
-                qutil.critical("Please only select a single reference frame for each alignment plugin used."
+                qtutil.critical("Please only select a single reference frame for each alignment plugin used."
                           "Automation will now close.")
                 return
 

@@ -20,6 +20,7 @@ class Widget(QWidget, WidgetDefault):
     class Defaults(WidgetDefault.Defaults):
         start_cut_off_default = 0
         end_cut_off_default = 0
+        manip = "cut-off"
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -99,8 +100,7 @@ class Widget(QWidget, WidgetDefault):
 
             num_frames = len(frames_mmap)-cut_off_end-cut_off_start
             name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = fileloader.get_name_after_no_overwrite(name_before, 'cut-off', self.project)
-            # name_after = str(name_before + '_' + 'cut-off')
+            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
             path = str(os.path.join(self.project.path, name_after) + '.npy')
             fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
             frames = np.load(path, mmap_mode='r+')
@@ -110,7 +110,7 @@ class Widget(QWidget, WidgetDefault):
             callback(1)
             output_paths = output_paths + [path]
             # frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project(video_path, self.project, None, 'cut-off', 'video')
+            pfs.save_project(video_path, self.project, None, self.Defaults.manip, 'video')
             pfs.refresh_list(self.project, self.video_list,
                              self.params[self.Labels.video_list_indices_label],
                              self.Defaults.list_display_type,
