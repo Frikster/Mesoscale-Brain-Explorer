@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 
+import functools
 import os
 import sys
-import functools
 
 import PyQt4
 import numpy as np
-from scipy import ndimage
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from scipy import signal
+from scipy import ndimage
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+
 
 #import numba as nb
 #from numba import cuda
