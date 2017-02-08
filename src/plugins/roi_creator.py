@@ -10,8 +10,7 @@ from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
-import functools
+
 sys.path.append('..')
 import qtutil
 from .util.plugin import PluginDefault
