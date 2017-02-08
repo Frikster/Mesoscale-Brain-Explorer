@@ -38,6 +38,7 @@ class Widget(QWidget):
         list_of_manips = pfs.get_list_of_project_manips(self.project)
         self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         # self.video_list = MyListView()
+        self.ref_no = QSpinBox()
         self.ref_no_min = QSpinBox()
         self.ref_no_max = QSpinBox()
         self.reference_frame = None
@@ -66,6 +67,23 @@ class Widget(QWidget):
         self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         vbox.addWidget(self.video_list)
+
+        max_cut_off = 100000
+        vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
+        self.ref_no.setMinimum(0)
+        self.ref_no.setMaximum(max_cut_off)
+        self.ref_no.setValue(400)
+        vbox.addWidget(self.ref_no)
+
+        hbox = QHBoxLayout()
+        self.scaling_checkbox = QCheckBox("Apply Scaling")
+        self.scaling_checkbox.setChecked(False)
+        hbox.addWidget(self.scaling_checkbox)
+
+        self.rotation_checkbox = QCheckBox("Apply Rotation")
+        self.rotation_checkbox.setChecked(True)
+        hbox.addWidget(self.rotation_checkbox)
+        vbox.addLayout(hbox)
 
         def min_handler(max_of_min):
             self.ref_no_min.setMaximum(max_of_min)
@@ -150,7 +168,7 @@ class Widget(QWidget):
         # Refresh showing reference_frame
         pfs.refresh_all_list(self.project, self.video_list)
 
-    def align_clicked(self, input_files = None):
+    def align_clicked(self, input_files=None):
         if not input_files:
             filenames = self.selected_videos
             reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
@@ -190,6 +208,19 @@ class Widget(QWidget):
         #     self.project.files.append(f)
         # self.project.save()
 
+    def compute_shift(self, template_frame, frame, progress_shifts):
+        def callback_shifts(x):
+            progress_shifts.setValue(x * 100)
+            QApplication.processEvents()
+        results = []
+        for i, frame in enumerate(frame):
+            if progress_shifts.wasCanceled():
+                return
+            callback_shifts(i / float(len(frame)))
+            results = results + [ird.translation(template_frame, frame)]
+        callback_shifts(1)
+        return results
+
     def compute_shifts(self, template_frame, frames, progress_shifts):
         def callback_shifts(x):
             progress_shifts.setValue(x * 100)
@@ -203,17 +234,22 @@ class Widget(QWidget):
         callback_shifts(1)
         return results
 
-    def apply_shifts(self, frames, shifts, progress_callback):
+    def apply_shifts(self, frames, shift, progress_callback):
         shifted_frames = []
-        for frame_no, shift in enumerate(shifts):
-            tvec = shift["tvec"]
-            progress_callback(frame_no / float(len(shifts)))
-            frame = frames[frame_no]
-            shifted_frames.append(ird.transform_img(frame, tvec=tvec))
+        tvec = shift["tvec"]
+        angle = shift["angle"]
+        if "scale" in shift.keys():
+            scale = shift["scale"]
+        else:
+            scale = 1.0
+        for frame_no, frame in enumerate(frames):
+            progress_callback(frame_no / float(len(frames)))
+            # frame = frames[frame_no]
+            shifted_frames.append(ird.transform_img(frame, tvec=tvec, angle=angle, scale=scale))
         progress_callback(1)
         return shifted_frames
 
-    def align_videos(self, filenames, reference_frame):
+    def align_videos(self, filenames, template_frame):
         """Return filenames of generated videos"""
         progress_global = QProgressDialog('Total progress aligning all files', 'Abort', 0, 100, self)
         progress_global.setAutoClose(True)
@@ -235,11 +271,31 @@ class Widget(QWidget):
             def callback_apply(x):
                 progress_apply.setValue(x * 100)
                 QApplication.processEvents()
-            frames = fileloader.load_file(filename)
-            shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
-            if progress_shifts.wasCanceled():
-                return
-            shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
+            progress_load = QProgressDialog('Loading ' + filename, 'Abort', 0, 100, self)
+            progress_load.setAutoClose(True)
+            progress_load.setMinimumDuration(0)
+            def callback_load(x):
+                progress_load.setValue(x * 100)
+                QApplication.processEvents()
+            frames = fileloader.load_file(filename, callback_load)
+            callback_load(1)
+
+            reference_frame = frames[self.ref_no.value()]
+            if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
+                shift = ird.similarity(template_frame, reference_frame)
+                if not self.rotation_checkbox.isChecked():
+                    shift['angle'] = 0.0
+                if not self.scaling_checkbox.isChecked():
+                    shift['scale'] = 1.0
+            else:
+                shift = ird.translation(template_frame, reference_frame)
+
+
+
+            #shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
+            # if progress_shifts.wasCanceled():
+            #     return
+            shifted_frames = self.apply_shifts(frames, shift, callback_apply)
             pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
             pfs.refresh_all_list(self.project, self.video_list)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
