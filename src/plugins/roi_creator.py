@@ -449,8 +449,11 @@ class MyPlugin(PluginDefault):
   #   pass
 
   def check_ready_for_automation(self):
-      return True
+      if len(self.widget.view.vb.rois) <= 0:
+        return False
+      else:
+        return True
 
   def automation_error_message(self):
-      return "YOU MUST NOT BE ABLE TO SEE THIS"
+      return "Select at least one ROI for each ROI cropper plugin"
 

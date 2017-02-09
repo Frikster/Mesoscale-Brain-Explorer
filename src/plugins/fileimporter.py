@@ -349,7 +349,7 @@ class Widget(QWidget):
         qtutil.critical("These files already exist in the project: "
                         + str(tester) +
                         " Please change their names if you want to import them")
-        return
+        return [" "] #todo: end automation more elegantly
     return self.import_files(filenames)
 
   def get_input_paths(self):

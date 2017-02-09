@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 
 import imreg_dft as ird
 import numpy as np
@@ -18,6 +19,7 @@ class Widget(QWidget, WidgetDefault):
 
     class Defaults(WidgetDefault.Defaults):
         list_display_type = ['ref_frame', 'video']
+        manip = 'align'
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -312,13 +314,16 @@ class Widget(QWidget, WidgetDefault):
             if progress_shifts.wasCanceled():
                 return
             #shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
-            pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
+            pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
                              self.Defaults.list_display_type, self.toolbutton_values)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)
-            # ret_filenames.append(path)
+            name_before, ext = os.path.splitext(os.path.basename(filename))
+            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+            path = str(os.path.join(self.project.path, name_after) + '.npy')
+            ret_filenames.append(path)
         callback_global(1)
         return ret_filenames
 
@@ -330,8 +335,14 @@ class MyPlugin(PluginDefault):
         super().__init__(self.widget, self.widget.Labels, self.name)
 
     def check_ready_for_automation(self):
-        return True
+        filenames = self.widget.selected_videos
+        reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+        if len(reference_frame_file) == 1:
+            return True
+        else:
+            return False
 
     def automation_error_message(self):
-        return "YOU SHOULD NOT BE ABLE TO SEE THIS MESSAGE"
+        return "Please select one reference frame for each alignment plugin used"
+
 
