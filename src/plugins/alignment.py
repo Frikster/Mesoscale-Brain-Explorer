@@ -314,15 +314,15 @@ class Widget(QWidget, WidgetDefault):
             if progress_shifts.wasCanceled():
                 return
             #shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
-            pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
+            path = pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
                              self.Defaults.list_display_type, self.toolbutton_values)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)
-            name_before, ext = os.path.splitext(os.path.basename(filename))
-            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
-            path = str(os.path.join(self.project.path, name_after) + '.npy')
+            # name_before, ext = os.path.splitext(os.path.basename(filename))
+            # name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+            # path = str(os.path.join(self.project.path, name_after) + '.npy')
             ret_filenames.append(path)
         callback_global(1)
         return ret_filenames

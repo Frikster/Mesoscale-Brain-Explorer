@@ -426,12 +426,12 @@ class Widget(QWidget, WidgetDefault):
       # Dont forget to set Endian value and set to 64 bit
       roi_frames = (frames * combined_mask[np.newaxis, :, :])
       callback(1)
-      name_before, ext = os.path.splitext(os.path.basename(video_path))
-      name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
-      path = str(os.path.join(self.project.path, name_after) + '.npy')
-      output_paths = output_paths + [path]
+      # name_before, ext = os.path.splitext(os.path.basename(video_path))
+      # name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+      # path = str(os.path.join(self.project.path, name_after) + '.npy')
       # path = os.path.join(self.project.path, 'roi' + '.npy')
-      pfs.save_project(video_path, self.project, roi_frames, self.Defaults.manip, 'video')
+      path = pfs.save_project(video_path, self.project, roi_frames, self.Defaults.manip, 'video')
+      output_paths = output_paths + [path]
       pfs.refresh_list(self.project, self.video_list,
                        self.params[self.Labels.video_list_indices_label],
                        self.Defaults.list_display_type,

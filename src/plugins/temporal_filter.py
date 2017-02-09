@@ -309,15 +309,15 @@ class Widget(QWidget, WidgetDefault):
                 msgBox.addButton(PyQt4.QtGui.QMessageBox.Ok)
                 msgBox.exec_()
             else:
-                pfs.save_project(video_path, self.project, frames, 'temporal-filter', 'video')
+                path = pfs.save_project(video_path, self.project, frames, 'temporal-filter', 'video')
                 pfs.refresh_list(self.project, self.video_list,
                                  self.params[self.Labels.video_list_indices_label],
                                  self.Defaults.list_display_type,
                                  self.params[self.Labels.last_manips_to_display_label])
             callback(1)
-            name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
-            path = str(os.path.join(self.project.path, name_after) + '.npy')
+            # name_before, ext = os.path.splitext(os.path.basename(video_path))
+            # name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+            # path = str(os.path.join(self.project.path, name_after) + '.npy')
             output_paths = output_paths + [path]
         global_callback(1)
         return output_paths

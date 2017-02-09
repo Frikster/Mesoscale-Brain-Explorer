@@ -108,9 +108,9 @@ class Widget(QWidget, WidgetDefault):
                 callback(i / float(len(frames_mmap)))
                 frames[i] = frame[:, :]
             callback(1)
-            output_paths = output_paths + [path]
             # frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project(video_path, self.project, None, self.Defaults.manip, 'video')
+            path = pfs.save_project(video_path, self.project, None, self.Defaults.manip, 'video')
+            output_paths = output_paths + [path]
             pfs.refresh_list(self.project, self.video_list,
                              self.params[self.Labels.video_list_indices_label],
                              self.Defaults.list_display_type,
