@@ -38,6 +38,7 @@ class Widget(QWidget, WidgetDefault):
         # list_of_manips = pfs.get_list_of_project_manips(self.project)
         # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         # self.video_list = MyListView()
+        self.ref_no = QSpinBox()
         self.ref_no_min = QSpinBox()
         self.ref_no_max = QSpinBox()
         self.main_button = QPushButton('&Align')
@@ -78,6 +79,23 @@ class Widget(QWidget, WidgetDefault):
         # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
+
+        max_cut_off = 100000
+        self.vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
+        self.ref_no.setMinimum(0)
+        self.ref_no.setMaximum(max_cut_off)
+        self.ref_no.setValue(400)
+        self.vbox.addWidget(self.ref_no)
+
+        hbox = QHBoxLayout()
+        self.scaling_checkbox = QCheckBox("Apply Scaling")
+        self.scaling_checkbox.setChecked(False)
+        hbox.addWidget(self.scaling_checkbox)
+
+        self.rotation_checkbox = QCheckBox("Apply Rotation")
+        self.rotation_checkbox.setChecked(True)
+        hbox.addWidget(self.rotation_checkbox)
+        self.vbox.addLayout(hbox)
 
         def min_handler(max_of_min):
             self.ref_no_min.setMaximum(max_of_min)
@@ -272,22 +290,26 @@ class Widget(QWidget, WidgetDefault):
             if progress_shifts.wasCanceled():
                 return
             callback_shifts(i / float(len(frames)))
-            results = results + [ird.similarity(template_frame, frame)['timg']]
+            results = results + [ird.translation(template_frame, frame)]
         callback_shifts(1)
         return results
 
-    def apply_shifts(self, frames, shifts, progress_callback):
+    def apply_shifts(self, frames, shift, progress_callback):
         shifted_frames = []
-        for frame_no, shift in enumerate(shifts):
-            tvec = shift["tvec"]
-            angle = shift["angle"]
-            progress_callback(frame_no / float(len(shifts)))
-            frame = frames[frame_no]
-            shifted_frames.append(ird.transform_img(frame, tvec=tvec, angle=angle))
+        tvec = shift["tvec"]
+        angle = shift["angle"]
+        if "scale" in shift.keys():
+            scale = shift["scale"]
+        else:
+            scale = 1.0
+        for frame_no, frame in enumerate(frames):
+            progress_callback(frame_no / float(len(frames)))
+            # frame = frames[frame_no]
+            shifted_frames.append(ird.transform_img(frame, tvec=tvec, angle=angle, scale=scale))
         progress_callback(1)
         return shifted_frames
 
-    def align_videos(self, filenames, reference_frame):
+    def align_videos(self, filenames, template_frame):
         """Return filenames of generated videos"""
         progress_global = QProgressDialog('Total progress aligning all files', 'Abort', 0, 100, self)
         progress_global.setAutoClose(True)
@@ -309,11 +331,29 @@ class Widget(QWidget, WidgetDefault):
             def callback_apply(x):
                 progress_apply.setValue(x * 100)
                 QApplication.processEvents()
-            frames = fileloader.load_file(filename)
-            shifted_frames = self.compute_shifts(reference_frame, frames, progress_shifts)
+            progress_load = QProgressDialog('Loading ' + filename, 'Abort', 0, 100, self)
+            progress_load.setAutoClose(True)
+            progress_load.setMinimumDuration(0)
+            def callback_load(x):
+                progress_load.setValue(x * 100)
+                QApplication.processEvents()
+            frames = fileloader.load_file(filename, callback_load)
+            callback_load(1)
+
+            reference_frame = frames[self.ref_no.value()]
+            if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
+                shift = ird.similarity(template_frame, reference_frame)
+                if not self.rotation_checkbox.isChecked():
+                    shift['angle'] = 0.0
+                if not self.scaling_checkbox.isChecked():
+                    shift['scale'] = 1.0
+            else:
+                shift = ird.translation(template_frame, reference_frame)
+
+            # shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
             if progress_shifts.wasCanceled():
                 return
-            #shifted_frames = self.apply_shifts(frames, shifts, callback_apply)
+            shifted_frames = self.apply_shifts(frames, shift, callback_apply)
             path = pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
                              self.Defaults.list_display_type, self.toolbutton_values)
