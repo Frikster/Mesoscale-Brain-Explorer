@@ -1,6 +1,6 @@
 {
   "files": [],
-  "unit_per_pixel": 1,
+  "unit_per_pixel": 41.01563,
   "pipeline": [
     {
 		"name":"fileimporter"

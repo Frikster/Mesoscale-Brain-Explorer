@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import filter_jeff as fj
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 
