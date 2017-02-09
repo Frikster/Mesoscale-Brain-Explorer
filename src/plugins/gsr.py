@@ -129,6 +129,7 @@ class Widget(QWidget, WidgetDefault):
     def global_callback(x):
         global_progress.setValue(x * 100)
         QApplication.processEvents()
+    output_paths = []
     total = len(selected_videos)
     for i, video_path in enumerate(selected_videos):
         global_callback(i / total)
@@ -144,13 +145,15 @@ class Widget(QWidget, WidgetDefault):
         width = frames.shape[1]
         height = frames.shape[2]
         frames = fj.gsr(frames, width, height, callback)
-        pfs.save_project(video_path, self.project, frames, self.Defaults.manip, 'video')
+        path = pfs.save_project(video_path, self.project, frames, self.Defaults.manip, 'video')
+        output_paths = output_paths + [path]
         pfs.refresh_list(self.project, self.video_list,
                          self.params[self.Labels.video_list_indices_label],
                          self.Defaults.list_display_type,
                          self.params[self.Labels.last_manips_to_display_label])
         callback(1)
     global_callback(1)
+    return output_paths
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
