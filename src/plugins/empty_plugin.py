@@ -1,102 +1,89 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtCore import *
+import functools
+import sys
+
+import qtutil
 from PyQt4.QtGui import *
 
-from .temporal_filter import *
-from .util import project_functions as pfs
-from .videoplayer import PlayerDialog
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
-class Widget(QWidget):
-  def __init__(self, project, parent=None):
+
+class Widget(QWidget, WidgetDefault):
+  class Labels(WidgetDefault.Labels):
+    example_sb_label = "Example Spinbox"
+    # todo: Define labels used as a key to save paramaters to file here
+
+  class Defaults(WidgetDefault.Defaults):
+    example_sb_default = 10
+    # todo: Define default values for this plugin and its UI components here
+
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
- 
-    if not project:
-      return
-    self.project = project
-
-    # define ui components and global data
-    self.view = MyGraphicsView(self.project)
-    self.video_list = QListView()
-    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    self.left = QFrame()
-    self.right = QFrame()
-    self.open_dialogs = []
-
-    self.setup_ui()
-    self.selected_videos = []
-
-    self.video_list.setModel(QStandardItemModel())
-    self.video_list.selectionModel().selectionChanged[QItemSelection,
-                                                      QItemSelection].connect(self.selected_video_changed)
-    self.video_list.doubleClicked.connect(self.video_triggered)
-    for f in project.files:
-      if f['type'] != 'video':
-        continue
-      self.video_list.model().appendRow(QStandardItem(f['name']))
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-  def video_triggered(self, index):
-    filename = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-    dialog = PlayerDialog(self.project, filename, self)
-    dialog.show()
-    self.open_dialogs.append(dialog)
+    if not project or not isinstance(plugin_position, int):
+        return
+    # todo: Define global attributes and UI components here
+    # example: here a button and spin box are defined
+    self.main_button = QPushButton('Custom Analysis')
+    self.example_sb = QSpinBox()
+    WidgetDefault.__init__(self, project, plugin_position)
 
   def setup_ui(self):
-    vbox_view = QVBoxLayout()
-    vbox_view.addWidget(self.view)
-    self.view.vb.setCursor(Qt.CrossCursor)
-    self.left.setLayout(vbox_view)
+    super().setup_ui()
+    # todo: setup UI component layout and properties here
+    # example: here the button is placed before the spinbox and the spinbox
+    # is given a input max value of 1000
+    # initially, before the spinbox a label is inserted which gets its text from Label class
+    self.vbox.addWidget(self.main_button)
+    self.example_sb.setMaximum(1000)
+    self.vbox.addWidget(QLabel(self.Labels.example_sb_label))
+    self.vbox.addWidget(self.example_sb)
+    self.vbox.addStretch()
 
-    vbox = QVBoxLayout()
-    list_of_manips = pfs.get_list_of_project_manips(self.project)
-    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    vbox.addWidget(self.toolbutton)
-    vbox.addWidget(QLabel('Choose video:'))
-    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.video_list)
-    hhbox = QHBoxLayout()
-    custom_butt = QPushButton('Perform Custom Analysis')
-    hhbox.addWidget(custom_butt)
-    vbox.addLayout(hhbox)
-    vbox.addStretch()
-    custom_butt.clicked.connect(self.custom_butt_clicked)
-    self.right.setLayout(vbox)
+  def setup_signals(self):
+    super().setup_signals()
+    # todo: Setup signals (i.e. what ui components do) here
+    # example: main button that activates execute_primary_function when clicked
+    self.main_button.clicked.connect(self.execute_primary_function)
 
-    splitter = QSplitter(Qt.Horizontal)
-    splitter.setHandleWidth(3)
-    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    splitter.addWidget(self.left)
-    splitter.addWidget(self.right)
-    hbox_global = QHBoxLayout()
-    hbox_global.addWidget(splitter)
-    self.setLayout(hbox_global)
+  def setup_params(self, reset=False):
+      super().setup_params()
+      if len(self.params) == 1 or reset:
+        # todo: setup plugin paramaters (e.g. UI component starting values) initial values here
+        # in this example the default value for the spinbox is associated with the label and saved to file
+        self.update_plugin_params(self.Labels.example_sb_label, self.Defaults.example_sb_default)
+      # todo: setup where plugin paramaters get their values from
+      # in this example the example spinbox gets its value from the param dictionary
+      # which is used to access plugin paramaters saved to file
+      self.example_sb.setValue(self.params[self.Labels.example_sb_label])
 
+  def setup_param_signals(self):
+      super().setup_param_signals()
+      # todo: setup how paramaters (e.g. UI component values) are stored
+      # e.g. saving the value after a user changes the spinbox value, keeping it from resetting
+      self.example_sb.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                    self.Labels.example_sb_label))
 
-  def refresh_video_list_via_combo_box(self, trigger_item=None):
-    pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  def execute_primary_function(self, input_paths=None):
+      '''Primary function of plugin'''
+      qtutil.info('This is only a template. Use it to code from. \n'
+                  'Value of spinbox is: ' + str(self.example_sb.value()))
 
-  def selected_video_changed(self, selected, deselected):
-    pfs.selected_video_changed_multi(self, selected, deselected)
-
-  def custom_butt_clicked(self):
-      print('Do custom stuff. Coding required.')
-
-class MyPlugin:
+class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'Empty Plugin'
-    self.widget = Widget(project)
+    self.name = 'Empty Plugin' # Define plugin name here
+    self.widget = Widget(project, plugin_position)
+    super().__init__(self.widget, self.widget.Labels, self.name)
 
-  def run(self):
-    pass
+    # todo: over-ride PluginDefault functions here to define custom behaviour
+    # (required for automation)
 
 if __name__=='__main__':
   app = QApplication(sys.argv)
   app.aboutToQuit.connect(app.deleteLater)
   w = QMainWindow()
-  w.setCentralWidget(Widget(None))
+  w.setCentralWidget(Widget(None, None))
   w.show()
   app.exec_()
   sys.exit()
