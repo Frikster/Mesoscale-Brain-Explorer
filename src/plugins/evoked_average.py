@@ -66,11 +66,18 @@ class Widget(QWidget, WidgetDefault):
         else:
             selected_videos = input_paths
 
+        progress_global = QProgressDialog('Creating evoked average...', 'Abort', 0, 100, self)
+        progress_global.setAutoClose(True)
+        progress_global.setMinimumDuration(0)
+        def global_callback(x):
+            progress_global.setValue(x * 100)
+            QApplication.processEvents()
+
         filenames = selected_videos
         if len(filenames) < 2:
             qtutil.warning('Select multiple files to average.')
             return
-        stacks = [fileloader.load_file(f) for f in filenames]
+        stacks = [np.load(f, mmap_mode='r') for f in filenames]
         lens = [len(stacks[x]) for x in range(len(stacks))]
         min_lens = np.min(lens)
 
@@ -79,11 +86,13 @@ class Widget(QWidget, WidgetDefault):
 
         trig_avg = np.empty([min_lens, length, breadth])
         for frame_index in range(min_lens):
+            global_callback(frame_index / min_lens)
             frames_to_avg = [stacks[stack_index][frame_index]
                              for stack_index in range(len(stacks))]
             frames_to_avg = np.array(frames_to_avg)
             avg = np.mean(frames_to_avg, axis=0)
             trig_avg[frame_index] = avg
+        global_callback(1)
         manip = self.Defaults.manip + '_' + str(len(filenames))
         output_path = pfs.save_project(filenames[0], self.project, trig_avg, manip, 'video')
         pfs.refresh_list(self.project, self.video_list,
@@ -100,8 +109,6 @@ class MyPlugin(PluginDefault):
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
-    # todo: memory map all input such that memory is only needed for the size of one
-    # todo: add progress bars
     def check_ready_for_automation(self):
         self.summed_filesize = 0
         for path in self.widget.selected_videos:

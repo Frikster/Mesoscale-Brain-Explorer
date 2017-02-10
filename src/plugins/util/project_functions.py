@@ -32,8 +32,24 @@ def save_project(video_path, project, frames, manip, file_type):
     path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
         if os.path.isfile(path):
+            progress = QProgressDialog('Deleting ' + path, 'Abort', 0, 100)
+            progress.setAutoClose(True)
+            progress.setMinimumDuration(0)
+            def callback_del(x):
+                progress.setValue(x * 100)
+                QApplication.processEvents()
+            callback_del(0)
             os.remove(path)
+            callback_del(1)
+        progress = QProgressDialog('Saving ' + path + ' to file. This could take a few minutes.', 'Abort', 0, 100)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+        def callback_save(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+        callback_save(0)
         np.save(path, frames)
+        callback_save(1)
     if not file_before['manipulations'] == []:
         project.files.append({
             'path': os.path.normpath(path),
