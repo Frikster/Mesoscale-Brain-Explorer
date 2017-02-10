@@ -21,7 +21,7 @@ class Widget(QWidget, WidgetDefault):
 
         if not project or not isinstance(plugin_position, int):
             return
-        self.concat_butt = QPushButton('Concatenate selected videos in selected order')
+        self.concat_butt = QPushButton('Concatenate')
         WidgetDefault.__init__(self, project, plugin_position)
 
             # self.plugin_position = plugin_position
@@ -79,8 +79,9 @@ class Widget(QWidget, WidgetDefault):
         self.video_list.setDragDropOverwriteMode(False)
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
-        self.vbox.addWidget(mue.InfoWidget('This operation requires as much memory as the combined size of all selected '
-                                      'stacks in the project directory. Note also there is no explicit progress bar'))
+        self.vbox.addWidget(mue.InfoWidget('Note that there is no explicit progress bar. '
+                                           'Note that videos can be dragged and dropped in the list but that the order'
+                                           'in which they are selected determines concatenation order.'))
         hhbox = QHBoxLayout()
         hhbox.addWidget(self.concat_butt)
         self.vbox.addLayout(hhbox)
@@ -115,6 +116,16 @@ class Widget(QWidget, WidgetDefault):
                 selected_videos = self.selected_videos
         else:
             selected_videos = input_paths
+
+        summed_filesize = 0
+        for path in self.widget.selected_videos:
+            summed_filesize = summed_filesize + os.path.getsize(path)
+        available = list(psutil.virtual_memory())[1]
+        if summed_filesize > available:
+            qtutil.critical("Not enough memory. Concatenated file is of size ~"+str(self.summed_filesize) +\
+               " and available memory is: " + str(self.available))
+            raise MemoryError("Not enough memory. Concatenated file is of size ~"+str(self.summed_filesize) +\
+               " and available memory is: " + str(self.available))
 
         paths = selected_videos
         if len(paths) < 2:
@@ -157,11 +168,8 @@ class MyPlugin(PluginDefault):
         for path in self.widget.selected_videos:
             self.summed_filesize = self.summed_filesize + os.path.getsize(path)
         self.available = list(psutil.virtual_memory())[1]
-        percent = list(psutil.virtual_memory())[2]
         if self.summed_filesize > self.available:
             return False
-        elif percent > 95:
-            qtutil.warning('Your memory appears to be getting low.')
         return True
 
     def automation_error_message(self):
