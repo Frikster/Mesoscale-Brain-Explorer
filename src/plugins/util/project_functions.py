@@ -111,7 +111,7 @@ def refresh_list(project, ui_list, indices, types, last_manips_to_display):
                             indices]
         for Qindex in theQIndexObjects:
             ui_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
-    else:
+    elif len(indices) == 1:
         ui_list.setCurrentIndex(ui_list.model().index(indices[0], 0))
 
 
