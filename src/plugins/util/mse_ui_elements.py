@@ -52,6 +52,53 @@ class Video_Selector(QListView):
 #         frame = fileloader.load_reference_frame(self.shown_video_path)
 #         self.view.show(frame)
 
+class RoiItemModel(QAbstractListModel):
+    textChanged = pyqtSignal(str, str)
+
+    def __init__(self, parent=None):
+        super(RoiItemModel, self).__init__(parent)
+        self.rois = []
+
+    def appendRoi(self, name):
+        self.rois.append(name)
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
+
+    def edit_roi_name(self, name, index):
+        self.rois.append(name)
+        row = len(self.rois) - 1
+        self.dataChanged.emit(self.index(row), self.index(row))
+
+    def rowCount(self, parent):
+        return len(self.rois)
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            return self.rois[index.row()]
+        return
+
+    def setData(self, index, value, role):
+      if role == Qt.EditRole:
+        value = str(value)
+        if value in self.rois[index.row()]:
+          pass
+        elif value in self.rois:
+          qtutil.critical('Roi name taken.')
+        else:
+          self.textChanged.emit(self.rois[index.row()], value)
+          self.rois[index.row()] = value
+        return True
+      return super(RoiItemModel, self).setData(index, value, role)
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+
+    def removeRow(self, roi_to_remove):
+        for roi in self.rois:
+            if roi == roi_to_remove:
+                del roi
+                break
+
 
 class InfoWidget(QFrame):
     def __init__(self, text, parent=None):

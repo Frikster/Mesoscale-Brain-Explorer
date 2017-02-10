@@ -10,10 +10,18 @@ import qtutil
 class UnknownFileFormatError(Exception):
   pass
 
-def load_npy(filename):
-  frames = np.load(filename)
-  # frames[np.isnan(frames)] = 0
-  return frames
+def load_npy(filename, progress_callback=None):
+  if not progress_callback:
+      frames = np.load(filename)
+      return frames
+  else:
+      frames_mmap = np.load(filename, mmap_mode='r')
+      frames = np.zeros(frames_mmap.shape)
+      for i, mmap_frame in enumerate(frames_mmap):
+          frames[i] = mmap_frame
+          progress_callback(i/(len(frames_mmap)))
+      # frames[np.isnan(frames)] = 0
+      return frames
 
 def get_name_after_no_overwrite(name_before, manip, project):
     """check if a file with same name already exists and *don't* overwrite if it does"""
@@ -33,7 +41,7 @@ def save_file(path, data):
     os.remove(path)
   np.save(path, data)
 
-def load_file(filename):
+def load_file(filename, progress_callback=None):
   file_size = os.path.getsize(filename)
   available = list(psutil.virtual_memory())[1]
   percent = list(psutil.virtual_memory())[2]
@@ -49,7 +57,7 @@ def load_file(filename):
       qtutil.warning('Your memory appears to be getting low.')
 
   if filename.endswith('.npy'):
-    frames = load_npy(filename)
+    frames = load_npy(filename, progress_callback)
   else:
     raise UnknownFileFormatError()
   return frames

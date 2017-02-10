@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import functools
 import os
 import sys
 import traceback
-import functools
 from shutil import copyfile
 
 import numpy as np
@@ -13,25 +13,10 @@ from PyQt4.QtGui import *
 sys.path.append('..')
 import qtutil
 import tifffile as tiff
+from .util.plugin import PluginDefault
 
 from .util import fileloader, fileconverter
 from .util import mse_ui_elements as mue
-
-class Labels:
-    scale_factor_label = "Scale Factor"
-    channel_label = "Channel"
-    width_label = "Width"
-    height_label = "Height"
-    no_channels_label = "Number of channels"
-    dtype_label = "dtype"
-
-class Defaults:
-    scale_factor_default = 1.00
-    channel_default = 2
-    width_default = 256
-    height_default = 256
-    no_channels_default = 3
-    dtype_default = 0 #index
 
 class NotConvertedError(Exception):
   pass
@@ -41,10 +26,26 @@ class FileAlreadyInProjectError(Exception):
     self.filename = filename
 
 class Widget(QWidget):
+  class Labels:
+    scale_factor_label = "Scale Factor"
+    channel_label = "Channel"
+    width_label = "Width"
+    height_label = "Height"
+    no_channels_label = "Number of channels"
+    dtype_label = "dtype"
+
+  class Defaults:
+    scale_factor_default = 1.00
+    channel_default = 2
+    width_default = 256
+    height_default = 256
+    no_channels_default = 3
+    dtype_default = 0
+
   def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
-    if not project:
+    if not project or not isinstance(plugin_position, int):
       return
     self.plugin_position = plugin_position
     self.project = project
@@ -63,12 +64,12 @@ class Widget(QWidget):
 
   def setup_params(self):
     if len(self.params) == 1:
-        self.update_plugin_params(Labels.scale_factor_label, Defaults.scale_factor_default)
-        self.update_plugin_params(Labels.channel_label, Defaults.channel_default)
-        self.update_plugin_params(Labels.width_label, Defaults.width_default)
-        self.update_plugin_params(Labels.height_label, Defaults.height_default)
-        self.update_plugin_params(Labels.no_channels_label, Defaults.no_channels_default)
-        self.update_plugin_params(Labels.dtype_label, Defaults.dtype_default)
+        self.update_plugin_params(self.Labels.scale_factor_label, self.Defaults.scale_factor_default)
+        self.update_plugin_params(self.Labels.channel_label, self.Defaults.channel_default)
+        self.update_plugin_params(self.Labels.width_label, self.Defaults.width_default)
+        self.update_plugin_params(self.Labels.height_label, self.Defaults.height_default)
+        self.update_plugin_params(self.Labels.no_channels_label, self.Defaults.no_channels_default)
+        self.update_plugin_params(self.Labels.dtype_label, self.Defaults.dtype_default)
 
     # "Scale Factor": 1.00,
     # "Channel": 2,
@@ -77,12 +78,12 @@ class Widget(QWidget):
     # "Number of channels": 3,
     # "dtype": "uint8"
 
-    self.scale_factor.setValue(self.params[Labels.scale_factor_label])
-    self.channel.setValue(self.params[Labels.channel_label])
-    self.sb_width.setValue(self.params[Labels.width_label])
-    self.sb_height.setValue(self.params[Labels.height_label])
-    self.sb_channel.setValue(self.params[Labels.no_channels_label])
-    self.cb_dtype.setCurrentIndex(self.params[Labels.dtype_label])
+    self.scale_factor.setValue(self.params[self.Labels.scale_factor_label])
+    self.channel.setValue(self.params[self.Labels.channel_label])
+    self.sb_width.setValue(self.params[self.Labels.width_label])
+    self.sb_height.setValue(self.params[self.Labels.height_label])
+    self.sb_channel.setValue(self.params[self.Labels.no_channels_label])
+    self.cb_dtype.setCurrentIndex(self.params[self.Labels.dtype_label])
 
   def setup_ui(self):
     vbox = QVBoxLayout()
@@ -162,7 +163,7 @@ class Widget(QWidget):
     vbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
                                      ' We advise you only import files no larger than 1/4 of your memory'))
     pb = QPushButton('New Video')
-    pb.clicked.connect(self.new_video)
+    pb.clicked.connect(self.execute_primary_function)
     vbox.addWidget(pb)
 
     self.listview = QListView()
@@ -175,12 +176,14 @@ class Widget(QWidget):
 
   def setup_param_signals(self):
       self.scale_factor.valueChanged[float].connect(functools.partial(self.update_plugin_params,
-                                                                      Labels.scale_factor_label))
-      self.channel.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.channel_label))
-      self.sb_width.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.width_label))
-      self.sb_height.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.height_label))
-      self.sb_channel.valueChanged[int].connect(functools.partial(self.update_plugin_params, Labels.no_channels_label))
-      self.cb_dtype.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params, Labels.dtype_label))
+                                                                      self.Labels.scale_factor_label))
+      self.channel.valueChanged[int].connect(functools.partial(self.update_plugin_params, self.Labels.channel_label))
+      self.sb_width.valueChanged[int].connect(functools.partial(self.update_plugin_params, self.Labels.width_label))
+      self.sb_height.valueChanged[int].connect(functools.partial(self.update_plugin_params, self.Labels.height_label))
+      self.sb_channel.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                  self.Labels.no_channels_label))
+      self.cb_dtype.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                       self.Labels.dtype_label))
 
   def update_plugin_params(self, key, val):
       self.params[key] = val
@@ -328,7 +331,7 @@ class Widget(QWidget):
         imported_paths = imported_paths + [imported_path]
     return imported_paths
 
-  def new_video(self, input_paths = None):
+  def execute_primary_function(self, input_paths = None):
     if not input_paths:
         filenames = QFileDialog.getOpenFileNames(
           self, 'Load images', QSettings().value('last_load_data_path'),
@@ -346,7 +349,7 @@ class Widget(QWidget):
         qtutil.critical("These files already exist in the project: "
                         + str(tester) +
                         " Please change their names if you want to import them")
-        return
+        return [" "] #todo: end automation more elegantly
     return self.import_files(filenames)
 
   def get_input_paths(self):
@@ -396,16 +399,21 @@ class Widget(QWidget):
     progress_callback(1)
     return ndarray
 
-class MyPlugin:
+class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Import Image Stacks'
     self.widget = Widget(project, plugin_position)
-
-  def run(self):
-    return self.widget.new_video()
+    super().__init__(self.widget, self.widget.Labels, self.name)
 
   def get_input_paths(self):
     return self.widget.get_input_paths()
+
+  def check_ready_for_automation(self):
+      return True
+
+  def automation_error_message(self):
+      return "YOU SHOULD NOT BE ABLE TO SEE THIS"
+
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)

@@ -26,10 +26,10 @@ def raw2npy(filename_from, filename_to, dtype, width, height,
     frame_size = width * height * num_channels
     if len(fp) % frame_size:
       raise ConvertError()
-    num_frames = len(fp) / frame_size
+    num_frames = int(len(fp) / frame_size)
     fp = np.memmap(filename_from, dtype, 'r',
       shape=(num_frames, width, height, num_channels))
-    np.save(filename_to, np.empty((num_frames, width, height), dtype))
+    np.save(filename_to, np.empty((num_frames, int(width), int(height)), dtype))
     fp_to = np.load(filename_to, mmap_mode='r+')
     for i, frame in enumerate(fp):
       progress_callback(i / float(len(fp)-1))

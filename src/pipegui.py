@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import collections
+import functools
 import importlib
 import multiprocessing
 import os
@@ -52,15 +53,45 @@ class Sidebar(QWidget):
   open_pipeconf_requested = pyqtSignal()
   open_datadialog_requested = pyqtSignal()
   automate_pipeline_requested = pyqtSignal()
+  x_origin_changed = pyqtSignal(float)
+  y_origin_changed = pyqtSignal(float)
+  units_per_pixel_changed = pyqtSignal(float)
 
   def __init__(self, parent=None):
     super(Sidebar, self).__init__(parent)
+    self.x_origin = QDoubleSpinBox()
+    self.y_origin = QDoubleSpinBox()
+    self.units_per_pixel = QDoubleSpinBox()
     self.setup_ui()
+    self.setup_signals()
 
   def setup_ui(self):
     self.setContentsMargins(4, 6, 5, 0)
 
     vbox = QVBoxLayout()
+
+    hbox = QHBoxLayout()
+    hbox.addWidget(QLabel('Origin:'))
+    hbox.addWidget(QLabel('Units per pixel:'))
+    vbox.addLayout(hbox)
+    hbox2 = QHBoxLayout()
+    hhbox = QHBoxLayout()
+    hhbox2 = QHBoxLayout()
+    hhbox.addWidget(QLabel("X:"))
+    hhbox.addWidget(self.x_origin)
+    hhbox.addWidget(QLabel("Y:"))
+    hhbox.addWidget(self.y_origin)
+    hhbox2.addWidget(self.units_per_pixel)
+    hbox2.addLayout(hhbox)
+    hbox2.addLayout(hhbox2)
+    vbox.addLayout(hbox2)
+    self.units_per_pixel.setDecimals(5)
+    self.units_per_pixel.setMaximum(100000)
+    self.x_origin.setMaximum(100000)
+    self.y_origin.setMaximum(100000)
+    # self.x_origin.setValue(self.project['origin'][0])
+    # self.y_origin.setValue(self.project['origin'][1])
+    # self.units_per_pixel.setValue(self.project['unit_per_pixel'])
 
     self.pl_list = PipelineView()
     self.pl_list.setIconSize(QSize(18, 18))
@@ -70,7 +101,6 @@ class Sidebar(QWidget):
     vbox.addWidget(QLabel('Pipeline:'))
     vbox.addWidget(self.pl_list)
 
-    # todo: automation testing button. Remove/replace
     pb = QPushButton('&Automation')
     pb.clicked.connect(self.automate_pipeline_requested)
     vbox.addWidget(pb)
@@ -90,6 +120,17 @@ class Sidebar(QWidget):
 
     self.setLayout(vbox)
 
+  def setup_sidebar_values(self, project):
+      self.x_origin.setValue(project['origin'][0])
+      self.y_origin.setValue(project['origin'][1])
+      self.units_per_pixel.setValue(project['unit_per_pixel'])
+
+  def setup_signals(self):
+      self.x_origin.valueChanged.connect(self.x_origin_changed)
+      self.y_origin.valueChanged.connect(self.y_origin_changed)
+      self.units_per_pixel.valueChanged.connect(self.units_per_pixel_changed)
+
+
 class MainWindow(QMainWindow):
   def __init__(self, parent=None):
     super(MainWindow, self).__init__(parent)
@@ -99,7 +140,9 @@ class MainWindow(QMainWindow):
     self.current_plugin = None
     self.project_manager = ProjectManager(self)
     self.plugins = self.load_plugins()
+    self.sidebar = Sidebar()
     self.setup_ui()
+    self.setup_signals()
 
     self.enable(False)
 
@@ -113,19 +156,20 @@ class MainWindow(QMainWindow):
         self.open_project(last)
       except:
         qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
-
+    self.sidebar.setup_sidebar_values(self.project)
 
   def load_plugins(self):
+    """This just gets all the plugins (no reference to pipeline)"""
     plugins = collections.OrderedDict()
     filenames = [f for f in sorted(os.listdir('plugins')) if f.endswith('.py')]
     for filename in filenames:
       name, ext = os.path.splitext(filename)
-      p = self.load_plugin('plugins.' + name)
+      p = self.load_plugin('plugins.' + name, None)
       if p:
         plugins[name] = p
     return plugins
 
-  def load_plugin(self, module, plugin_position=None):
+  def load_plugin(self, module, plugin_position):
     try:
         m = importlib.import_module(module)
         if not hasattr(m, 'MyPlugin'):
@@ -139,8 +183,8 @@ class MainWindow(QMainWindow):
         return p
 
   def reload_pipeline_plugins(self):
-    for plugin_name in self.pipeline_model.get_plugin_names():
-      p = self.load_plugin('plugins.' + plugin_name)
+    for i, plugin_name in enumerate(self.pipeline_model.get_plugin_names()):
+      p = self.load_plugin('plugins.' + plugin_name, i)
       if p:
         self.plugins[plugin_name] = p
     if self.current_plugin:
@@ -149,17 +193,16 @@ class MainWindow(QMainWindow):
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)
     self.datadialog = DataDialog(self)
-    self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
-
-    self.sidebar = Sidebar()
-    self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
-    self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
-    self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
+    # self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
+    #
+    # self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
+    # self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
+    # self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
 
     self.pl_frame = QFrame()
 
-    self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
-    self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
+    # self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
+    # self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
     splitter = QSplitter(self)
     self.enable = lambda yes: splitter.setEnabled(yes)
@@ -220,6 +263,35 @@ class MainWindow(QMainWindow):
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
 
+  def setup_signals(self):
+      self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
+
+      self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
+      self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
+      self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
+      self.sidebar.x_origin_changed[float].connect(functools.partial(self.set_project_coordinate_system, 'x'))
+      self.sidebar.y_origin_changed[float].connect(functools.partial(self.set_project_coordinate_system, 'y'))
+      self.sidebar.units_per_pixel_changed[float].connect(functools.partial(self.set_project_coordinate_system,
+                                                                            'units_per_pixel'))
+      self.plugins['set_coordinate_system'].widget.x_origin_changed[float].connect(functools.partial(
+          self.set_project_coordinate_system, 'x'))
+      self.plugins['set_coordinate_system'].widget.y_origin_changed[float].connect(functools.partial(
+          self.set_project_coordinate_system, 'y'))
+      # todo: add signals from set_coordinate_system here
+      self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
+      self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
+
+  def set_project_coordinate_system(self, key, value):
+    if key == 'x':
+        self.project['origin'][0] = value
+        self.project.save()
+    elif key == 'y':
+        self.project['origin'][1] = value
+        self.project.save()
+    elif key == 'units_per_pixel':
+        self.project['unit_per_pixel'] = value
+        self.project.save()
+
   def create_project(self):
     project = self.project_manager.new_project()
     if project:
@@ -255,7 +327,7 @@ class MainWindow(QMainWindow):
     self.project_menu.setEnabled(False)
     self.enable(False)
   
-  def set_plugin(self, plugin_name, plugin_position=None):
+  def set_plugin(self, plugin_name, plugin_position):
     p = self.load_plugin('plugins.' + str(plugin_name), plugin_position)
     if not p:
       return

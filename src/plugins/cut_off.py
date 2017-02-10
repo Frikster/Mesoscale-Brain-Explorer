@@ -1,217 +1,71 @@
 #!/usr/bin/env python3
 
-import os
 import functools
+import os
 
 import numpy as np
-from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView
-from .util.plugin import Plugin_default
-from .util.plugin import Widget_default
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
-class Labels:
-    video_list_indices_label = 'video_list_indices'
-    last_manips_to_display_label = 'last_manips_to_display'
-    start_cut_off_label = 'Cut off from start'
-    end_cut_off_label = 'Cut off from end'
 
-class Defaults:
-    video_list_indices_default = [0]
-    last_manips_to_display_default = ['All']
-    list_display_type = ['video']
-    start_cut_off_default = 0
-    end_cut_off_default = 0
-
-# todo: make subclass Widget_default
-class Widget(QWidget):
-    class Labels:
-        video_list_indices_label = 'video_list_indices'
-        last_manips_to_display_label = 'last_manips_to_display'
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
         start_cut_off_label = 'Cut off from start'
         end_cut_off_label = 'Cut off from end'
 
-    class Defaults:
-        video_list_indices_default = [0]
-        last_manips_to_display_default = ['All']
-        list_display_type = ['video']
+    class Defaults(WidgetDefault.Defaults):
         start_cut_off_default = 0
         end_cut_off_default = 0
+        manip = "cut-off"
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
-
-        if not project:
+        if not project or not isinstance(plugin_position, int):
             return
-        self.plugin_position = plugin_position
-        self.project = project
-
-        # define ui components and global data
-        self.view = MyGraphicsView(self.project)
-        self.video_list = MyListView()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.left = QFrame()
-        self.right = QFrame()
         self.left_cut_off = QSpinBox()
         self.right_cut_off = QSpinBox()
-
-        self.video_list_indices = []
-        self.toolbutton_values = []
-        self.open_dialogs = []
-        self.selected_videos = []
-        self.shown_video_path = None
-
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
-        # for f in project.files:
-        #     if f['type'] != 'video':
-        #         continue
-        #     self.video_list.model().appendRow(QStandardItem(f['name']))
-        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-        self.setup_ui()
-        if isinstance(plugin_position, int):
-            self.params = project.pipeline[self.plugin_position]
-            assert (self.params['name'] == 'cut_off')
-            self.setup_param_signals()
-            try:
-                self.setup_params()
-            except:
-                self.setup_params(reset=True)
-            pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
-                             Defaults.list_display_type, self.toolbutton_values)
-
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
+        self.main_button = QPushButton('Cut off frames')
+        WidgetDefault.__init__(self, project, plugin_position)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.left.setLayout(vbox_view)
-
-        vbox = QVBoxLayout()
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Choose video:'))
-        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        #self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.video_list)
-        max_cut_off = 5000
-        vbox.addWidget(QLabel(Labels.start_cut_off_label))
+        super().setup_ui()
+        max_cut_off = 50000
+        self.vbox.addWidget(QLabel(self.Labels.start_cut_off_label))
         self.left_cut_off.setMinimum(0)
         self.left_cut_off.setMaximum(max_cut_off)
-        self.left_cut_off.setValue(Defaults.start_cut_off_default)
-        vbox.addWidget(self.left_cut_off)
-        vbox.addWidget(QLabel(Labels.end_cut_off_label))
+        self.left_cut_off.setValue(self.Defaults.start_cut_off_default)
+        self.vbox.addWidget(self.left_cut_off)
+        self.vbox.addWidget(QLabel(self.Labels.end_cut_off_label))
         self.right_cut_off.setMinimum(0)
         self.right_cut_off.setMaximum(max_cut_off)
-        self.right_cut_off.setValue(Defaults.end_cut_off_default)
-        vbox.addWidget(self.right_cut_off)
-        pb = QPushButton('Cut off frames')
-        pb.clicked.connect(self.cut_off)
-        vbox.addWidget(pb)
-        self.right.setLayout(vbox)
+        self.right_cut_off.setValue(self.Defaults.end_cut_off_default)
+        self.vbox.addWidget(self.right_cut_off)
+        self.vbox.addWidget(self.main_button)
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
+    def setup_signals(self):
+        super().setup_signals()
+        self.main_button.clicked.connect(self.execute_primary_function)
 
     def setup_params(self, reset=False):
+        super().setup_params()
         if len(self.params) == 1 or reset:
-            self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
-            self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
-            self.update_plugin_params(Labels.start_cut_off_label, Defaults.start_cut_off_default)
-            self.update_plugin_params(Labels.end_cut_off_label, Defaults.end_cut_off_default)
-        self.video_list_indices = self.params[Labels.video_list_indices_label]
-        self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
-        manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
-                                  if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
-        for item in manip_items:
-            item.setCheckState(Qt.Checked)
-        not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
-                       if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
-        for item in not_checked:
-            item.setCheckState(Qt.Unchecked)
-        self.left_cut_off.setValue(self.params[Labels.start_cut_off_label])
-        self.right_cut_off.setValue(self.params[Labels.end_cut_off_label])
-
+            self.update_plugin_params(self.Labels.start_cut_off_label, self.Defaults.start_cut_off_default)
+            self.update_plugin_params(self.Labels.end_cut_off_label, self.Defaults.end_cut_off_default)
+        self.left_cut_off.setValue(self.params[self.Labels.start_cut_off_label])
+        self.right_cut_off.setValue(self.params[self.Labels.end_cut_off_label])
 
     def setup_param_signals(self):
-        self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
-        self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
+        super().setup_param_signals()
         self.left_cut_off.valueChanged[int].connect(functools.partial(self.update_plugin_params,
-                                                                        Labels.start_cut_off_label))
+                                                                      self.Labels.start_cut_off_label))
         self.right_cut_off.valueChanged[int].connect(functools.partial(self.update_plugin_params,
-                                                                      Labels.end_cut_off_label))
+                                                                       self.Labels.end_cut_off_label))
 
-
-    def prepare_video_list_for_update(self, selected, deselected):
-        val = [v.row() for v in self.video_list.selectedIndexes()]
-        self.update_plugin_params(Labels.video_list_indices_label, val)
-
-    def prepare_toolbutton_for_update(self, trigger_item):
-        val = self.params[Labels.last_manips_to_display_label]
-        selected = self.toolbutton.itemText(trigger_item)
-        if selected not in val:
-            val = val + [selected]
-            if trigger_item != 0:
-                val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
-        else:
-            val = [manip for manip in val if manip != selected]
-
-        self.update_plugin_params(Labels.last_manips_to_display_label, val)
-
-
-    def update_plugin_params(self, key, val):
-        pfs.update_plugin_params(self, key, val)
-
-    # def selected_video_changed(self, selection):
-    #     if not selection.indexes():
-    #         return
-    #     self.video_path = str(os.path.join(self.project.path,
-    #                                        selection.indexes()[0].data(Qt.DisplayRole))
-    #                           + '.npy')
-    #     frame = fileloader.load_reference_frame(self.video_path)
-    #     self.view.show(frame)
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, Defaults.list_display_type, trigger_item)
-
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
-
-    # def selected_video_changed(self, selected, deselected):
-    #     if not selected.indexes():
-    #         return
-    #
-    #     for index in deselected.indexes():
-    #         vidpath = str(os.path.join(self.project.path,
-    #                                  index.data(Qt.DisplayRole))
-    #                           + '.npy')
-    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-    #     for index in selected.indexes():
-    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-    #         if vidpath not in self.selected_videos and vidpath != 'None':
-    #             self.selected_videos = self.selected_videos + [vidpath]
-    #
-    #     self.shown_video_path = str(os.path.join(self.project.path,
-    #                                        selected.indexes()[0].data(Qt.DisplayRole))
-    #                           + '.npy')
-    #     frame = fileloader.load_reference_frame(self.shown_video_path)
-    #     self.view.show(frame)
-
-    def cut_off(self, input_paths = None):
+    def execute_primary_function(self, input_paths=None):
         if not input_paths:
             if not self.selected_videos:
                 return
@@ -246,8 +100,7 @@ class Widget(QWidget):
 
             num_frames = len(frames_mmap)-cut_off_end-cut_off_start
             name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = fileloader.get_name_after_no_overwrite(name_before, 'cut-off', self.project)
-            # name_after = str(name_before + '_' + 'cut-off')
+            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
             path = str(os.path.join(self.project.path, name_after) + '.npy')
             fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1]))))
             frames = np.load(path, mmap_mode='r+')
@@ -255,41 +108,26 @@ class Widget(QWidget):
                 callback(i / float(len(frames_mmap)))
                 frames[i] = frame[:, :]
             callback(1)
-            output_paths = output_paths + [path]
             # frames = np.array(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end])
-            pfs.save_project(video_path, self.project, None, 'cut-off', 'video')
+            path = pfs.save_project(video_path, self.project, None, self.Defaults.manip, 'video')
+            output_paths = output_paths + [path]
             pfs.refresh_list(self.project, self.video_list,
-                             self.params[Labels.video_list_indices_label],
-                             Defaults.list_display_type,
-                             self.params[Labels.last_manips_to_display_label])
+                             self.params[self.Labels.video_list_indices_label],
+                             self.Defaults.list_display_type,
+                             self.params[self.Labels.last_manips_to_display_label])
         global_callback(1)
         return output_paths
 
-class MyPlugin:
+class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Cut off'
         self.widget = Widget(project, plugin_position)
-
-    def run(self, input_paths = None):
-        self.widget.params = self.widget.project.pipeline[self.widget.plugin_position]
-        return self.widget.cut_off(input_paths)
-        # todo notes:
-        # automation consists of class Labels, Defaults,
-        # setupParams (defaults and set from self.params)
-        # setup_param_signals which links to update_plugin_params
-        # and finally run with plugin_position param
-        # input and output paths
-
-    def get_input_paths(self):
-        fs = self.widget.project.files
-        indices = self.widget.params[Labels.video_list_indices_label]
-        return [fs[i]['path'] for i in range(len(fs)) if i in indices]
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
     def check_ready_for_automation(self):
         lc = self.widget.left_cut_off.value()
         rc = self.widget.right_cut_off.value()
         return lc > 0 or rc > 0
-
 
     def automation_error_message(self):
         return "Cut off plugin cannot have both cut off paramaters set to 0."
