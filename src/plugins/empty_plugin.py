@@ -8,6 +8,7 @@ from PyQt4.QtGui import *
 
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+from .util import project_functions as pfs
 
 
 class Widget(QWidget, WidgetDefault):
@@ -27,6 +28,7 @@ class Widget(QWidget, WidgetDefault):
     # example: here a button and spin box are defined
     self.main_button = QPushButton('Custom Analysis')
     self.example_sb = QSpinBox()
+    # note the call to WidgetDefault AFTER defining attributes
     WidgetDefault.__init__(self, project, plugin_position)
 
   def setup_ui(self):
@@ -67,8 +69,25 @@ class Widget(QWidget, WidgetDefault):
 
   def execute_primary_function(self, input_paths=None):
       '''Primary function of plugin'''
+      if not input_paths:
+          if not self.selected_videos:
+              return
+          else:
+              selected_videos = self.selected_videos
+      else:
+          selected_videos = input_paths
+      # use selected_videos which are the paths to stacks the user has selected or have been input from automation
       qtutil.info('This is only a template. Use it to code from. \n'
                   'Value of spinbox is: ' + str(self.example_sb.value()))
+      # todo: insert functionality here
+      # refresh_list can be used to refresh an input list that will have particular indices selected,
+      # specified content type shown as well as only showing content after a particular plugin manipulation
+      pfs.refresh_list(self.project, self.video_list,
+                       self.params[self.Labels.video_list_indices_label],
+                       self.Defaults.list_display_type,
+                       self.params[self.Labels.last_manips_to_display_label])
+      # return the output path(s) of this function for automation
+      # return output_paths
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
