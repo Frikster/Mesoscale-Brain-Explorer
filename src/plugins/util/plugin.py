@@ -1,3 +1,5 @@
+import functools
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -84,6 +86,12 @@ class WidgetDefault(object):
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
         self.video_list.doubleClicked.connect(self.video_triggered)
         self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        self.video_list.video_player_scaled_signal.connect(functools.partial(self.video_triggered,
+                                                                             self.video_list.currentIndex()))
+        # todo: connect signals
+        # self.video_list.video_player_unscaled_signal.connect()
+        # self.video_list.delete_signal.connect()
+        # self.video_list.detatch_signal.connect()
 
     def setup_params(self, reset=False):
         if len(self.params) == 1 or reset:
@@ -132,6 +140,10 @@ class WidgetDefault(object):
     def execute_primary_function(self, input_paths=None):
         raise PrimaryFunctionMissing("Your custom plugin does not have a primary function."
                                      "Override this method")
+
+
+class ListMenu(MyListView):
+    pass
 
 
 class PluginDefault:
