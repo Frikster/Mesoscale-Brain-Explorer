@@ -156,21 +156,29 @@ class CheckableComboBox(QtGui.QComboBox):
             item.setCheckState(QtCore.Qt.Checked)
 
 class PlayerDialog(QDialog):
-  def __init__(self, project, filename, parent=None):
+  def __init__(self, project, filename, parent=None, scaling=True):
     super(PlayerDialog, self).__init__(parent)
     self.project = project
     self.setup_ui()
 
+    self.scale = scaling
     self.fp = np.load(filename, mmap_mode='r')
-    self.global_min = np.min(self.fp)
-    self.global_max = np.max(self.fp)
+    if isinstance(scaling, bool) and scaling:
+        self.global_min = np.min(self.fp)
+        self.global_max = np.max(self.fp)
+    if isinstance(scaling, tuple):
+        self.global_min = scaling[0]
+        self.global_max = scaling[1]
     self.slider.setMaximum(len(self.fp)-1)
     self.show_frame(0)
 
   def show_frame(self, frame_num):
     frame = self.fp[frame_num]
     self.label_frame.setText(str(frame_num) + ' / ' + str(len(self.fp)-1))
-    self.view.show(frame, self.global_min, self.global_max)
+    if hasattr(self, 'global_min') and hasattr(self, 'global_max'):
+        self.view.show(frame, self.global_min, self.global_max)
+    else:
+        self.view.show(frame)
 
   def setup_ui(self):
     vbox = QVBoxLayout()

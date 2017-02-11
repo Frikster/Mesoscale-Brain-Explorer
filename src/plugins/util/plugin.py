@@ -17,6 +17,11 @@ class WidgetDefault(object):
     class Labels(object):
         video_list_indices_label = 'video_list_indices'
         last_manips_to_display_label = 'last_manips_to_display'
+        video_player_scaled_label = 'video_player_scaled'
+        video_player_unscaled_label = 'video_player_unscaled'
+        delete_signal_label = 'delete_signal'
+        detatch_signal_label = 'detatch_signal'
+
 
     class Defaults(object):
         video_list_indices_default = [0]
@@ -57,8 +62,8 @@ class WidgetDefault(object):
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
                              self.Defaults.list_display_type, self.toolbutton_values)
 
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
+    def video_triggered(self, index, scaling=True):
+        pfs.video_triggered(self, index, scaling)
 
     def setup_ui(self):
         self.vbox_view.addWidget(self.view)
@@ -86,12 +91,24 @@ class WidgetDefault(object):
         self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
         self.video_list.doubleClicked.connect(self.video_triggered)
         self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        self.video_list.video_player_scaled_signal.connect(functools.partial(self.video_triggered,
-                                                                             self.video_list.currentIndex()))
-        # todo: connect signals
-        # self.video_list.video_player_unscaled_signal.connect()
-        # self.video_list.delete_signal.connect()
-        # self.video_list.detatch_signal.connect()
+        self.video_list.video_player_scaled_signal.connect(functools.partial(
+            self.prepare_context_menu_signal_for_action, self.Labels.video_player_scaled_label))
+        self.video_list.video_player_unscaled_signal.connect(functools.partial(
+            self.prepare_context_menu_signal_for_action, self.Labels.video_player_unscaled_label))
+        self.video_list.delete_signal.connect(functools.partial(
+            self.prepare_context_menu_signal_for_action, self.Labels.delete_signal_label))
+        self.video_list.detatch_signal.connect(functools.partial(
+            self.prepare_context_menu_signal_for_action, self.Labels.detatch_signal_label))
+
+    def prepare_context_menu_signal_for_action(self, key):
+        if key == self.Labels.video_player_scaled_label:
+            self.video_triggered(self.video_list.currentIndex())
+        if key == self.Labels.video_player_unscaled_label:
+            self.video_triggered(self.video_list.currentIndex(), False)
+        if key == self.Labels.delete_signal_label:
+            pass
+        if key == self.Labels.detatch_signal_label:
+            pass
 
     def setup_params(self, reset=False):
         if len(self.params) == 1 or reset:

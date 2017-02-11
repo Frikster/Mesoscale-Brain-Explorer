@@ -90,7 +90,7 @@ class MyListView(QListView):
         if action == video_player_scaled_action:
             self.video_player_scaled_signal.emit()
         if action == video_player_unscaled_action:
-            self.video_player_unscaled_signalid.emit()
+            self.video_player_unscaled_signal.emit()
         if action == delete_action:
             self.delete_signal.emit()
         if action == detatch_action:
