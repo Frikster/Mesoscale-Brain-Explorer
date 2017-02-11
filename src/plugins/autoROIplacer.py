@@ -271,14 +271,14 @@ class Widget(QWidget, WidgetDefault):
         self.view.vb.selectROI(roi)
       self.view.vb.removeROI()
 
-  # def selected_video_changed(self, selection):
-  #   if not selection.indexes():
-  #     return
-  #   self.video_path = str(os.path.join(self.project.path,
-  #                                  selection.indexes()[0].data(Qt.DisplayRole))
-  #                         + '.npy')
-  #   frame = fileloader.load_reference_frame(self.video_path)
-  #   self.view.show(frame)
+  def selected_video_changed(self, selection):
+    if not selection.indexes():
+      return
+    self.video_path = str(os.path.join(self.project.path,
+                                   selection.indexes()[0].data(Qt.DisplayRole))
+                          + '.npy')
+    frame = fileloader.load_reference_frame(self.video_path)
+    self.view.show(frame)
 
   def selected_roi_changed(self, selection):
     if self.selected_roi_changed_flag == 0:
