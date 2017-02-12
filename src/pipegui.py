@@ -121,9 +121,10 @@ class Sidebar(QWidget):
     self.setLayout(vbox)
 
   def setup_sidebar_values(self, project):
-      self.x_origin.setValue(project['origin'][0])
-      self.y_origin.setValue(project['origin'][1])
-      self.units_per_pixel.setValue(project['unit_per_pixel'])
+      if project:
+        self.x_origin.setValue(project['origin'][0])
+        self.y_origin.setValue(project['origin'][1])
+        self.units_per_pixel.setValue(project['unit_per_pixel'])
 
   def setup_signals(self):
       self.x_origin.valueChanged.connect(self.x_origin_changed)
@@ -188,7 +189,7 @@ class MainWindow(QMainWindow):
       if p:
         self.plugins[plugin_name] = p
     if self.current_plugin:
-      self.set_plugin(self.current_plugin)
+      self.set_plugin(self.current_plugin, None)
 
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)

@@ -1,5 +1,7 @@
 import functools
+import os
 
+import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -106,9 +108,26 @@ class WidgetDefault(object):
         if key == self.Labels.video_player_unscaled_label:
             self.video_triggered(self.video_list.currentIndex(), False)
         if key == self.Labels.delete_signal_label:
-            pass
+            self.remove_clicked()
         if key == self.Labels.detatch_signal_label:
-            pass
+            self.detatch_clicked()
+
+    def remove_clicked(self):
+        self.detatch_clicked()
+        for path in self.selected_videos:
+            try:
+                os.remove(path)
+            except:
+                qtutil.critical('Could not delete file ' + path)
+                return
+
+    def detatch_clicked(self):
+       for path in self.selected_videos:
+            norm_path = os.path.normpath(path)
+            self.project.files[:] = [f for f in self.project.files if os.path.normpath(f['path']) != norm_path]
+       self.project.save()
+       pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                        self.Defaults.list_display_type, self.toolbutton_values)
 
     def setup_params(self, reset=False):
         if len(self.params) == 1 or reset:
