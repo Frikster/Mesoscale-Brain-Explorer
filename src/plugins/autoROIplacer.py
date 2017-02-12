@@ -133,6 +133,7 @@ class Widget(QWidget, WidgetDefault):
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
+    WidgetDefault.__init__(self, project, plugin_position)
     roi_names = [f['name'] for f in project.files if f['type'] == 'auto_roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
@@ -177,7 +178,6 @@ class Widget(QWidget, WidgetDefault):
           self.table_widget.clear()
           self.table_widget.setRowCount(len(self.data[self.headers[0]]))
           self.table_widget.update(self.data)
-    WidgetDefault.__init__(self, project, plugin_position)
 
 
   # def video_triggered(self, index):
