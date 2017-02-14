@@ -20,6 +20,7 @@ class Widget(QWidget, WidgetDefault):
     class Defaults(WidgetDefault.Defaults):
         list_display_type = ['ref_frame', 'video']
         manip = 'align'
+        secondary_manip = 'ref_frame'
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -247,9 +248,8 @@ class Widget(QWidget, WidgetDefault):
             reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
         else:
             filenames = input_files
-            reference_frame_file = self.selected_videos
-            if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
-                    len(reference_frame_file):
+            reference_frame_file = [f for f in input_files if f[-13:] == 'ref_frame.npy']
+            if len(reference_frame_file) != 1:
                 qtutil.critical("Please only select a single reference frame for each alignment plugin used."
                           "Automation will now close.")
                 return
@@ -375,8 +375,8 @@ class MyPlugin(PluginDefault):
         super().__init__(self.widget, self.widget.Labels, self.name)
 
     def check_ready_for_automation(self):
-        filenames = self.widget.selected_videos
-        reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+        filenames = self.get_input_paths()
+        reference_frame_file = [file for file in filenames if file[-13:] == self.widget.Defaults.secondary_manip+'.npy']
         if len(reference_frame_file) == 1:
             return True
         else:

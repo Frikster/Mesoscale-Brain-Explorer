@@ -151,6 +151,7 @@ class MainWindow(QMainWindow):
     self.sidebar.pl_list.setModel(self.pipeline_model)
     self.pipeconf.pipeline_list.setModel(self.pipeline_model)
 
+    # todo: load last if user requests it
     last = str(QSettings().value('path_of_last_project'))
     if last:
       try:
