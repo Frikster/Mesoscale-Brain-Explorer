@@ -201,9 +201,22 @@ class Widget(QWidget):
     channels = int(self.sb_channel.value())
     channel = int(self.channel.value())
     # todo: figure out whether channel goes in path name or somehow in
+    new_filename = os.path.basename(filename)[:-4]
+    new_filename = os.path.join(self.project.path, new_filename) + '.npy'
+    if os.path.isfile(new_filename):
+        i = 1
+        path_after = new_filename
+        while os.path.isfile(path_after):
+            name_after = new_filename[:-4] + '(' + str(i) + ')' + '.npy'
+            path_after = os.path.join(self.project.path, name_after)
+            i = i + 1
+        path = path_after
+    else:
+        path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+        path = os.path.join(self.project.path, path)
     # path = os.path.splitext(os.path.basename(filename))[0] + '_channel_' + str(channel) + '.npy'
-    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
-    path = os.path.join(self.project.path, path)
+    # path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+    # path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
     progress.setAutoClose(True)
@@ -238,8 +251,23 @@ class Widget(QWidget):
     rescale_value = float(self.scale_factor.value())
     # channel = int(self.channel.value())
 
-    path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
-    path = os.path.join(self.project.path, path)
+    new_filename = os.path.basename(filename)[:-4]
+    new_filename = os.path.join(self.project.path, new_filename) + '.npy'
+    if os.path.isfile(new_filename):
+        i = 1
+        path_after = new_filename
+        while os.path.isfile(path_after):
+            name_after = new_filename[:-4] + '(' + str(i) + ')' + '.npy'
+            path_after = os.path.join(self.project.path, name_after)
+            i = i + 1
+        path = path_after
+    else:
+        path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+        path = os.path.join(self.project.path, path)
+
+
+    # path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
+    # path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting tif to npy...', 'Abort', 0, 100, self)
     progress.setAutoClose(True)
@@ -295,11 +323,19 @@ class Widget(QWidget):
       if os.path.normpath(filename) != os.path.normpath(new_filename):
           qtutil.info('Copying .npy from ' + filename + ' to ' + new_filename +
                       '. You can do this manually for large files to see a progress bar')
+          # if os.path.isfile(new_filename):
+          #     i = 1
+          #     path_after = new_filename
+          #     while os.path.isfile(path_after):
+          #         name_after = new_filename + '(' + str(i) + ')' + '.npy'
+          #         path_after = os.path.join(self.project.path, name_after)
+          #         i = i + 1
+          #     new_filename = path_after
           copyfile(filename, new_filename)
       filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
-      raise FileAlreadyInProjectError(filename)      
+      raise FileAlreadyInProjectError(filename)
 
     name, ext = os.path.splitext(os.path.basename(filename))
 
@@ -321,8 +357,8 @@ class Widget(QWidget):
         imported_path = self.import_file(filename)
       except NotConvertedError:
         qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
-      except FileAlreadyInProjectError as e:
-        qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
+      # except FileAlreadyInProjectError as e:
+      #   qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
       except:
         qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
           traceback.format_exc())
@@ -345,11 +381,11 @@ class Widget(QWidget):
     new_file_names = [os.path.splitext(os.path.basename(filename))[0] for filename in filenames]
     tester = [name for name in proj_file_names if name in new_file_names]
 
-    if tester:
-        qtutil.critical("These files already exist in the project: "
-                        + str(tester) +
-                        " Please change their names if you want to import them")
-        return [" "] #todo: end automation more elegantly
+    # if tester:
+    #     qtutil.critical("These files already exist in the project: "
+    #                     + str(tester) +
+    #                     " Please change their names if you want to import them")
+    #     return [" "] #todo: end automation more elegantly
     return self.import_files(filenames)
 
   def get_input_paths(self):
