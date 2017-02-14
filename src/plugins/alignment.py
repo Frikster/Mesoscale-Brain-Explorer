@@ -11,16 +11,19 @@ from .util import fileloader
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-
+import functools
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
-        pass
+        apply_scaling_label = 'Apply Scaling'
+        apply_rotation_label = 'Apply Rotation'
 
     class Defaults(WidgetDefault.Defaults):
         list_display_type = ['ref_frame', 'video']
         manip = 'align'
         secondary_manip = 'ref_frame'
+        apply_scaling_default = True
+        apply_rotation_default = False
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -203,6 +206,22 @@ class Widget(QWidget, WidgetDefault):
         super().setup_signals()
         self.main_button.clicked.connect(self.execute_primary_function)
         self.ref_button.clicked.connect(self.compute_ref_frame)
+
+    def setup_params(self, reset=False):
+        super().setup_params()
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.apply_rotation_label, self.Defaults.apply_rotation_default)
+            self.update_plugin_params(self.Labels.apply_scaling_label, self.Defaults.apply_scaling_default)
+        self.rotation_checkbox.setChecked(self.params[self.Labels.apply_rotation_label])
+        self.scaling_checkbox.setChecked(self.params[self.Labels.apply_scaling_label])
+
+
+    def setup_param_signals(self):
+        super().setup_param_signals()
+        self.rotation_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.apply_rotation_label))
+        self.scaling_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.apply_scaling_label))
 
 
     def compute_ref_frame(self):
