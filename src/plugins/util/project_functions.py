@@ -122,6 +122,8 @@ def refresh_list(project, ui_list, indices, types, last_manips_to_display):
                 if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
                     ui_list.model().appendRow(item)
 
+    if len(indices) == 0:
+        return
     if len(indices) > 1:
         theQIndexObjects = [ui_list.model().createIndex(rowIndex, 0) for rowIndex in
                             indices]

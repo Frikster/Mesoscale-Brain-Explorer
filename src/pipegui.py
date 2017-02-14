@@ -6,6 +6,7 @@ import importlib
 import multiprocessing
 import os
 import sys
+import json
 
 import qtutil
 from PyQt4.QtCore import *
@@ -184,6 +185,14 @@ class MainWindow(QMainWindow):
     else:
         return p
 
+  # def reset_pipeline_plugins(self, plugin_names):
+  #     for i, plugin_name in enumerate(plugin_names):
+  #         p = self.load_plugin('plugins.' + plugin_name, i)
+  #         if p:
+  #             self.plugins[plugin_name] = p
+  #     if self.current_plugin:
+  #         self.set_plugin(self.current_plugin, None)
+
   def reload_pipeline_plugins(self):
     for i, plugin_name in enumerate(self.pipeline_model.get_plugin_names()):
       p = self.load_plugin('plugins.' + plugin_name, i)
@@ -309,13 +318,42 @@ class MainWindow(QMainWindow):
 
     pipeline = []
     for plugin_dict in self.project.pipeline:
-      plugin_name = plugin_dict['name']
+      # include fix to update old versions to new format
+      try:
+          plugin_name = plugin_dict['name']
+      except:
+          attrs = json.load(open('../templates/spcproject.json'))
+          pipeline_template = attrs['pipeline']
+          # pipeline_names = [p['name'] for p in pipeline_template]
+          # plugins = self.load_plugins()
+          # for plugin_name in pipeline_names:
+          #     for plugin in plugins:
+          #         if plugin == plugin_name:
+          #             pipeline.append((plugin, plugins[plugin].name))
+          #             break
+          QMessageBox.about(self, 'Critical Error in pipeline. Manual Reset Recommended',
+                            """
+                            <p>Please quit and replace the pipeline in your project JSON file with</p>
+                            <p></p>
+                             <td>%s</td>
+                             <p>which can be copied from
+                             <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/spcproject.json">here</a></p>
+                            <p>Only the pipeline section needs to be replaced</p>
+                            """ % pipeline_template)
+
+          # qtutil.critical("Pipeline appears to be corrupt. "
+          #                 "Please replace your current pipeline in the JSON file with \n"
+          #                 " " + str(pipeline_template) + "which can be copied from \n" +
+          #                 < a href = "https://github.com/Frikster/Mesoscale-Brain-Explorer/issues" > here < / a > < / p >
+          #                 "https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/spcproject.json")
+          return
       for plugin in self.plugins:
         if plugin == plugin_name:
            pipeline.append((plugin, self.plugins[plugin].name))
            break
     self.pipeline_model.set_plugins(pipeline)
     self.reload_pipeline_plugins()
+    # self.reset_pipeline_plugins([p[0] for p in pipeline])
 
   def open_project(self, path=''):
     project = self.project_manager.open_project(path)

@@ -17,7 +17,7 @@ class Widget(QWidget, WidgetDefault):
         f0_source_index_label = 'f0 Source Index'
 
     class Defaults(WidgetDefault.Defaults):
-        f0_source_index_default = None
+        f0_source_index_default = []
         manip = 'df_f0'
 
     def __init__(self, project, plugin_position, parent=None):
