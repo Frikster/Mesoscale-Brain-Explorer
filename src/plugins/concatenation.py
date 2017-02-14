@@ -118,14 +118,14 @@ class Widget(QWidget, WidgetDefault):
             selected_videos = input_paths
 
         summed_filesize = 0
-        for path in self.widget.selected_videos:
+        for path in self.selected_videos:
             summed_filesize = summed_filesize + os.path.getsize(path)
         available = list(psutil.virtual_memory())[1]
         if summed_filesize > available:
-            qtutil.critical("Not enough memory. Concatenated file is of size ~"+str(self.summed_filesize) +\
-               " and available memory is: " + str(self.available))
-            raise MemoryError("Not enough memory. Concatenated file is of size ~"+str(self.summed_filesize) +\
-               " and available memory is: " + str(self.available))
+            qtutil.critical("Not enough memory. Concatenated file is of size ~"+str(summed_filesize) +\
+               " and available memory is: " + str(available))
+            raise MemoryError("Not enough memory. Concatenated file is of size ~"+str(summed_filesize) +\
+               " and available memory is: " + str(available))
 
         paths = selected_videos
         if len(paths) < 2:
