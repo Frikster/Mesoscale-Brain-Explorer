@@ -14,6 +14,7 @@ sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen3-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev default-jdk ant libvtk5-qt4-dev
 ```
+You will need to install openCV after the above dependencies are installed: http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html
 
 Please download and install the latest pyqtgraph package from the 
 following link if it fails via the terminal: http://www.pyqtgraph.org/
