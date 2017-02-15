@@ -42,7 +42,7 @@ class JSObjectModel(QAbstractTableModel):
 class FileTableModel(JSObjectModel):
   def __init__(self, data, parent=None):
     super(FileTableModel, self).__init__(data, parent)
-  
+
   def get_path(self, index):
     return self.retrieve(index.row(), 'path')
   
@@ -65,7 +65,6 @@ class FileTable(QTableView):
     selection = self.selectionModel().selectedRows()
     filenames = [self.model().get_path(index) for index in selection]
     return filenames
-
 
 class MyListView(QListView):
     video_player_scaled_signal = pyqtSignal()

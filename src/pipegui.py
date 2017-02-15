@@ -16,6 +16,8 @@ from datadialog import DataDialog
 from pipeconf import PipeconfDialog, PipelineModel
 from project import ProjectManager
 
+from plugins.util import mse_ui_elements as mue
+
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
 
@@ -63,29 +65,25 @@ class Sidebar(QWidget):
     self.x_origin = QDoubleSpinBox()
     self.y_origin = QDoubleSpinBox()
     self.units_per_pixel = QDoubleSpinBox()
+    self.auto_pb = QPushButton('&Automation')
     self.setup_ui()
     self.setup_signals()
+    self.setup_whats_this()
 
   def setup_ui(self):
     self.setContentsMargins(4, 6, 5, 0)
 
     vbox = QVBoxLayout()
 
+    vbox.addWidget(QLabel('Origin:'))
     hbox = QHBoxLayout()
-    hbox.addWidget(QLabel('Origin:'))
-    hbox.addWidget(QLabel('Units per pixel:'))
+    hbox.addWidget(QLabel("X:"))
+    hbox.addWidget(self.x_origin)
+    hbox.addWidget(QLabel("Y:"))
+    hbox.addWidget(self.y_origin)
     vbox.addLayout(hbox)
-    hbox2 = QHBoxLayout()
-    hhbox = QHBoxLayout()
-    hhbox2 = QHBoxLayout()
-    hhbox.addWidget(QLabel("X:"))
-    hhbox.addWidget(self.x_origin)
-    hhbox.addWidget(QLabel("Y:"))
-    hhbox.addWidget(self.y_origin)
-    hhbox2.addWidget(self.units_per_pixel)
-    hbox2.addLayout(hhbox)
-    hbox2.addLayout(hhbox2)
-    vbox.addLayout(hbox2)
+    vbox.addWidget(QLabel('Units per pixel:'))
+    vbox.addWidget(self.units_per_pixel)
     self.units_per_pixel.setDecimals(5)
     self.units_per_pixel.setMaximum(100000)
     self.x_origin.setMaximum(100000)
@@ -102,10 +100,24 @@ class Sidebar(QWidget):
     vbox.addWidget(QLabel('Pipeline:'))
     vbox.addWidget(self.pl_list)
 
-    pb = QPushButton('&Automation')
-    pb.clicked.connect(self.automate_pipeline_requested)
-    vbox.addWidget(pb)
-   
+    self.auto_pb.clicked.connect(self.automate_pipeline_requested)
+    vbox.addWidget(self.auto_pb)
+
+    vbox.addWidget(mue.InfoWidget('Automation allows you to use the output from a preceding plugin in the pipeline as '
+                                  'input to the next. You can configure the pipeline to set up a custom order. '
+                                  'To use: \n'
+                                  '1) If your first plugin is not the importer, select files in the video list to use '
+                                  'as input. These files will go through each step in your pipeline. \n'
+                                  '2) Set paramaters on each individual plugin in your pipeline. For example, in the '
+                                  'alignment plugin select the reference frame all files will be aligned to and in the '
+                                  'ROI plugin select the ROIs cropped to for all files. \n'
+                                  'Use the "What\'s This" help feature on UI elements in each plugin to learn '
+                                  'how to set paramaters for each one.\n'
+                                  '3) When you\'re ready highlight each plugin you intend to run and make sure they '
+                                  'are in the correct order. Some plugins cannot be automated so do not highlight '
+                                  'those.\n'
+                                  '\n Click Automate!'))
+
     vbox.addSpacerItem(QSpacerItem(0, 1, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
     pb = QPushButton('&Configure Pipeline')
@@ -132,12 +144,35 @@ class Sidebar(QWidget):
       self.y_origin.valueChanged.connect(self.y_origin_changed)
       self.units_per_pixel.valueChanged.connect(self.units_per_pixel_changed)
 
+  def setup_whats_this(self):
+      self.x_origin.setWhatsThis("Set the x coordinate used across all plugins in this project. "
+                                 "Units are in pixels so coordinates must be within the size of "
+                                 "all imported files"
+                                 "Coordinates can also be set via plugins, after which the change "
+                                 "should be reflected in the value here"
+                                 )
+      self.y_origin.setWhatsThis("Set the y coordinate used across all plugins in this project. "
+                                 "Units are in pixels so coordinates must be within the size of "
+                                 "all imported files"
+                                 "Coordinates can also be set via plugins, after which the change "
+                                 "should be reflected in the value here"
+                                 )
+      self.units_per_pixel.setWhatsThis("Set the amount of units there are in a single pixel. "
+                                        "This is applied across all plugins in this project. "
+                                        "Units can be anything as long as the same units are used "
+                                        "across all plugins. e.g. if you use microns for units per pixel "
+                                        "then microns must be used for the coordinates in the ROI Placer plugin.")
+      self.auto_pb.setWhatsThis("If you are still unsure how to automate, watch a video tutorial. "
+                                "A link to where to find tutorials can be find by clicking Help -> About")
 
 class MainWindow(QMainWindow):
   def __init__(self, parent=None):
     super(MainWindow, self).__init__(parent)
     self.setWindowTitle(APPNAME)
-
+    self.setWindowFlags(Qt.Window | Qt.WindowContextHelpButtonHint |
+                        Qt.WindowMinimizeButtonHint |
+                        Qt.WindowMaximizeButtonHint |
+                        Qt.WindowCloseButtonHint)
     self.project = None
     self.current_plugin = None
     self.project_manager = ProjectManager(self)
@@ -152,14 +187,18 @@ class MainWindow(QMainWindow):
     self.sidebar.pl_list.setModel(self.pipeline_model)
     self.pipeconf.pipeline_list.setModel(self.pipeline_model)
 
-    # todo: load last if user requests it
     last = str(QSettings().value('path_of_last_project'))
     if last:
-      try:
-        self.open_project(last)
-      except:
-        qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
-    self.sidebar.setup_sidebar_values(self.project)
+        quit_msg = "Load last project " + last + " ?"
+        reply = QMessageBox.question(self, 'Project Setup',
+                         quit_msg, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if last:
+                try:
+                    self.open_project(last)
+                except:
+                    qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
+            self.sidebar.setup_sidebar_values(self.project)
 
   def load_plugins(self):
     """This just gets all the plugins (no reference to pipeline)"""
@@ -255,6 +294,8 @@ class MainWindow(QMainWindow):
     about_action.setStatusTip('About ' + APPNAME)
     about_action.triggered.connect(self.about)
     about_action.setShortcut('F1')
+    whats_this_action = QWhatsThis.createAction(QAction('&What\'s This?', self))
+    whats_this_action.setShortcut('Shift+F1')
 
     m = self.menu.addMenu('&Project')
     m.setEnabled(False)
@@ -273,6 +314,8 @@ class MainWindow(QMainWindow):
 
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
+    help_menu.addAction(whats_this_action)
+
 
   def setup_signals(self):
       self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
@@ -435,13 +478,14 @@ class MainWindow(QMainWindow):
 
   def about(self):
     author = 'Cornelis Dirk Haupt'
-    date = '2016'
+    date = '2017'
 
     QMessageBox.about(self, 'About ' + APPNAME, 
         """
         <b>%s</b>
         <p>An online readme, including user manual and developer tutorial can be found
         <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer">here</a></p>
+        <p>Use the "what's this" feature to click on any UI component and learn how to use it</p>
         <p>Please submit any feature requests or issues
         <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer/issues">here</a></p>
         <p></p>
@@ -460,6 +504,7 @@ class MainWindow(QMainWindow):
         </tr>            
         </table></p>
         """ % (APPNAME, author, VERSION, date))
+
 
 if __name__ == '__main__':
   multiprocessing.freeze_support()
