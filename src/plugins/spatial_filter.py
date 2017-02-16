@@ -66,7 +66,7 @@ from .util.plugin import WidgetDefault
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
-        kernal_size_label = "Kernal Size"
+        kernal_size_label = "Kernel Size"
 
     class Defaults(WidgetDefault.Defaults):
         kernal_size_default = 8
@@ -313,6 +313,19 @@ class Widget(QWidget, WidgetDefault):
                                  self.params[self.Labels.last_manips_to_display_label])
             callback(1)
         global_callback(1)
+
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.kernal_size.setWhatsThis("The size (in pixels) of the square mean filter that wil be convolved "
+                                      "with each selected image stack for spatial filtering. A larger kernel size "
+                                      "entails more blurring and therefore filtering to emphasize larger features"
+                                      "and de-emphasize smaller ones. "
+                                      "\nNote that we have "
+                                      "found a kernel size of 8 highlights blood vessels in Ai94 mice well enough "
+                                      "such that a frame in the spatially filtered stack can be used as the reference "
+                                      "frame in the alignment plugin in 256x256 image stacks so as to align all image "
+                                      "stacks to the blood vessels. "
+                                      "Kernel size 4 can be used for 128x128 image stacks.")
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
