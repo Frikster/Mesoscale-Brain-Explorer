@@ -118,6 +118,14 @@ class Widget(QWidget, WidgetDefault):
         global_callback(1)
         return output_paths
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.left_cut_off.setWhatsThis("Number of frames to remove from the start of each image stack selected. Useful "
+                                       "if artifacts (e.g. movement) occur near the start of most image stacks")
+        self.right_cut_off.setWhatsThis("Number of frames to remove from the end of each image stack selected. Useful "
+                                        "if artifacts (e.g. movement) occur near the end of most image stacks")
+
+
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Cut off'
