@@ -104,7 +104,8 @@ class Sidebar(QWidget):
     vbox.addWidget(self.auto_pb)
 
     vbox.addWidget(mue.InfoWidget('Automation allows you to use the output from a preceding plugin in the pipeline as '
-                                  'input to the next. You can configure the pipeline to set up a custom order. '
+                                  'input to the next. You can configure your pipeline to set up a custom order, '
+                                  'add additional plugins or remove plugins. '
                                   'To use: \n'
                                   '1) If your first plugin is not the importer, select files in the video list to use '
                                   'as input. These files will go through each step in your pipeline. \n'

@@ -42,6 +42,7 @@ class WidgetDefault(object):
         self.video_list.setModel(QStandardItemModel())
         list_of_manips = pfs.get_list_of_project_manips(self.project)
         self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        self.execute_primary_function_button = QPushButton('&Execute')
         self.left = QFrame()
         self.right = QFrame()
         self.vbox_view = QVBoxLayout()
@@ -63,6 +64,7 @@ class WidgetDefault(object):
                 self.setup_params(reset=True)
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
                              self.Defaults.list_display_type, self.toolbutton_values)
+        self.setup_whats_this()
 
     def video_triggered(self, index, scaling=True):
         pfs.video_triggered(self, index, scaling)
@@ -177,9 +179,16 @@ class WidgetDefault(object):
         raise PrimaryFunctionMissing("Your custom plugin does not have a primary function."
                                      "Override this method")
 
-
-class ListMenu(MyListView):
-    pass
+    def setup_whats_this(self):
+        self.video_list.setWhatsThis("List of files available for manipulation in this plugin. "
+                                     "Note that some plugins may have unique lists so if you don't "
+                                     "see the file you are looking for you may be in the wrong plugin. "
+                                     "In most cases Multiple files can be selected allowing for bulk processing. ")
+        self.toolbutton.setWhatsThis("Filter allowing you to set which files to view. Files are filtered "
+                                     "based on the last manipulation they went through. Note that sometimes "
+                                     "'All' may be displayed despite not all files being in view. "
+                                     "This is a limitation. Simply click the dropdown list and check which options "
+                                     "are really selected.")
 
 
 class PluginDefault:
