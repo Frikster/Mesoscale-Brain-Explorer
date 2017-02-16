@@ -20,7 +20,6 @@ class Widget(QWidget, WidgetDefault):
 
         if not project or not isinstance(plugin_position, int):
             return
-
         WidgetDefault.__init__(self, project, plugin_position)
 
         # self.plugin_position = plugin_position
@@ -67,7 +66,7 @@ class Widget(QWidget, WidgetDefault):
         # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
         # vbox.addWidget(self.toolbutton)
-        self.vbox.addWidget(QLabel('Selection order determines numerator and denominator'))
+        # self.vbox.addWidget(QLabel('Press Ctrl or shift and then select your numerator followed by denominator'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setAcceptDrops(True)
         self.video_list.setDragEnabled(True)
@@ -77,8 +76,10 @@ class Widget(QWidget, WidgetDefault):
         self.video_list.setDragDropOverwriteMode(False)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
-        self.vbox.addWidget(mue.InfoWidget('This operation requires as much memory as the combined size of all selected '
-                                      'stacks in the project directory. Note also there is no explicit progress bar'))
+        self.vbox.addWidget(mue.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
+                                           'denominator. Files can be dragged in the video list for convenience'
+                                           'but the order does not determine which is the numerator and which the'
+                                           'denominator.'))
         hhbox = QHBoxLayout()
         div_butt = QPushButton('Divide first by second')
         hhbox.addWidget(div_butt)
@@ -137,10 +138,9 @@ class Widget(QWidget, WidgetDefault):
         # })
         # self.project.save()
 
-
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'Channel Math'
+        self.name = 'Channel Division'
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
