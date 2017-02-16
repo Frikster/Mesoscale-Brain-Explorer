@@ -17,6 +17,7 @@ from pipeconf import PipeconfDialog, PipelineModel
 from project import ProjectManager
 
 from plugins.util import mse_ui_elements as mue
+from plugins import set_coordinate_system as scs
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -143,6 +144,7 @@ class Sidebar(QWidget):
   def setup_signals(self):
       self.x_origin.valueChanged.connect(self.x_origin_changed)
       self.y_origin.valueChanged.connect(self.y_origin_changed)
+
       self.units_per_pixel.valueChanged.connect(self.units_per_pixel_changed)
 
   def setup_whats_this(self):
@@ -238,6 +240,13 @@ class MainWindow(QMainWindow):
       p = self.load_plugin('plugins.' + plugin_name, i)
       if p:
         self.plugins[plugin_name] = p
+        # def set_x(val):
+        #     self.sidebar.x_origin.setValue(val)
+        # def set_y(val):
+        #     self.sidebar.y_origin.setValue(val)
+        # if plugin_name == 'set_coordinate_system':
+        #     p.widget.x_origin_changed[float].connect(self.set_x)
+        #     p.widget.y_origin_changed[float].connect(set_y)
     if self.current_plugin:
       self.set_plugin(self.current_plugin, None)
 
@@ -333,10 +342,13 @@ class MainWindow(QMainWindow):
       self.plugins['set_coordinate_system'].widget.y_origin_changed[float].connect(functools.partial(
           self.set_project_coordinate_system, 'y'))
       # todo: add signals from set_coordinate_system here
+
       self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
       self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
   def set_project_coordinate_system(self, key, value):
+    #todo: add update for view
+    self.project['origin'] = list(self.project['origin'])
     if key == 'x':
         self.project['origin'][0] = value
         self.project.save()
@@ -346,6 +358,9 @@ class MainWindow(QMainWindow):
     elif key == 'units_per_pixel':
         self.project['unit_per_pixel'] = value
         self.project.save()
+
+    if self.current_plugin in self.plugins.keys():
+        self.plugins[self.current_plugin].widget.view.update()
 
   def create_project(self):
     project = self.project_manager.new_project()
@@ -417,6 +432,14 @@ class MainWindow(QMainWindow):
       return
     self.current_plugin = plugin_name
     self.plugins[plugin_name] = p
+
+    def set_x(val):
+        self.sidebar.x_origin.setValue(val)
+    def set_y(val):
+        self.sidebar.y_origin.setValue(val)
+    if plugin_name == 'set_coordinate_system':
+        p.widget.x_origin_changed[float].connect(set_x)
+        p.widget.y_origin_changed[float].connect(set_y)
 
     lt = QVBoxLayout()
     lt.addWidget(p.widget)

@@ -41,7 +41,7 @@ class DetailsDialog(QDialog):
     self.table = FileTable()
     vbox.addWidget(self.table)
     self.setLayout(vbox)
-    self.resize(600, 400)
+    self.resize(1600, 400)
 
 class RemoveDialog(QDialog):
   def __init__(self, fileinfo, parent=None):
@@ -88,6 +88,7 @@ class DataDialog(QDialog):
     super(DataDialog, self).__init__(parent)
     self.table = FileTable()
     self.remove_pb = QPushButton('&Remove file')
+    self.details_pb = QPushButton('&Details')
     self.setup_ui()
     self.setup_whats_this()
 
@@ -100,9 +101,8 @@ class DataDialog(QDialog):
     hbox.addWidget(self.table)
 
     vbox = QVBoxLayout()
-    pb = QPushButton('&Details')
-    pb.clicked.connect(self.details_clicked)
-    vbox.addWidget(pb)
+    self.details_pb.clicked.connect(self.details_clicked)
+    vbox.addWidget(self.details_pb)
     self.remove_pb.clicked.connect(self.remove_clicked)
     vbox.addWidget(self.remove_pb)
     vbox.addStretch()
@@ -166,3 +166,4 @@ class DataDialog(QDialog):
       self.remove_pb.setWhatsThis('Select multiple files. And then each can be deleted one by one checking '
                                   'each file path before confirming deletion. This offers more '
                                   'careful deletion than deleting directly via the video list in a plugin')
+      self.details_pb.setWhatsThis('Select a row and then click this to view that row')
