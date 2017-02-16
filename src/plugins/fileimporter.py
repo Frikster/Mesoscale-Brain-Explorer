@@ -7,6 +7,7 @@ import traceback
 from shutil import copyfile
 
 import numpy as np
+import psutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -61,6 +62,7 @@ class Widget(QWidget):
     for f in self.project.files:
       if f['type'] == 'video':
         self.listview.model().appendRow(QStandardItem(f['path']))
+    self.setup_whats_this()
 
   def setup_params(self):
     if len(self.params) == 1:
@@ -110,44 +112,52 @@ class Widget(QWidget):
     # self.rescale_height.setValue(256)
     # grid.addWidget(self.rescale_height, 1, 1)
 
+    # def scale_factor_handler(val):
+    #     if not (val/0.25).is_integer():
+    #         self.scale_factor.setValue(1.0)
+
     grid.addWidget(QLabel('Scale Factor:'), 1, 0)
     self.scale_factor = QDoubleSpinBox()
+    # self.scale_factor.valueChanged[float].connect(scale_factor_handler)
     self.scale_factor.setSingleStep(0.25)
     self.scale_factor.setMinimum(0.25)
     self.scale_factor.setMaximum(1.00)
     self.scale_factor.setValue(1.0)
     grid.addWidget(self.scale_factor, 1, 1)
 
-    grid.addWidget(QLabel('Channel:'), 2, 0)
-    self.channel = QSpinBox()
-    self.channel.setMinimum(1)
-    self.channel.setMaximum(3)
-    self.channel.setValue(2)
-    grid.addWidget(self.channel, 2, 1)
+    grid.addWidget(qtutil.separator(), 2, 0)
+    grid.addWidget(qtutil.separator(), 2, 1)
 
-    grid.addWidget(qtutil.separator(), 3, 0)
-    grid.addWidget(qtutil.separator(), 3, 1)
-    grid.addWidget(QLabel('Set paramaters for all imported raws'), 4, 0)
-    grid.addWidget(QLabel('All raws will be rescaled and specified channel imported upon conversion'), 5, 0)
-    grid.addWidget(QLabel('Width:'), 6, 0)
+    grid.addWidget(QLabel('This section only applies to imported raw files.'), 3, 0)
+    grid.addWidget(QLabel('All imported raws will also be rescaled using the above value'), 4, 0)
+
+    grid.addWidget(QLabel('Width:'), 5, 0)
     self.sb_width = QSpinBox()
     self.sb_width.setMinimum(1)
     self.sb_width.setMaximum(1024)
     self.sb_width.setValue(256)
-    grid.addWidget(self.sb_width, 6, 1)
-    grid.addWidget(QLabel('Height:'), 7, 0)
+    grid.addWidget(self.sb_width, 5, 1)
+    grid.addWidget(QLabel('Height:'), 6, 0)
     self.sb_height = QSpinBox()
     self.sb_height.setMinimum(1)
     self.sb_height.setMaximum(1024)
     self.sb_height.setValue(256)
-    grid.addWidget(self.sb_height, 7, 1)
-    grid.addWidget(QLabel('Number of channels:'), 8, 0)
+    grid.addWidget(self.sb_height, 6, 1)
+    grid.addWidget(QLabel('Number of channels in raw:'), 7, 0)
     self.sb_channel = QSpinBox()
     self.sb_channel.setMinimum(1)
     self.sb_channel.setMaximum(3)
     self.sb_channel.setValue(3)
-    grid.addWidget(self.sb_channel, 8, 1)
-    grid.addWidget(QLabel('dtype:'), 9, 0)
+    grid.addWidget(self.sb_channel, 7, 1)
+
+    grid.addWidget(QLabel('Channel in raw to be imported:'), 8, 0)
+    self.channel = QSpinBox()
+    self.channel.setMinimum(1)
+    self.channel.setMaximum(3)
+    self.channel.setValue(2)
+    grid.addWidget(self.channel, 8, 1)
+
+    grid.addWidget(QLabel('Raw dtype:'), 9, 0)
     self.cb_dtype = QComboBox()
     for t in 'uint8', 'float32', 'float64':
       self.cb_dtype.addItem(t)
@@ -155,14 +165,18 @@ class Widget(QWidget):
     grid.addWidget(qtutil.separator(), 10, 0)
     grid.addWidget(qtutil.separator(), 10, 1)
     vbox.addLayout(grid)
-    vbox.addStretch()
+    #vbox.addStretch()
 
     self.setLayout(vbox)
     self.resize(400, 220)
 
-    vbox.addWidget(mue.WarningWidget('Warning. This application has not yet been memory optimized for conversion.'
-                                     ' We advise you only import files no larger than 1/4 of your memory'))
-    pb = QPushButton('New Video')
+    vbox.addWidget(mue.WarningWidget('Warning. This application has not been memory optimized for conversion.'
+                                     ' We advise you only import raw or tiff files no larger than 1/4 of your memory. '
+                                     'e.g. If you have 8GB RAM then we recommend not importing a raw or tiff larger '
+                                     'than 2GB. It may or may not freeze your system otherwise.'
+                                     '\n \n'
+                                     'Press the button below to proceed once all parameters above have been set.'))
+    pb = QPushButton('Import Image Stack(s)')
     pb.clicked.connect(self.execute_primary_function)
     vbox.addWidget(pb)
 
@@ -243,13 +257,14 @@ class Widget(QWidget):
                                       rescale_width), callback, operation='mean')
           np.save(path, scaled)
         except:
-          qtutil.critical('Rebinning raw failed. We can only scale down from larger sized files to preserve data')
+          qtutil.critical("Rebinning raw failed. Please check your scale factor. Use the Help -> 'Whats this' feature"
+                          " on the scale factor for more info.")
           progress.close()
     return ret_filename
 
   def convert_tif(self, filename):
     rescale_value = float(self.scale_factor.value())
-    # channel = int(self.channel.value())
+    channel = int(self.channel.value())
 
     new_filename = os.path.basename(filename)[:-4]
     new_filename = os.path.join(self.project.path, new_filename) + '.npy'
@@ -321,8 +336,17 @@ class Widget(QWidget):
       new_filename = os.path.basename(filename)
       new_filename = os.path.join(self.project.path, new_filename)
       if os.path.normpath(filename) != os.path.normpath(new_filename):
+          file_size = os.path.getsize(filename)
+          available = list(psutil.virtual_memory())[1]
+          if file_size > available:
+              qtutil.critical('Not enough memory. File is of size ' + str(file_size) +
+                              ' and available memory is: ' + str(available))
+              raise MemoryError('Not enough memory. File is of size ' + str(file_size) +
+                                ' and available memory is: ' + str(available))
+
+
           qtutil.info('Copying .npy from ' + filename + ' to ' + new_filename +
-                      '. You can do this manually for large files to see a progress bar')
+                      '. We recommend doing this manually for large files')
           # if os.path.isfile(new_filename):
           #     i = 1
           #     path_after = new_filename
@@ -331,7 +355,21 @@ class Widget(QWidget):
           #         path_after = os.path.join(self.project.path, name_after)
           #         i = i + 1
           #     new_filename = path_after
+          copyfile_progress = QProgressDialog('Progress Copying ' + filename + 'to ' + new_filename,
+                                              'Abort', 0, 100, self)
+          copyfile_progress.setAutoClose(True)
+          copyfile_progress.setMinimumDuration(0)
+
+          def copyfile_progress(x):
+              copyfile_progress.setValue(x * 100)
+              QApplication.processEvents()
+          copyfile_progress(0.0)
+          if copyfile_progress.wasCanceled():
+              return
           copyfile(filename, new_filename)
+          if copyfile_progress.wasCanceled():
+              return
+          copyfile_progress(1.0)
       filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
@@ -434,6 +472,24 @@ class Widget(QWidget):
       ndarray = op(-1 * (i + 1))
     progress_callback(1)
     return ndarray
+
+  def setup_whats_this(self):
+      self.scale_factor.setWhatsThis("Scales the imported image stack down by this factor. e.g a 256x256 image stack "
+                                     "will be 128x128 with this set to 0.5. Note that import values that don't "
+                                     "scale your image stack down to a height and width where both are integers you "
+                                     "will receive an error. e.g you cannot scale a 128x128 by 0.6 as this will "
+                                     "attempt to create a 76.8x76.8 file which is not possible as we cannot have"
+                                     "'0.6' of a pixel.")
+      self.channel.setWhatsThis("Set which channel is imported from your raw. Only one channel imports are "
+                                "currently supported for tiff files a npy files. Please separate your multi-channel"
+                                "tiff image stacks into separate files one per channel to import all the channels")
+      self.sb_width.setWhatsThis("Raw files lack headers so file shape needs to be specified manually")
+      self.sb_height.setWhatsThis("Raw files lack headers so file shape needs to be specified manually")
+      self.sb_channel.setWhatsThis("Set how many channel the raw has since raw files do not have headers specifying "
+                                   "shape")
+      self.cb_dtype.setWhatsThis("Specify the data type of your raw file to be imported. Raw files do not have headers "
+                                 "so this needs to be specified manually")
+
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
