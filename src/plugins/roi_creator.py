@@ -73,7 +73,7 @@ from .util.mse_ui_elements import RoiItemModel
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
-    roi_list_indices_label = "ROIs"
+    roi_list_indices_label = "ROIs - double click to rename"
 
   class Defaults(WidgetDefault.Defaults):
     roi_list_indices_default = [0]
@@ -179,7 +179,7 @@ class Widget(QWidget, WidgetDefault):
     # w.setLayout(vbox2)
     # vbox.addWidget(w)
     # vbox.addWidget(qtutil.separator())
-      self.vbox.addWidget(QLabel('ROIs'))
+      self.vbox.addWidget(QLabel(self.Labels.roi_list_indices_label))
       self.vbox.addWidget(self.roi_list)
 
     # self.right.setLayout(self.vbox)
@@ -439,9 +439,19 @@ class Widget(QWidget, WidgetDefault):
     global_callback(1)
     return output_paths
 
+  def setup_whats_this(self):
+    super().setup_whats_this()
+    self.create_roi_button.setWhatsThis("Click to enter ROI placement mode allowing you to create ROIs on the image "
+                                        "which will be saved and can be accessed in the list below")
+    self.crop_button.setWhatsThis("Select one or many ROIs below and then select one or many image stacks above. "
+                                  "All selected image stacks will be cropped to the ROIs selected")
+    self.roi_list.setWhatsThis("Select ROIs you've made. Double-click to change their name. For automation yo mustv"
+                               "pick ROI(s) that will be cropped to for all files in the pipeline")
+
+
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'Create ROIs'
+    self.name = 'Crop to ROIs'
     self.widget = Widget(project, plugin_position)
     super().__init__(self.widget, self.widget.Labels, self.name)
 

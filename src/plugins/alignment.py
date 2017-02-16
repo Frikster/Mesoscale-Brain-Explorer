@@ -409,7 +409,8 @@ class Widget(QWidget, WidgetDefault):
                                      "veins ever further")
         self.ref_button.setWhatsThis("Click to compute your reference frame using the single selected image stack and "
                                      "the parameters above. The reference frame can afterwards be found at the top of "
-                                     "the video list to be used with the parameters below")
+                                     "the video list to be used with the parameters below\n"
+                                     "Note that for automation, a reference frame must be selected")
         self.ref_no.setWhatsThis("During alignment a single frame is selected from each image stack. This frame is "
                                  "aligned to the reference frame you have previously computed. The shift required "
                                  "(translation, rotation and scaling) to attain alignment between these two frames is "

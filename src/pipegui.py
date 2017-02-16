@@ -539,7 +539,7 @@ if __name__ == '__main__':
   app.setOrganizationDomain('spc-corporation.com')
 
   w = MainWindow()
-  w.resize(1060, 660)
+  w.resize(1600, 660)
   w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
