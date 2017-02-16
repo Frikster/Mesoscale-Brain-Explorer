@@ -205,9 +205,6 @@ class Widget(QWidget, WidgetDefault):
     # MainWindow.set_project_coordinate_system('x', x_avg)
     # MainWindow.set_project_coordinate_system('y', y_avg)
 
-
-
-
   def set_origin_label(self, x, y):
     # x, y = self.project['origin']
     self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
@@ -241,6 +238,18 @@ class Widget(QWidget, WidgetDefault):
     #self.view.update()
     #self.save()
 
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.origin_label.setWhatsThis("Click the image to select an origin for each image stack by clicking your image "
+                                     "and it will be saved and displayed here. Select multiple image stacks in the "
+                                     "video list and then compute averaged origin to apply the averaged origin of all "
+                                     "selected image stacks as the origin for the project")
+      self.avg_origin_button.setWhatsThis("After clicking on the scene an origin is saved for that image stack "
+                                          "and displayed above. Select multiple image stacks in the "
+                                          "video list that have origins and then click this to compute the average of "
+                                          "all those origins. This will then be set as the origin of the "
+                                          "project")
+
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Set coordinate system'
@@ -249,3 +258,4 @@ class MyPlugin(PluginDefault):
 
   def run(self):
     self.widget.update()
+
