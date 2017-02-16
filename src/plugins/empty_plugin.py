@@ -89,6 +89,12 @@ class Widget(QWidget, WidgetDefault):
       # return the output path(s) of this function for automation
       # return output_paths
 
+  def setup_whats_this(self):
+      '''Setup custom help messages'''
+      # todo: setup custom help messages to aid the user, each tied to one of your UI components.
+      # See overridden method for an example
+      super().setup_whats_this()
+
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Empty Plugin' # Define plugin name here
