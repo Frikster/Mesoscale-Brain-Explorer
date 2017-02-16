@@ -83,23 +83,7 @@ class Widget(QWidget, WidgetDefault):
         # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
-
-        max_cut_off = 100000
-        self.vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
-        self.ref_no.setMinimum(0)
-        self.ref_no.setMaximum(max_cut_off)
-        self.ref_no.setValue(400)
-        self.vbox.addWidget(self.ref_no)
-
-        hbox = QHBoxLayout()
-        self.scaling_checkbox = QCheckBox("Apply Scaling")
-        self.scaling_checkbox.setChecked(False)
-        hbox.addWidget(self.scaling_checkbox)
-
-        self.rotation_checkbox = QCheckBox("Apply Rotation")
-        self.rotation_checkbox.setChecked(True)
-        hbox.addWidget(self.rotation_checkbox)
-        self.vbox.addLayout(hbox)
+        self.vbox.addWidget(qtutil.separator())
 
         def min_handler(max_of_min):
             self.ref_no_min.setMaximum(max_of_min)
@@ -121,8 +105,29 @@ class Widget(QWidget, WidgetDefault):
         hbox.addWidget(self.ref_no_max)
         self.vbox.addLayout(hbox)
 
-        self.vbox.addWidget(self.main_button)
         self.vbox.addWidget(self.ref_button)
+        self.vbox.addWidget(qtutil.separator())
+
+        max_cut_off = 100000
+        self.vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
+        self.ref_no.setMinimum(0)
+        self.ref_no.setMaximum(max_cut_off)
+        self.ref_no.setValue(400)
+        self.vbox.addWidget(self.ref_no)
+
+        hbox = QHBoxLayout()
+        self.scaling_checkbox = QCheckBox("Apply Scaling")
+        self.scaling_checkbox.setChecked(False)
+        hbox.addWidget(self.scaling_checkbox)
+
+        self.rotation_checkbox = QCheckBox("Apply Rotation")
+        self.rotation_checkbox.setChecked(True)
+        hbox.addWidget(self.rotation_checkbox)
+        self.vbox.addLayout(hbox)
+
+
+
+        self.vbox.addWidget(self.main_button)
         # self.right.setLayout(self.vbox)
 
         # splitter = QSplitter(Qt.Horizontal)
@@ -386,7 +391,36 @@ class Widget(QWidget, WidgetDefault):
         callback_global(1)
         return ret_filenames
 
-
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.ref_no_min.setWhatsThis("All image stacks are aligned to a single reference frame. Here you can select "
+                                     "a single image stack above and choose which single frame is used by setting the "
+                                     "min = max. However, you can also average over a range of frames which may "
+                                     "improve noise-signal ratio and thereby emphasize consistent features suitable "
+                                     "for alignment (e.g. blood veins). Typically a single spatially filtered image "
+                                     "stack is used to compute the reference frame to emphasize features such as blood"
+                                     "veins ever further")
+        self.ref_no_max.setWhatsThis("All image stacks are aligned to a single reference frame. Here you can select "
+                                     "a single image stack above and choose which single frame is used by setting the "
+                                     "min = max. However, you can also average over a range of frames which may "
+                                     "improve noise-signal ratio and thereby emphasize consistent features suitable "
+                                     "for alignment (e.g. blood veins). Typically a single spatially filtered image "
+                                     "stack is used to compute the reference frame to emphasize features such as blood"
+                                     "veins ever further")
+        self.ref_button.setWhatsThis("Click to compute your reference frame using the single selected image stack and "
+                                     "the parameters above. The reference frame can afterwards be found at the top of "
+                                     "the video list to be used with the parameters below")
+        self.ref_no.setWhatsThis("During alignment a single frame is selected from each image stack. This frame is "
+                                 "aligned to the reference frame you have previously computed. The shift required "
+                                 "(translation, rotation and scaling) to attain alignment between these two frames is "
+                                 "then applied to all frames in that image stack. Here the 400th frame is arbitrarily "
+                                 "the default because in our experience this is typically far enough so as to avoid "
+                                 "any potential artifacts at the start of the stack if these were not cut off")
+        self.scaling_checkbox.setWhatsThis("Set if scaling is performed to find the best alignment.")
+        self.rotation_checkbox.setWhatsThis("Set if rotation is performed to find the best alignment")
+        self.main_button.setWhatsThis("Note that without either rotation or scaling checked, only x-y translation is "
+                                      "performed")
+        
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Alignment'
