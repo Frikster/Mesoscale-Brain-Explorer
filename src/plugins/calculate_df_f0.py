@@ -227,6 +227,18 @@ class Widget(QWidget, WidgetDefault):
         global_callback(1)
         return output_paths
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.video_list2.setWhatsThis("The change in signal from an averaged baseline across frames for each pixel can "
+                                      "be computed for all selected image stacks. When calculating dF/F0 you may "
+                                      "want the averaged baseline to be computed from a different image stack than for "
+                                      "the image stack you are computing dF/F0 for. Typically this will be desired if "
+                                      "global signal regression (GSR) is applied before computing dF/F0")
+        self.df_d0_pb.setWhatsThis("Click and dF/F0 is computed for all image stacks in the first list, using an "
+                                   "averaged baseline from the second list. If no image stack is selected in the "
+                                   "second list then the averaged baseline is computed using each individual image "
+                                   "stack selected in the first list")
+
 class MyPlugin(PluginDefault):
     def __init__(self, project=None, plugin_position=None):
         self.name = 'Calculate df over f0'
