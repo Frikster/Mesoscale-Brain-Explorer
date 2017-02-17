@@ -322,6 +322,17 @@ class Widget(QWidget, WidgetDefault):
         global_callback(1)
         return output_paths
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.execute_primary_function_button.setWhatsThis("A forward-backward filter with Chebyshev type I digital and "
+                                                          "analog filter design, and maximum of 0.1 allowable ripple "
+                                                          "in the passband is applied using the parameters above."
+                                                          "\n"
+                                                          "Select multiple image stacks to apply the same filter to "
+                                                          "all selected image stacks.")
+
+
+
 class MyPlugin(PluginDefault):
     def __init__(self, project=None, plugin_position=None):
         self.name = 'Temporal Filter'
