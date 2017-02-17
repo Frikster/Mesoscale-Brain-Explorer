@@ -324,7 +324,7 @@ class Widget(QWidget, WidgetDefault):
 
     def setup_whats_this(self):
         super().setup_whats_this()
-        self.execute_primary_function_button.setWhatsThis("A forward-backward filter with Chebyshev type I digital and "
+        self.temp_filter_pb.setWhatsThis("A forward-backward filter with Chebyshev type I digital and "
                                                           "analog filter design, and maximum of 0.1 allowable ripple "
                                                           "in the passband is applied using the parameters above."
                                                           "\n"
