@@ -12,11 +12,10 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
-from .util import project_functions as pfs
 from .util.mse_ui_elements import RoiItemModel
-from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+
 
 #This the code for getting the ROI locations from bregma.
 

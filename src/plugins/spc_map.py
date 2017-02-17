@@ -20,6 +20,10 @@ from .util.gradient import GradientLegend
 from .util.mygraphicsview import MyGraphicsView
 from .util.qt import MyListView, MyProgressDialog
 
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
+from .util.mse_ui_elements import RoiItemModel
+
 
 def calc_spc(video_path, x, y, progress):
     frame = fileloader.load_reference_frame(video_path)
@@ -44,52 +48,52 @@ def calc_spc(video_path, x, y, progress):
 
     return spc_map
 
-class SeedItemModel(QAbstractListModel):
-    textChanged = pyqtSignal(str, str)
-
-    # dataChanged = pyqtSignal(int, int)
-
-    def __init__(self, parent=None):
-        super(SeedItemModel, self).__init__(parent)
-        self.seeds = []
-
-    def appendseed(self, name):
-        self.seeds.append(name)
-        row = len(self.seeds) - 1
-        self.dataChanged.emit(self.index(row), self.index(row))
-
-    def edit_seed_name(self, name, index):
-        self.seeds.append(name)
-        row = len(self.seeds) - 1
-        self.dataChanged.emit(self.index(row), self.index(row))
-
-    def rowCount(self, parent):
-        return len(self.seeds)
-
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            return self.seeds[index.row()]
-        return
-
-    def setData(self, index, value, role):
-        if role in [Qt.DisplayRole, Qt.EditRole]:
-            self.textChanged.emit(self.seeds[index.row()], value)
-            self.seeds[index.row()] = str(value)
-            return True
-        return super(SeedItemModel, self).setData(index, value, role)
-
-    def flags(self, index):
-        return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
-
-    def removeRow(self, seed_to_remove):
-        for seed in self.seeds:
-            if seed == seed_to_remove:
-                del seed
-                break
+# class SeedItemModel(QAbstractListModel):
+#     textChanged = pyqtSignal(str, str)
+#
+#     # dataChanged = pyqtSignal(int, int)
+#
+#     def __init__(self, parent=None):
+#         super(SeedItemModel, self).__init__(parent)
+#         self.seeds = []
+#
+#     def appendseed(self, name):
+#         self.seeds.append(name)
+#         row = len(self.seeds) - 1
+#         self.dataChanged.emit(self.index(row), self.index(row))
+#
+#     def edit_seed_name(self, name, index):
+#         self.seeds.append(name)
+#         row = len(self.seeds) - 1
+#         self.dataChanged.emit(self.index(row), self.index(row))
+#
+#     def rowCount(self, parent):
+#         return len(self.seeds)
+#
+#     def data(self, index, role):
+#         if role == Qt.DisplayRole:
+#             return self.seeds[index.row()]
+#         return
+#
+#     def setData(self, index, value, role):
+#         if role in [Qt.DisplayRole, Qt.EditRole]:
+#             self.textChanged.emit(self.seeds[index.row()], value)
+#             self.seeds[index.row()] = str(value)
+#             return True
+#         return super(SeedItemModel, self).setData(index, value, role)
+#
+#     def flags(self, index):
+#         return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+#
+#     def removeRow(self, seed_to_remove):
+#         for seed in self.seeds:
+#             if seed == seed_to_remove:
+#                 del seed
+#                 break
 
 class SPCMapDialog(QDialog):
-    def __init__(self, project, video_path, spcmap, cm_type, parent=None, seed_name=None):
-        super(SPCMapDialog, self).__init__(parent)
+    def __init__(self, project, video_path, spcmap, cm_type, seed_name=None):
+        super(SPCMapDialog, self).__init__()
         self.project = project
         self.video_path = video_path
         self.spc = spcmap
@@ -155,70 +159,78 @@ class SPCMapDialog(QDialog):
           value = '-'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
 
-class Widget(QWidget):
-    def __init__(self, project, parent=None):
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
+        roi_list_indices_label = "ROIs"
+
+    class Defaults(WidgetDefault.Defaults):
+        roi_list_indices_default = [0]
+        manip = "spc"
+
+    def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
-        if not project:
-          return
-        self.project = project
+        if not project or not isinstance(plugin_position, int):
+            return
+        # self.project = project
 
         # define Widgets and data
-        self.view = MyGraphicsView(self.project)
-        self.video_list = MyListView()
+        # self.view = MyGraphicsView(self.project)
+        # self.video_list = MyListView()
         self.cm_comboBox = QtGui.QComboBox(self)
-        self.seed_list = QListView()
-        self.left = QFrame()
-        self.right = QFrame()
+        self.roi_list = QListView()
+        self.bulk_background_pb = QPushButton('Save all SPC maps from table seeds to file')
+        self.spc_from_seeds_pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
 
-        self.setup_ui()
+        # self.left = QFrame()
+        # self.right = QFrame()
+
+        # self.setup_ui()
         self.cm_type = self.cm_comboBox.itemText(0)
 
-        self.open_dialogs = []
-        self.selected_videos = []
+        # self.open_dialogs = []
+        # self.selected_videos = []
 
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
-        for f in project.files:
-          if f['type'] != 'video':
-            continue
-          self.video_list.model().appendRow(QStandardItem(f['name']))
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-        self.cm_comboBox.activated[str].connect(self.cm_choice)
-        self.view.vb.clicked.connect(self.vbc_clicked)
+        # self.video_list.setModel(QStandardItemModel())
+        # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
+        # self.video_list.doubleClicked.connect(self.video_triggered)
+        # for f in project.files:
+        #   if f['type'] != 'video':
+        #     continue
+        #   self.video_list.model().appendRow(QStandardItem(f['name']))
+        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+        # self.cm_comboBox.activated[str].connect(self.cm_choice)
 
         # setup ROI list widget
-        model = SeedItemModel()
-        self.seed_list.setModel(model)
-        self.seed_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # model = SeedItemModel()
+        self.roi_list.setModel(RoiItemModel())
+        self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         # A flag to see whether selected_seed_changed is being entered for the first time
         self.selected_seed_changed_flag = 0
-        self.seed_list.selectionModel().selectionChanged[QItemSelection,
-                                                        QItemSelection].connect(self.selected_seed_changed)
-        seed_names = [f['name'] for f in project.files if f['type'] == 'seed']
+        seed_names = [f['name'] for f in project.files if f['type'] == 'auto_roi']
         for seed_name in seed_names:
-            if seed_name not in self.seed_list.model().seeds:
-                model.appendseed(seed_name)
-        self.seed_list.setCurrentIndex(model.index(0, 0))
+            if seed_name not in self.roi_list.model().rois:
+                self.roi_list.model().appendRoi(seed_name)
+        WidgetDefault.__init__(self, project, plugin_position)
 
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
+    # def video_triggered(self, index):
+    #     pfs.video_triggered(self, index)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.left.setLayout(vbox_view)
-
-        vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Choose video:'))
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        vbox.addWidget(self.video_list)
-        vbox.addWidget(QLabel('Choose colormap:'))
+        super().setup_ui()
+        # vbox_view = QVBoxLayout()
+        # vbox_view.addWidget(self.view)
+        # self.left.setLayout(vbox_view)
+        #
+        # vbox = QVBoxLayout()
+        # list_of_manips = pfs.get_list_of_project_manips(self.project)
+        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        # vbox.addWidget(self.toolbutton)
+        # vbox.addWidget(QLabel('Choose video:'))
+        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # vbox.addWidget(self.video_list)
+        self.vbox.addWidget(QLabel('Choose colormap:'))
         # todo: colormap list should be dealt with in a seperate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("coolwarm")
@@ -228,34 +240,58 @@ class Widget(QWidget):
         self.cm_comboBox.addItem("inferno")
         self.cm_comboBox.addItem("plasma")
         self.cm_comboBox.addItem("magma")
-        vbox.addWidget(self.cm_comboBox)
-        vbox.addWidget(qtutil.separator())
-        vbox.addWidget(QLabel('seeds'))
-        vbox.addWidget(self.seed_list)
-        pb = QPushButton('Save all SPC maps from table seeds to file')
-        pb.clicked.connect(self.spc_bulk_clicked)
-        vbox.addWidget(pb)
-        pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
-        pb.clicked.connect(self.spc_bulk_clicked_display)
-        vbox.addWidget(pb)
-        vbox.addStretch()
-        vbox.addWidget(mue.InfoWidget('Click on the image to generate custom SPC map.'))
-        self.right.setLayout(vbox)
+        self.vbox.addWidget(self.cm_comboBox)
+        # self.vbox.addWidget(qtutil.separator())
+        self.vbox.addWidget(QLabel('seeds'))
+        self.vbox.addWidget(self.roi_list)
+        # pb = QPushButton('Save all SPC maps from table seeds to file')
+        self.vbox.addWidget(self.bulk_background_pb)
+        # pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
+        self.vbox.addWidget(self.spc_from_seeds_pb)
+        self.vbox.addStretch()
+        self.vbox.addWidget(mue.InfoWidget('Click on the image to generate custom SPC map.'))
+        # self.right.setLayout(self.vbox)
+        #
+        # splitter = QSplitter(Qt.Horizontal)
+        # splitter.setHandleWidth(3)
+        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        # splitter.addWidget(self.left)
+        # splitter.addWidget(self.right)
+        # hbox_global = QHBoxLayout()
+        # hbox_global.addWidget(splitter)
+        # self.setLayout(hbox_global)
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
+    # def refresh_video_list_via_combo_box(self, trigger_item=None):
+    #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
+    #
+    # def selected_video_changed(self, selected, deselected):
+    #     pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+    def setup_signals(self):
+        super().setup_signals()
+        self.view.vb.clicked.connect(self.vbc_clicked)
+        self.bulk_background_pb.clicked.connect(self.spc_bulk_clicked)
+        self.spc_from_seeds_pb.clicked.connect(self.spc_bulk_clicked_display)
+        self.roi_list.selectionModel().selectionChanged[QItemSelection,
+                                                        QItemSelection].connect(self.selected_seed_changed)
 
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
+    def setup_params(self, reset=False):
+        super().setup_params()
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
+        roi_indices = self.params[self.Labels.roi_list_indices_label]
+        theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
+                            roi_indices]
+        for Qindex in theQIndexObjects:
+            self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+
+    def setup_param_signals(self):
+        super().setup_param_signals()
+        self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+
+    def prepare_roi_list_for_update(self, selected, deselected):
+        val = [v.row() for v in self.roi_list.selectedIndexes()]
+        self.update_plugin_params(self.Labels.roi_list_indices_label, val)
 
     def selected_seed_changed(self, selection):
         if self.selected_seed_changed_flag == 0:
@@ -265,12 +301,12 @@ class Widget(QWidget):
             return
 
         self.remove_all_seeds()
-        seeds_selected = [str(self.seed_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-                         for x in range(len(self.seed_list.selectionModel().selectedIndexes()))]
+        seeds_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+                          for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
         seeds_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
         seeds_to_add = [x for x in seeds_selected if x not in seeds_in_view]
         for seed_to_add in seeds_to_add:
-            self.view.vb.loadROI([self.project.path + '/' + seed_to_add + '.seed'])
+            self.view.vb.loadROI([self.project.path + '/' + seed_to_add + '.roi'])
 
     def remove_all_seeds(self):
         seeds = self.view.vb.rois[:]
@@ -296,11 +332,11 @@ class Widget(QWidget):
                 progress.setValue(x * 100)
                 QApplication.processEvents()
             # setup seed table
-            if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
-                qtutil.critical("There's no seed table associated with this project")
+            if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+                qtutil.critical("There's no roi table associated with this project")
                 return
             text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
-                              if self.project.files[x]['type'] == 'seed_table']
+                              if self.project.files[x]['type'] == 'roi_table']
             assert(len(text_file_path) == 1)
             text_file_path = text_file_path[0]
             seed_table = []
@@ -311,8 +347,8 @@ class Widget(QWidget):
             seed_table = np.array(seed_table)
             seed_table_range = range(len(seed_table))[1:]
             seed_names = [seed_table[x, 0] for x in seed_table_range]
-            seed_coord_x = [float(seed_table[x, 1]) for x in seed_table_range]
-            seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
+            seed_coord_x = [float(seed_table[x, 2]) for x in seed_table_range]
+            seed_coord_y = [float(seed_table[x, 3]) for x in seed_table_range]
             seed_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in seed_coord_x]
             seed_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in seed_coord_y]
             for i, ind in enumerate(range(len(seed_names))):
@@ -355,11 +391,11 @@ class Widget(QWidget):
 
 
             # setup seed table
-            if 'seed_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+            if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
                 qtutil.critical("There's no seed table associated with this project")
                 return
             text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
-                              if self.project.files[x]['type'] == 'seed_table']
+                              if self.project.files[x]['type'] == 'roi_table']
             assert(len(text_file_path) == 1)
             text_file_path = text_file_path[0]
             seed_table = []
@@ -370,8 +406,8 @@ class Widget(QWidget):
             seed_table = np.array(seed_table)
             seed_table_range = range(len(seed_table))[1:]
             seed_names = [seed_table[x, 0] for x in seed_table_range]
-            seed_coord_x = [float(seed_table[x, 1]) for x in seed_table_range]
-            seed_coord_y = [float(seed_table[x, 2]) for x in seed_table_range]
+            seed_coord_x = [float(seed_table[x, 2]) for x in seed_table_range]
+            seed_coord_y = [float(seed_table[x, 3]) for x in seed_table_range]
             seed_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in seed_coord_x]
             seed_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in seed_coord_y]
             rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
@@ -406,7 +442,8 @@ class Widget(QWidget):
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for selected in self.selected_videos:
             spc = calc_spc(selected, x, y, progress)
-            dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_type, self)
+            dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_comboBox.currentText())
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowStaysOnTopHint)
             dialog.show()
             self.open_dialogs.append(dialog)
 
@@ -420,7 +457,7 @@ class Widget(QWidget):
         spc = calc_spc(vid_path, x, y, progress)
         # save to npy
         np.save(path_without_ext + '.npy', spc)
-        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_type, self, name)
+        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText(), name)
         dialog_object.show()
         self.open_dialogs.append(dialog_object)
         spc_col = dialog_object.colorized_spc
@@ -438,7 +475,7 @@ class Widget(QWidget):
         spc = calc_spc(vid_path, x, y, progress)
         # save to npy
         np.save(path_without_ext + '.npy', spc)
-        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_type, self)
+        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
         spc_col = dialog_object.colorized_spc
         #Save as png and jpeg
         scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
@@ -446,10 +483,11 @@ class Widget(QWidget):
         #png.from_array(spc_col, 'L').save(path_without_ext+".png")
 
 
-class MyPlugin:
+class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'SPC map'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
     def run(self):
         pass
