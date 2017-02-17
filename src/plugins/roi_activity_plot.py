@@ -104,8 +104,8 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
         color = brewer_colors[i].rgb
     else:
         if not warning_issued:
-            qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. Please be careful'
-                           'with how you interpret your data')
+            qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
+                           'Please be careful with how you interpret your data')
             warning_issued = True
         if i < len(brewer_colors) + len(kelly_colors):
             color = kelly_colors[i-len(brewer_colors)].rgb
