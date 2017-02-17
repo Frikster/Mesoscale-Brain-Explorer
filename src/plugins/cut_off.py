@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 from .util import fileloader
 from .util import project_functions as pfs
@@ -115,6 +116,11 @@ class Widget(QWidget, WidgetDefault):
                              self.params[self.Labels.video_list_indices_label],
                              self.Defaults.list_display_type,
                              self.params[self.Labels.last_manips_to_display_label])
+            if self.Defaults.manip not in [self.toolbutton.itemText(i) for
+                                           i in range(self.toolbutton.model().rowCount())]:
+                self.toolbutton.addItem(self.Defaults.manip)
+                item = self.toolbutton.model().item(self.toolbutton.model().rowCount()-1, 0)
+                item.setCheckState(Qt.Checked)
         global_callback(1)
         return output_paths
 
