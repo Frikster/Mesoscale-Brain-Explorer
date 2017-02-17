@@ -181,6 +181,8 @@ class WidgetDefault(object):
 
     def setup_whats_this(self):
         self.video_list.setWhatsThis("List of files available for manipulation in this plugin. "
+                                     "Double click a file to load the video player for it. Right click for additional "
+                                     "options. "
                                      "Note that some plugins may have unique lists so if you don't "
                                      "see the file you are looking for you may be in the wrong plugin. "
                                      "In most cases Multiple files can be selected allowing for bulk processing. ")
