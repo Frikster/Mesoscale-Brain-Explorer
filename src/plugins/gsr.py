@@ -155,6 +155,14 @@ class Widget(QWidget, WidgetDefault):
     global_callback(1)
     return output_paths
 
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.butt_gsr.setWhatsThis("Global Signal Regression(GSR) uses linear regression to remove shared variance "
+                                 "between the global signal and the time course. The algebraic consequence is that GSR "
+                                 "shifts the distribution of functional connectivity "
+                                 "values from being predominantly positive to both positive and negative in any "
+                                 "given subject.")
+
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Global Signal Regression'
