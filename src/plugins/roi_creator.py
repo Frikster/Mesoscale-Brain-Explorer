@@ -442,11 +442,18 @@ class Widget(QWidget, WidgetDefault):
   def setup_whats_this(self):
     super().setup_whats_this()
     self.create_roi_button.setWhatsThis("Click to enter ROI placement mode allowing you to create ROIs on the image "
-                                        "which will be saved and can be accessed in the list below")
+                                        "which will be saved and can be accessed in the list below. Left click to "
+                                        "add an ROI corner. Right click to complete the ROI. ROI corners can also be "
+                                        "modified after creating the ROI by left clicking and dragging them. "
+                                        "Additional corners can be added by left clicking an ROI edge. "
+                                        "Right click a modified ROI and click save to save changes made to an ROI")
     self.crop_button.setWhatsThis("Select one or many ROIs below and then select one or many image stacks above. "
                                   "All selected image stacks will be cropped to the ROIs selected")
-    self.roi_list.setWhatsThis("Select ROIs you've made. Double-click to change their name. For automation yo mustv"
-                               "pick ROI(s) that will be cropped to for all files in the pipeline")
+    self.roi_list.setWhatsThis("Select ROIs you've made. Double-click to change their name. For automation you must "
+                               "pick ROI(s) that will be cropped to for all files in the pipeline. ROI corners can be "
+                               "modified after creating the ROI by left clicking and dragging them. Additional corners "
+                               "can be added by left clicking an ROI edge. "
+                               "Right click a modified ROI and click save to save changes made to an ROI")
 
 
 class MyPlugin(PluginDefault):
