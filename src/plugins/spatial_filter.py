@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+import functools
 import os
 import sys
 
 import PyQt4
 import numpy as np
-from scipy import ndimage
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from scipy import signal
+from scipy import ndimage
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
 
 #import numba as nb
@@ -61,15 +62,24 @@ from .util.mygraphicsview import MyGraphicsView
 #         frames_beam += avg_beam
 #         output[:, i, j] = frames_beam
 
-class Widget(QWidget):
+
+
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
+        kernal_size_label = "Kernel Size"
+
+    class Defaults(WidgetDefault.Defaults):
+        kernal_size_default = 8
+
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
 
         # self.temporal_filter_beams_nb = nb.jit(nb.float64[:, :, :]
         #                                   (nb.float64[:, :, :]),
         #                                   nopython=True)(temporal_filter_beams)
-        if not project:
+        if not project or not isinstance(plugin_position, int):
             return
+        self.plugin_position = plugin_position
         if project == "standalone":
             filenames = QFileDialog.getOpenFileNames(
                 self, 'Load data', str(QSettings().value('last_load_data_path')),
@@ -86,70 +96,139 @@ class Widget(QWidget):
             #     })
 
         # define ui components and global data
-        self.left = QFrame()
-        self.right = QFrame()
-        self.view = MyGraphicsView(self.project)
-        self.video_list = QListView()
+        # self.left = QFrame()
+        # self.right = QFrame()
+        # self.view = MyGraphicsView(self.project)
+        # self.video_list = QListView()
         self.kernal_size = QSpinBox()
         self.spat_filter_pb = QPushButton('&Apply Filter')
+        WidgetDefault.__init__(self, project, plugin_position)
 
-        self.setup_ui()
-        self.selected_videos = []
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.selectionModel().selectionChanged[QItemSelection,
-                                                          QItemSelection].connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
+        # self.video_list_indices = []
+        # self.toolbutton_values = []
+        # self.selected_videos = []
+        # self.video_list.setModel(QStandardItemModel())
+        # self.video_list.selectionModel().selectionChanged[QItemSelection,
+        #                                                   QItemSelection].connect(self.selected_video_changed)
+        # self.video_list.doubleClicked.connect(self.video_triggered)
 
-        if self.project:
-            for f in self.project.files:
-                if f['type'] != 'video':
-                    continue
-                self.video_list.model().appendRow(QStandardItem(f['name']))
-        else:
-            for f in filenames:
-                self.video_list.model().appendRow(QStandardItem(f))
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-        self.spat_filter_pb.clicked.connect(self.filter_clicked)
+        # if self.project:
+        #     for f in self.project.files:
+        #         if f['type'] != 'video':
+        #             continue
+        #         self.video_list.model().appendRow(QStandardItem(f['name']))
+        # else:
+        #     for f in filenames:
+        #         self.video_list.model().appendRow(QStandardItem(f))
 
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
+        # self.setup_ui()
+        # if isinstance(plugin_position, int):
+        #     self.params = project.pipeline[self.plugin_position]
+        #     assert (self.params['name'] == 'spatial_filter')
+        #     self.setup_param_signals()
+        #     try:
+        #         self.setup_params()
+        #     except:
+        #         self.setup_params(reset=True)
+        #     pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+        #                      Defaults.list_display_type, self.toolbutton_values)
+
+
+    # def video_triggered(self, index):
+    #     pfs.video_triggered(self, index)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.left.setLayout(vbox_view)
+        super().setup_ui()
 
-        vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Choose video:'))
-        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        vbox.addWidget(self.video_list)
-        vbox.addWidget(QLabel('Kernal Size'))
+        # vbox_view = QVBoxLayout()
+        # vbox_view.addWidget(self.view)
+        # self.left.setLayout(vbox_view)
+        #
+        # vbox = QVBoxLayout()
+        # list_of_manips = pfs.get_list_of_project_manips(self.project)
+        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        # vbox.addWidget(self.toolbutton)
+        # vbox.addWidget(QLabel('Choose video:'))
+        # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # vbox.addWidget(self.video_list)
+        self.vbox.addWidget(QLabel(self.Labels.kernal_size_label))
         self.kernal_size.setMinimum(1)
         self.kernal_size.setValue(8)
-        vbox.addWidget(self.kernal_size)
-        vbox.addWidget(self.spat_filter_pb)
+        self.vbox.addWidget(self.kernal_size)
+        self.vbox.addWidget(self.spat_filter_pb)
 
-        self.right.setLayout(vbox)
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
+        # self.right.setLayout(self.vbox)
+        # splitter = QSplitter(Qt.Horizontal)
+        # splitter.setHandleWidth(3)
+        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        # splitter.addWidget(self.left)
+        # splitter.addWidget(self.right)
+        # hbox_global = QHBoxLayout()
+        # hbox_global.addWidget(splitter)
+        # self.setLayout(hbox_global)
 
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
+    def setup_signals(self):
+        super().setup_signals()
+        self.spat_filter_pb.clicked.connect(self.execute_primary_function)
 
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
+
+    def setup_params(self, reset=False):
+        super().setup_params()
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.kernal_size_label, self.Defaults.kernal_size_default)
+        self.kernal_size.setValue(self.params[self.Labels.kernal_size_label])
+
+        #     self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
+        #     self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
+        # self.video_list_indices = self.params[Labels.video_list_indices_label]
+        # self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
+        # manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+        #                           if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
+        # for item in manip_items:
+        #     item.setCheckState(Qt.Checked)
+        # not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+        #                if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+        # for item in not_checked:
+        #     item.setCheckState(Qt.Unchecked)
+
+
+    def setup_param_signals(self):
+        super().setup_param_signals()
+        self.kernal_size.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.kernal_size_label))
+        # self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
+        # self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
+
+    # def prepare_video_list_for_update(self, selected, deselected):
+    #     val = [v.row() for v in self.video_list.selectedIndexes()]
+    #     self.update_plugin_params(Labels.video_list_indices_label, val)
+    #
+    # def prepare_toolbutton_for_update(self, trigger_item):
+    #     val = self.params[Labels.last_manips_to_display_label]
+    #     selected = self.toolbutton.itemText(trigger_item)
+    #     if selected not in val:
+    #         val = val + [selected]
+    #         if trigger_item != 0:
+    #             val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
+    #     else:
+    #         val = [manip for manip in val if manip != selected]
+    #
+    #     self.update_plugin_params(Labels.last_manips_to_display_label, val)
+
+
+    # def update_plugin_params(self, key, val):
+    #     pfs.update_plugin_params(self, key, val)
+
+
+
+    # def refresh_video_list_via_combo_box(self, trigger_item=None):
+    #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
+    #
+    # def selected_video_changed(self, selected, deselected):
+    #     pfs.selected_video_changed_multi(self, selected, deselected)
 
     # def selected_video_changed(self, selected, deselected):
     #     if not selected.indexes():
@@ -171,16 +250,15 @@ class Widget(QWidget):
     #     frame = fileloader.load_reference_frame(self.shown_video_path)
     #     self.view.show(frame)
 
-    def filter_clicked(self):
-        # todo: other spatial filters could be defined here
-        # progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
-        # progress.setAutoClose(True)
-        # progress.setMinimumDuration(0)
-        #
-        # def callback(x):
-        #     progress.setValue(x * 100)
-        #     QApplication.processEvents()
-        self.spatial_filter()
+    # def filter_clicked(self):
+    #     # progress = QProgressDialog('Filtering selection', 'Abort', 0, 100, self)
+    #     # progress.setAutoClose(True)
+    #     # progress.setMinimumDuration(0)
+    #     #
+    #     # def callback(x):
+    #     #     progress.setValue(x * 100)
+    #     #     QApplication.processEvents()
+    #     self.spatial_filter()
 
     def generate_mean_filter_kernel(self, size):
         kernel = 1.0 / (size * size) * np.array([[1] * size] * size)
@@ -191,7 +269,7 @@ class Widget(QWidget):
         framek = ndimage.convolve(frame, kernel, mode='constant', cval=0.0)
         return framek
 
-    def spatial_filter(self):
+    def execute_primary_function(self):
         global_progress = QProgressDialog('Total Progress Filtering Selection', 'Abort', 0, 100, self)
         global_progress.setAutoClose(True)
         global_progress.setMinimumDuration(0)
@@ -229,14 +307,31 @@ class Widget(QWidget):
                 msgBox.exec_()
             else:
                 pfs.save_project(video_path, self.project, frames, 'spatial-filter', 'video')
-                pfs.refresh_all_list(self.project, self.video_list)
+                pfs.refresh_list(self.project, self.video_list,
+                                 self.params[self.Labels.video_list_indices_label],
+                                 self.Defaults.list_display_type,
+                                 self.params[self.Labels.last_manips_to_display_label])
             callback(1)
         global_callback(1)
 
-class MyPlugin:
-    def __init__(self, project=None, plugin_position=None):
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.kernal_size.setWhatsThis("The size (in pixels) of the square mean filter that wil be convolved "
+                                      "with each selected image stack for spatial filtering. A larger kernel size "
+                                      "entails more blurring and therefore filtering to emphasize larger features"
+                                      "and de-emphasize smaller ones. "
+                                      "\nNote that we have "
+                                      "found a kernel size of 8 highlights blood vessels in Ai94 mice well enough "
+                                      "such that a frame in the spatially filtered stack can be used as the reference "
+                                      "frame in the alignment plugin in 256x256 image stacks so as to align all image "
+                                      "stacks to the blood vessels. "
+                                      "Kernel size 4 can be used for 128x128 image stacks.")
+
+class MyPlugin(PluginDefault):
+    def __init__(self, project, plugin_position):
         self.name = 'Spatial Filter'
         self.widget = Widget(project, plugin_position)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
     def run(self):
         pass

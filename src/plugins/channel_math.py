@@ -3,58 +3,70 @@
 from .temporal_filter import *
 from .util import mse_ui_elements as mue
 import qtutil
+import psutil
 from .videoplayer import PlayerDialog
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
-class Widget(QWidget):
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
+        pass
+
+    class Defaults(WidgetDefault.Defaults):
+        pass
+
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
 
-        if not project:
+        if not project or not isinstance(plugin_position, int):
             return
-        self.plugin_position = plugin_position
-        self.project = project
+        WidgetDefault.__init__(self, project, plugin_position)
+
+        # self.plugin_position = plugin_position
+        # self.project = project
 
         # define ui components and global data
-        self.view = MyGraphicsView(self.project)
-        self.video_list = QListView()
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.left = QFrame()
-        self.right = QFrame()
-        self.open_dialogs = []
+        # self.view = MyGraphicsView(self.project)
+        # self.video_list = QListView()
+        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # self.left = QFrame()
+        # self.right = QFrame()
+        # self.open_dialogs = []
+        #
+        # self.setup_ui()
+        # self.selected_videos = []
+        #
+        # self.video_list.setModel(QStandardItemModel())
+        # self.video_list.selectionModel().selectionChanged[QItemSelection,
+        #                                                   QItemSelection].connect(self.selected_video_changed)
+        # self.video_list.doubleClicked.connect(self.video_triggered)
+        # for f in project.files:
+        #     if f['type'] != 'video':
+        #         continue
+        #     item = QStandardItem(f['name'])
+        #     item.setDropEnabled(False)
+        #     self.video_list.model().appendRow(item)
+        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
-        self.setup_ui()
-        self.selected_videos = []
-
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.selectionModel().selectionChanged[QItemSelection,
-                                                          QItemSelection].connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
-        for f in project.files:
-            if f['type'] != 'video':
-                continue
-            item = QStandardItem(f['name'])
-            item.setDropEnabled(False)
-            self.video_list.model().appendRow(item)
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-    def video_triggered(self, index):
-        filename = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-        dialog = PlayerDialog(self.project, filename, self)
-        dialog.show()
-        self.open_dialogs.append(dialog)
+    # def video_triggered(self, index):
+    #     filename = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
+    #     dialog = PlayerDialog(self.project, filename, self)
+    #     dialog.show()
+    #     self.open_dialogs.append(dialog)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.view.vb.setCursor(Qt.CrossCursor)
-        self.left.setLayout(vbox_view)
-
-        vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Selection order determines concatenation order'))
+        super().setup_ui()
+        # vbox_view = QVBoxLayout()
+        # vbox_view.addWidget(self.view)
+        # self.view.vb.setCursor(Qt.CrossCursor)
+        # self.left.setLayout(vbox_view)
+        #
+        # vbox = QVBoxLayout()
+        # list_of_manips = pfs.get_list_of_project_manips(self.project)
+        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        # vbox.addWidget(self.toolbutton)
+        # self.vbox.addWidget(QLabel('Press Ctrl or shift and then select your numerator followed by denominator'))
         self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.video_list.setAcceptDrops(True)
         self.video_list.setDragEnabled(True)
@@ -63,33 +75,40 @@ class Widget(QWidget):
         self.video_list.setDefaultDropAction(Qt.MoveAction)
         self.video_list.setDragDropOverwriteMode(False)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.video_list)
-        vbox.addWidget(mue.InfoWidget('This operation requires as much memory as the combined size of all selected '
-                                      'stacks in the project directory. Note also there is no explicit progress bar'))
+        # vbox.addWidget(self.video_list)
+        self.vbox.addWidget(mue.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
+                                           'denominator. Files can be dragged in the video list for convenience'
+                                           'but the order does not determine which is the numerator and which the'
+                                           'denominator.'))
         hhbox = QHBoxLayout()
         div_butt = QPushButton('Divide first by second')
         hhbox.addWidget(div_butt)
-        vbox.addLayout(hhbox)
-        vbox.addStretch()
+        self.vbox.addLayout(hhbox)
+        self.vbox.addStretch()
         div_butt.clicked.connect(self.div_clicked)
-        self.right.setLayout(vbox)
-
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
-
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
-
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
+        # self.right.setLayout(vbox)
+        #
+        # splitter = QSplitter(Qt.Horizontal)
+        # splitter.setHandleWidth(3)
+        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        # splitter.addWidget(self.left)
+        # splitter.addWidget(self.right)
+        # hbox_global = QHBoxLayout()
+        # hbox_global.addWidget(splitter)
+        # self.setLayout(hbox_global)
 
     def div_clicked(self):
+        summed_filesize = 0
+        for path in self.selected_videos:
+            summed_filesize = summed_filesize + os.path.getsize(path)
+        available = list(psutil.virtual_memory())[1]
+        if summed_filesize > available:
+            qtutil.critical("Not enough memory. Total is of size "+str(summed_filesize) +\
+               " and available memory is: " + str(available))
+            raise MemoryError("Not enough memory. Total is of size "+str(summed_filesize) +\
+               " and available memory is: " + str(available))
+
+
         paths = self.selected_videos
         if len(paths) != 2:
             qtutil.warning('Select 2 files to divide.')
@@ -105,8 +124,10 @@ class Widget(QWidget):
         # long_ass_name = 'concat_'+'_concat_'.join(filenames[1:])
         # long_ass_name = long_ass_name.replace('.npy', '')
         pfs.save_project(paths[0], self.project, frames, manip, 'video')
-        pfs.refresh_all_list(self.project, self.video_list)
-
+        pfs.refresh_list(self.project, self.video_list,
+                         self.params[self.Labels.video_list_indices_label],
+                         self.Defaults.list_display_type,
+                         self.params[self.Labels.last_manips_to_display_label])
         # path = os.path.join(self.project.path, str(uuid.uuid4()) + 'Concat.npy')
         # np.save(path, frames)
         # self.project.files.append({
@@ -117,11 +138,11 @@ class Widget(QWidget):
         # })
         # self.project.save()
 
-
-class MyPlugin:
+class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'Channel Math'
+        self.name = 'Channel Division'
         self.widget = Widget(project, plugin_position)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
     def run(self):
         pass

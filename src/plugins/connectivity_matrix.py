@@ -133,8 +133,8 @@ class ConnectivityTable(QTableView):
         self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
-    def __init__(self, selected_videos, image, rois, cm_type, parent=None, progress_callback=None):
-        super(ConnectivityDialog, self).__init__(parent)
+    def __init__(self, selected_videos, image, rois, cm_type, progress_callback=None):
+        super(ConnectivityDialog, self).__init__()
         self.setWindowTitle('Connectivity Matrix')
         self.setup_ui()
         self.model = ConnectivityModel(selected_videos, image, rois, cm_type, None, progress_callback)
@@ -275,26 +275,6 @@ class Widget(QWidget):
     def cm_choice(self, cm_choice):
         self.cm_type = cm_choice
 
-    # def selected_video_changed(self, selected, deselected):
-    #     if not selected.indexes():
-    #         return
-    #
-    #     for index in deselected.indexes():
-    #         vidpath = str(os.path.join(self.project.path,
-    #                                  index.data(Qt.DisplayRole))
-    #                           + '.npy')
-    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-    #     for index in selected.indexes():
-    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-    #         if vidpath not in self.selected_videos and vidpath != 'None':
-    #             self.selected_videos = self.selected_videos + [vidpath]
-    #
-    #     self.shown_video_path = str(os.path.join(self.project.path,
-    #                                        selected.indexes()[0].data(Qt.DisplayRole))
-    #                           + '.npy')
-    #     frame = fileloader.load_reference_frame(self.shown_video_path)
-    #     self.view.show(frame)
-
     def selected_roi_changed(self, selected, deselected):
         #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
         #todo: what's the point of the forloops?
@@ -324,7 +304,7 @@ class Widget(QWidget):
         else:
 
             win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
-                                   rois, self.cm_type, self, callback)
+                                   rois, self.cm_type, callback)
             callback(1)
             win.show()
             self.open_dialogs.append(win)

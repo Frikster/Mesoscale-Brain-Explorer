@@ -1,10 +1,6 @@
 Known Issues
 ==============
 
-Critical
----------------
-* Sometimes the load button for loading image stacks just flat does not work. Without changing the code it will spontaneously fix itself. Expect QSettings is to blame.
-
 General
 ---------------
 * Refactor filter_jeff.py and diplacement_jeff.py
@@ -74,7 +70,3 @@ Stdev Map
 * colormaps should be listed in a seperate script (make exstensible)
 * Map window always in focus (cannot bring main window in front of it)
 * In windows th gradient bar is stuck in the top left. Move the image and it moves to the right spot
-
-Video Player
-------------------
-* df_fo displays a flicker in the background; all values aren't normalized across frames

@@ -5,7 +5,6 @@ import csv
 import os
 from shutil import copyfile
 
-import functools
 import numpy as np
 import qtutil
 from PyQt4 import QtCore
@@ -13,8 +12,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
-from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
+from .util.mse_ui_elements import RoiItemModel
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
 
 #This the code for getting the ROI locations from bregma.
@@ -46,91 +46,102 @@ from .util.mygraphicsview import MyGraphicsView
 #yy = round([yy yy2]);
 
 
-class RoiItemModel(QAbstractListModel):
-  textChanged = pyqtSignal(str, str)
-  #dataChanged = pyqtSignal(int, int)
+# class RoiItemModel(QAbstractListModel):
+#   textChanged = pyqtSignal(str, str)
+#   #dataChanged = pyqtSignal(int, int)
+#
+#   def __init__(self, parent=None):
+#     super(RoiItemModel, self).__init__(parent)
+#     self.rois = []
+#
+#   def appendRoi(self, name):
+#     self.rois.append(name)
+#     row = len(self.rois) - 1
+#     self.dataChanged.emit(self.index(row), self.index(row))
+#
+#   def edit_roi_name(self, name, index):
+#       self.rois.append(name)
+#       row = len(self.rois) - 1
+#       self.dataChanged.emit(self.index(row), self.index(row))
+#
+#   def rowCount(self, parent):
+#     return len(self.rois)
+#
+#   def data(self, index, role):
+#     if role == Qt.DisplayRole:
+#       return self.rois[index.row()]
+#     return
+#
+#   def setData(self, index, value, role):
+#     if role in [Qt.DisplayRole, Qt.EditRole]:
+#       self.textChanged.emit(self.rois[index.row()], value)
+#       self.rois[index.row()] = str(value)
+#       return True
+#     return super(RoiItemModel, self).setData(index, value, role)
+#
+#   def flags(self, index):
+#     return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
+#
+#   def removeRow(self, roi_to_remove):
+#     for i, roi in enumerate(self.rois):
+#       if roi == roi_to_remove:
+#         del self.rois[i]
+#         break
 
-  def __init__(self, parent=None):
-    super(RoiItemModel, self).__init__(parent)
-    self.rois = []
+class Widget(QWidget, WidgetDefault):
+  class Labels(WidgetDefault.Labels):
+    roi_list_indices_label = "ROIs"
 
-  def appendRoi(self, name):
-    self.rois.append(name)
-    row = len(self.rois) - 1
-    self.dataChanged.emit(self.index(row), self.index(row))
+  class Defaults(WidgetDefault.Defaults):
+    roi_list_indices_default = [0]
+    list_display_type = ['ref_frame', 'video']
 
-  def edit_roi_name(self, name, index):
-      self.rois.append(name)
-      row = len(self.rois) - 1
-      self.dataChanged.emit(self.index(row), self.index(row))
-
-  def rowCount(self, parent):
-    return len(self.rois)
-
-  def data(self, index, role):
-    if role == Qt.DisplayRole:
-      return self.rois[index.row()]
-    return
-
-  def setData(self, index, value, role):
-    if role in [Qt.DisplayRole, Qt.EditRole]:
-      self.textChanged.emit(self.rois[index.row()], value)
-      self.rois[index.row()] = str(value)
-      return True
-    return super(RoiItemModel, self).setData(index, value, role)
-
-  def flags(self, index):
-    return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
-
-  def removeRow(self, roi_to_remove):
-    for i, roi in enumerate(self.rois):
-      if roi == roi_to_remove:
-        del self.rois[i]
-        break
-
-class Widget(QWidget):
-  def __init__(self, project, parent=None):
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
     # check project
-    if not project:
-      return
-    self.project = project
+    if not project or not isinstance(plugin_position, int):
+        return
+    # self.project = project
 
     # define widgets
     self.headers = None
     self.data = None
     self.text_file_path = None
-    self.view = MyGraphicsView(self.project)
+    self.load_table_pb = QPushButton('Load CSV of ROI coordinates relative to origin')
+    self.update_table_pb = QPushButton('Update Table')
+
+
+    # self.view = MyGraphicsView(self.project)
     self.table_widget = AutoROICoords(self.data, 0, 4)
-    self.left = QFrame()
-    self.right = QFrame()
+    # self.left = QFrame()
+    # self.right = QFrame()
+    #
+    # self.setup_ui()
 
-    self.setup_ui()
+    # self.video_list.setModel(QStandardItemModel())
+    # self.video_list.selectionModel().selectionChanged[QItemSelection,
+    #                                                   QItemSelection].connect(self.selected_video_changed)
+    # self.video_list.doubleClicked.connect(self.video_triggered)
+    # for f in project.files:
+    #   if f['type'] != 'video':
+    #     continue
+    #   self.video_list.model().appendRow(QStandardItem(str(f['name'])))
+    # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
-    self.video_list.setModel(QStandardItemModel())
-    self.video_list.selectionModel().selectionChanged[QItemSelection,
-                                                      QItemSelection].connect(self.selected_video_changed)
-    self.video_list.doubleClicked.connect(self.video_triggered)
-    for f in project.files:
-      if f['type'] != 'video':
-        continue
-      self.video_list.model().appendRow(QStandardItem(str(f['name'])))
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-    model = RoiItemModel()
     # todo: this wont update that specific changed value
-    self.view.vb.roi_placed.connect(self.update_project_roi)
-    model.textChanged.connect(self.update_project_roi)
-    self.roi_list.setModel(model)
+    # model = RoiItemModel()
+    # model.textChanged.connect(self.update_project_roi)
+    self.roi_list = QListView()
+    self.roi_list.setModel(RoiItemModel())
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.roi_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
-    self.roi_list.selectionModel().selectionChanged[QItemSelection,
-                                                    QItemSelection].connect(self.selected_roi_changed)
+    WidgetDefault.__init__(self, project, plugin_position)
     roi_names = [f['name'] for f in project.files if f['type'] == 'auto_roi']
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
-        model.appendRoi(roi_name)
+          self.roi_list.model().appendRoi(roi_name)
 
       # setup roi table
       if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
@@ -172,8 +183,9 @@ class Widget(QWidget):
           self.table_widget.setRowCount(len(self.data[self.headers[0]]))
           self.table_widget.update(self.data)
 
-  def video_triggered(self, index):
-      pfs.video_triggered(self, index)
+
+  # def video_triggered(self, index):
+  #     pfs.video_triggered(self, index)
   # def roi_item_edited(self, item):
   #   new_name = item.text()
   #   prev_name = item.data(Qt.UserRole)
@@ -183,50 +195,79 @@ class Widget(QWidget):
   #   self.roi_list.model().itemChanged[QStandardItem.setData].connect(self.roi_item_edited)
 
   def setup_ui(self):
-    vbox_view = QVBoxLayout()
-    vbox_view.addWidget(self.view)
-    self.left.setLayout(vbox_view)
+    super().setup_ui()
 
-    vbox = QVBoxLayout()
-    list_of_manips = pfs.get_list_of_project_manips(self.project)
-    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    vbox.addWidget(self.toolbutton)
-    vbox.addWidget(QLabel('Choose video:'))
-    self.video_list = QListView()
-    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    vbox.addWidget(self.video_list)
-    pb = QPushButton('Load ROIs (origin required)')
-    pb.clicked.connect(self.load_ROI_table)
-    vbox.addWidget(pb)
-    vbox.addWidget(self.table_widget)
-    self.table_widget.itemChanged.connect(self.update_auto_rois)
-    pb = QPushButton('Update ROIs')
-    pb.clicked.connect(self.load_ROI_table_intermediate)
+    # vbox_view = QVBoxLayout()
+    # vbox_view.addWidget(self.view)
+    # self.left.setLayout(vbox_view)
+    #
+    # vbox = QVBoxLayout()
+    # list_of_manips = pfs.get_list_of_project_manips(self.project)
+    # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    # vbox.addWidget(self.toolbutton)
+    # vbox.addWidget(QLabel('Choose video:'))
+    # self.video_list = QListView()
+    # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    # vbox.addWidget(self.video_list)
+    # pb = QPushButton('Load ROIs (origin required)')
+    # self.load_table_pb.clicked.connect(self.load_ROI_table)
+    self.vbox.addWidget(self.load_table_pb )
+    self.vbox.addWidget(self.table_widget)
+    # pb = QPushButton('Update ROIs')
 
-    vbox.addWidget(pb)
+    self.vbox.addWidget(self.update_table_pb)
     # vbox2 = QVBoxLayout()
     # w = QWidget()
     # w.setLayout(vbox2)
     # vbox.addWidget(w)
-    vbox.addWidget(qtutil.separator())
-    vbox.addWidget(QLabel('ROIs'))
-    self.roi_list = QListView()
-    vbox.addWidget(self.roi_list)
-    self.right.setLayout(vbox)
+    self.vbox.addWidget(qtutil.separator())
+    self.vbox.addWidget(QLabel('ROIs'))
+    #self.roi_list = QListView()
+    self.vbox.addWidget(self.roi_list)
+    # self.right.setLayout(self.vbox)
+    #
+    # splitter = QSplitter(Qt.Horizontal)
+    # splitter.setHandleWidth(3)
+    # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    # splitter.addWidget(self.left)
+    # splitter.addWidget(self.right)
+    # hbox_global = QHBoxLayout()
+    # hbox_global.addWidget(splitter)
+    # self.setLayout(hbox_global)
 
-    splitter = QSplitter(Qt.Horizontal)
-    splitter.setHandleWidth(3)
-    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    splitter.addWidget(self.left)
-    splitter.addWidget(self.right)
-    hbox_global = QHBoxLayout()
-    hbox_global.addWidget(splitter)
-    self.setLayout(hbox_global)
+  # def refresh_video_list_via_combo_box(self, trigger_item=None):
+  #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
-  def refresh_video_list_via_combo_box(self, trigger_item=None):
-      pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  def setup_signals(self):
+      super().setup_signals()
+      self.load_table_pb.clicked.connect(self.load_ROI_table)
+      self.view.vb.roi_placed.connect(self.update_project_roi)
+      self.table_widget.itemChanged.connect(self.update_auto_rois)
+      self.update_table_pb.clicked.connect(self.load_ROI_table_intermediate)
+      self.roi_list.model().textChanged.connect(self.update_project_roi)
+      self.roi_list.selectionModel().selectionChanged[QItemSelection,
+                                                      QItemSelection].connect(self.selected_roi_changed)
+
+
+  # def setup_params(self, reset=False):
+  #     super().setup_params()
+  #     if len(self.params) == 1 or reset:
+  #         self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
+  #     roi_indices = self.params[self.Labels.roi_list_indices_label]
+  #     theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
+  #                         roi_indices]
+  #     for Qindex in theQIndexObjects:
+  #         self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+  #
+  # def setup_param_signals(self):
+  #     super().setup_param_signals()
+  #     self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+
+  def prepare_roi_list_for_update(self, selected, deselected):
+      val = [v.row() for v in self.roi_list.selectedIndexes()]
+      self.update_plugin_params(self.Labels.roi_list_indices_label, val)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
@@ -250,12 +291,14 @@ class Widget(QWidget):
       return
     if not selection.indexes() or self.view.vb.drawROImode:
       return
-
     self.remove_all_rois()
+
     # todo: re-explain how you can figure out to go from commented line to uncommented line
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole))
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+    if len(rois_selected) == 1 and rois_selected[0] == 'None':
+        return
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
@@ -404,11 +447,12 @@ class Widget(QWidget):
 
   def update_project_roi(self, roi):
     name = roi.name
-    if not name:
+    if not name or name == 'None':
       raise ValueError('ROI has no name')
     if self.view.vb.drawROImode:
       return
 
+    roi.setName(name)
     path = os.path.join(self.project.path, name + '.roi')
     #if self.view.vb.isActive():
     self.view.vb.saveROI(path)
@@ -458,6 +502,47 @@ class Widget(QWidget):
         self.auto_ROI()
 
 
+  def setup_whats_this(self):
+    super().setup_whats_this()
+    self.load_table_pb.setWhatsThis("For the Seed/ROI Placement plugins a specific format is required for your "
+                                    "coordinates to see proper importation into your MBE project. Click Help -> About "
+                                    "and follow the link to the online tutorial to find a section that shows an "
+                                    "example that is in acceptable format. For your csv containing coordinates, there "
+                                    "must be 4 columns. Next, for the column names '1)' must precede the column name"
+                                    " of the column with ROI names, a '2)' must precede the column specifying the "
+                                    "length of each square ROI, a '3)' precedes the X Coordinate column and '4)'  the "
+                                    "Y Coordinate column. Your columns can otherwise be named whatever you please. ")
+    self.table_widget.setWhatsThis("Imported coordinates will be shown here. Select ROIs in the below list to view "
+                                   "their location on the scene and then adjust the origin and units per pixel in the "
+                                   "left sidepanel to see change in real-time to adjust and shift the ROIs to your "
+                                   "liking. Changing the values of length and the x and y coordinates in this table "
+                                   "changes the corresponding ROI. You can see the change by clicking on the ROI after "
+                                   "in the below list. *However*, although you can see the ROIs shift from changing "
+                                   "the table values these changes are not saved and are meant for exploratory "
+                                   "purposes. The only way for changes to be saved is to make the change in the csv. "
+                                   "So if you find one of your coordinates is slightly off and you want to nudge it, \
+                                   you can change its coordinates in this table and watch how that changes where its "
+                                   "location is. Once you are happy with its placement, copy and paste the new "
+                                   "coordinates and replace the coordinates in your csv and save the csv. Now reload "
+                                   "this csv and the change will be made.")
+    self.update_table_pb.setWhatsThis("ROIs sometimes are misplaced by MBE. The cause of this is still unknown so "
+                                      "please click here to refresh which solves this issue most of the time. Also,"
+                                      "if you've made changes to the table above you can click here to revert to the "
+                                      "version you have saved on file")
+    self.roi_list.setWhatsThis("Imported ROIs will be shown here. Select ROIs in the this list to view "
+                               "their location on the scene and then adjust the origin and units per pixel in the "
+                               "left sidepanel to see change in real-time to adjust and shift the ROIs to your "
+                               "liking. Changing the values of length and the x and y coordinates in the above table "
+                               "changes the corresponding ROI. You can see the change by clicking on the ROI after "
+                               "in this list. *However*, although you can see the ROIs shift from changing the "
+                               "table values these changes are not saved and are meant for exploratory purposes. "
+                               "The only way for changes to be saved is to make the change in the csv. So if you "
+                               "find one of your coordinates is slightly off and you want to nudge it, you can "
+                               "change its coordinates in the above table and watch how that changes where its "
+                               "location is. "
+                               "Once you are happy with its placement, copy and paste the new coordinates and "
+                               "replace the coordinates in your csv and save the csv. Now reload this csv and the "
+                               "change will be made.")
 
 
 class AutoROICoords(QTableWidget):
@@ -484,10 +569,11 @@ class AutoROICoords(QTableWidget):
         self.setmydata()
 
 
-class MyPlugin:
+class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'Auto ROI placer'
-    self.widget = Widget(project)
+    self.name = 'Import CSV ROI Coordinates'
+    self.widget = Widget(project, plugin_position)
+    super().__init__(self.widget, self.widget.Labels, self.name)
   
   def run(self):
     pass

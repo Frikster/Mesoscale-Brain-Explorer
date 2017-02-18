@@ -41,7 +41,7 @@ class DetailsDialog(QDialog):
     self.table = FileTable()
     vbox.addWidget(self.table)
     self.setLayout(vbox)
-    self.resize(600, 400)
+    self.resize(1600, 400)
 
 class RemoveDialog(QDialog):
   def __init__(self, fileinfo, parent=None):
@@ -86,25 +86,25 @@ class DataDialog(QDialog):
   
   def __init__(self, parent=None):
     super(DataDialog, self).__init__(parent)
-
+    self.table = FileTable()
+    self.remove_pb = QPushButton('&Remove file')
+    self.details_pb = QPushButton('&Details')
     self.setup_ui()
+    self.setup_whats_this()
 
   def setup_ui(self):
     self.setWindowTitle('Data')
 
     hbox = QHBoxLayout()
-    self.table = FileTable()
     self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.table.doubleClicked.connect(self.double_clicked)
     hbox.addWidget(self.table)
 
     vbox = QVBoxLayout()
-    pb = QPushButton('&Details')
-    pb.clicked.connect(self.details_clicked)
-    vbox.addWidget(pb)
-    pb = QPushButton('&Remove file')
-    pb.clicked.connect(self.remove_clicked)
-    vbox.addWidget(pb)
+    self.details_pb.clicked.connect(self.details_clicked)
+    vbox.addWidget(self.details_pb)
+    self.remove_pb.clicked.connect(self.remove_clicked)
+    vbox.addWidget(self.remove_pb)
     vbox.addStretch()
     hbox.addLayout(vbox)
     hbox.setStretch(0, 1)
@@ -159,3 +159,11 @@ class DataDialog(QDialog):
     self.project.save()
     self.reload_plugins.emit()
     self.update(self.project)
+
+  def setup_whats_this(self):
+      self.table.setWhatsThis('Sadly columns cannot be adjusted so double click any file and then adjust window '
+                              'size to view file details')
+      self.remove_pb.setWhatsThis('Select multiple files. And then each can be deleted one by one checking '
+                                  'each file path before confirming deletion. This offers more '
+                                  'careful deletion than deleting directly via the video list in a plugin')
+      self.details_pb.setWhatsThis('Select a row and then click this to view that row')

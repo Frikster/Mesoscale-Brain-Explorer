@@ -1,85 +1,97 @@
 #!/usr/bin/env python3
 
-from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import filter_jeff as fj
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
-
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
 
 # on button click!
 
-class Widget(QWidget):
+class Widget(QWidget, WidgetDefault):
+  class Labels(WidgetDefault.Labels):
+    pass
+
+  class Defaults(WidgetDefault.Defaults):
+    manip = "gsr"
+
   def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
-    if not project:
-      return
-    self.plugin_position = plugin_position
-    self.project = project
+    if not project or not isinstance(plugin_position, int):
+        return
+    self.butt_gsr = QPushButton('Global Signal Regression')
+    WidgetDefault.__init__(self, project, plugin_position)
 
-    # define ui components and global data
-    self.view = MyGraphicsView(self.project)
-    self.video_list = QListView()
-    self.left = QFrame()
-    self.right = QFrame()
+    # self.plugin_position = plugin_position
+    # self.project = project
+    #
+    # # define ui components and global data
+    # self.view = MyGraphicsView(self.project)
+    # self.video_list = QListView()
+    # self.left = QFrame()
+    # self.right = QFrame()
+    #
+    # self.setup_ui()
+    # self.selected_videos = []
+    #
+    # self.video_list.setModel(QStandardItemModel())
+    # self.video_list.selectionModel().selectionChanged[QItemSelection,
+    #                                                   QItemSelection].connect(self.selected_video_changed)
+    # for f in project.files:
+    #   if f['type'] != 'video':
+    #     continue
+    #   self.video_list.model().appendRow(QStandardItem(f['name']))
+    # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+    # self.video_list.doubleClicked.connect(self.video_triggered)
 
-    self.setup_ui()
-    self.selected_videos = []
-
-    self.video_list.setModel(QStandardItemModel())
-    self.video_list.selectionModel().selectionChanged[QItemSelection,
-                                                      QItemSelection].connect(self.selected_video_changed)
-    for f in project.files:
-      if f['type'] != 'video':
-        continue
-      self.video_list.model().appendRow(QStandardItem(f['name']))
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-    self.video_list.doubleClicked.connect(self.video_triggered)
-
-  def video_triggered(self, index):
-      pfs.video_triggered(self, index)
+  # def video_triggered(self, index):
+  #     pfs.video_triggered(self, index)
 
   def setup_ui(self):
-    vbox_view = QVBoxLayout()
-    vbox_view.addWidget(self.view)
-    self.view.vb.setCursor(Qt.CrossCursor)
-    self.left.setLayout(vbox_view)
+      super().setup_ui()
+    # vbox_view = QVBoxLayout()
+    # vbox_view.addWidget(self.view)
+    # self.view.vb.setCursor(Qt.CrossCursor)
+    # self.left.setLayout(vbox_view)
+    #
+    # vbox = QVBoxLayout()
+    # list_of_manips = pfs.get_list_of_project_manips(self.project)
+    # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    # vbox.addWidget(self.toolbutton)
+    # vbox.addWidget(QLabel('Choose video:'))
+    # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    # vbox.addWidget(self.video_list)
+      hhbox = QHBoxLayout()
+    # butt_gsr = QPushButton('Global Signal Regression')
+      hhbox.addWidget(self.butt_gsr)
+      self.vbox.addLayout(hhbox)
+      self.vbox.addStretch()
+    # self.right.setLayout(vbox)
+    #
+    # splitter = QSplitter(Qt.Horizontal)
+    # splitter.setHandleWidth(3)
+    # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    # splitter.addWidget(self.left)
+    # splitter.addWidget(self.right)
+    # hbox_global = QHBoxLayout()
+    # hbox_global.addWidget(splitter)
+    # self.setLayout(hbox_global)
 
-    vbox = QVBoxLayout()
-    list_of_manips = pfs.get_list_of_project_manips(self.project)
-    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    vbox.addWidget(self.toolbutton)
-    vbox.addWidget(QLabel('Choose video:'))
-    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-    vbox.addWidget(self.video_list)
-    hhbox = QHBoxLayout()
-    butt_gsr = QPushButton('Global Signal Regression')
-    hhbox.addWidget(butt_gsr)
-    vbox.addLayout(hhbox)
-    vbox.addStretch()
-    butt_gsr.clicked.connect(self.gsr_clicked)
-    self.right.setLayout(vbox)
+  def setup_signals(self):
+      super().setup_signals()
+      self.butt_gsr.clicked.connect(self.execute_primary_function)
 
-    splitter = QSplitter(Qt.Horizontal)
-    splitter.setHandleWidth(3)
-    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    splitter.addWidget(self.left)
-    splitter.addWidget(self.right)
-    hbox_global = QHBoxLayout()
-    hbox_global.addWidget(splitter)
-    self.setLayout(hbox_global)
-
-  def refresh_video_list_via_combo_box(self, trigger_item=None):
-    pfs.refresh_video_list_via_combo_box(self, trigger_item)
-
-  def selected_video_changed(self, selected, deselected):
-    pfs.selected_video_changed_multi(self, selected, deselected)
+  # def refresh_video_list_via_combo_box(self, trigger_item=None):
+  #   pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  #
+  # def selected_video_changed(self, selected, deselected):
+  #   pfs.selected_video_changed_multi(self, selected, deselected)
 
   # def selected_video_changed(self, selected, deselected):
   #   if not selected.indexes():
@@ -101,18 +113,25 @@ class Widget(QWidget):
   #   frame = fileloader.load_reference_frame(self.shown_video_path)
   #   self.view.show(frame)
 
-  def gsr_clicked(self):
-      self.gsr()
 
-  def gsr(self):
+  def execute_primary_function(self, input_paths=None):
+    if not input_paths:
+        if not self.selected_videos:
+            return
+        else:
+            selected_videos = self.selected_videos
+    else:
+        selected_videos = input_paths
+
     global_progress = QProgressDialog('Total Progress for Computing GSR for Selection', 'Abort', 0, 100, self)
     global_progress.setAutoClose(True)
     global_progress.setMinimumDuration(0)
     def global_callback(x):
         global_progress.setValue(x * 100)
         QApplication.processEvents()
-    total = len(self.selected_videos)
-    for i, video_path in enumerate(self.selected_videos):
+    output_paths = []
+    total = len(selected_videos)
+    for i, video_path in enumerate(selected_videos):
         global_callback(i / total)
         progress = QProgressDialog('Computing GSR for ' + video_path, 'Abort', 0, 100, self)
         progress.setAutoClose(True)
@@ -126,15 +145,33 @@ class Widget(QWidget):
         width = frames.shape[1]
         height = frames.shape[2]
         frames = fj.gsr(frames, width, height, callback)
-        pfs.save_project(video_path, self.project, frames, 'gsr', 'video')
-        pfs.refresh_all_list(self.project, self.video_list)
+        path = pfs.save_project(video_path, self.project, frames, self.Defaults.manip, 'video')
+        output_paths = output_paths + [path]
+        pfs.refresh_list(self.project, self.video_list,
+                         self.params[self.Labels.video_list_indices_label],
+                         self.Defaults.list_display_type,
+                         self.params[self.Labels.last_manips_to_display_label])
         callback(1)
     global_callback(1)
+    return output_paths
 
-class MyPlugin:
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.butt_gsr.setWhatsThis("Global Signal Regression(GSR) uses linear regression to remove shared variance "
+                                 "between the global signal and the time course. The algebraic consequence is that GSR "
+                                 "shifts the distribution of functional connectivity "
+                                 "values from being predominantly positive to both positive and negative in any "
+                                 "given subject.")
+
+class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'GSR'
+    self.name = 'Global Signal Regression'
     self.widget = Widget(project, plugin_position)
-  
-  def run(self):
-    pass
+    super().__init__(self.widget, self.widget.Labels, self.name)
+
+  def check_ready_for_automation(self):
+    return True
+
+  def automation_error_message(self):
+      return "YOU SHOULD NOT BE ABLE TO SEE THIS"
+
