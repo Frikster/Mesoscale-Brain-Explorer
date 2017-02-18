@@ -29,14 +29,11 @@
 	{
 		"name":"gsr"
 	},
-	{
-		"name":"auto_seed_placer"
+    {
+		"name":"autoROIplacer"
 	},
 	{
 		"name":"spc_map"
-	},
-	{
-		"name":"autoROIplacer"
 	},
 	{
 		"name":"connectivity_matrix"
