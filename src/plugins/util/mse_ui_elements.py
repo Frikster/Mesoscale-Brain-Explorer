@@ -99,6 +99,65 @@ class RoiItemModel(QAbstractListModel):
                 del roi
                 break
 
+class RoiList(QListView):
+    class Labels(object):
+        roi_list_indices_label = "ROIs"
+
+    class Defaults(object):
+        roi_list_indices_default = [0]
+
+    def __init__(self, widget, roi_types):
+        super(RoiList, self).__init__()
+        self.setModel(RoiItemModel())
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.widget = widget
+
+        self.selected_roi_changed_flag = 0
+        roi_names = [f['name'] for f in self.widget.project.files if f['type'] in roi_types]
+        for roi_name in roi_names:
+            if roi_name not in self.model().rois:
+                self.model().appendRoi(roi_name)
+
+        self.selectionModel().selectionChanged[QItemSelection,
+                                                        QItemSelection].connect(self.selected_roi_changed)
+
+    def selected_roi_changed(self, selection):
+        if self.selected_roi_changed_flag == 0:
+            self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
+            return
+        if not selection.indexes() or self.widget.view.vb.drawROImode:
+            return
+
+        self.remove_all_rois()
+        rois_selected = [str(self.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+                          for x in range(len(self.selectionModel().selectedIndexes()))]
+        rois_in_view = [self.widget.view.vb.rois[x].name for x in range(len(self.widget.view.vb.rois))]
+        rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+        for roi_to_add in rois_to_add:
+            self.widget.view.vb.loadROI([self.widget.project.path + '/' + roi_to_add + '.roi'])
+
+    def remove_all_rois(self):
+        rois = self.widget.view.vb.rois[:]
+        for roi in rois:
+            if not roi.isSelected:
+                self.widget.view.vb.selectROI(roi)
+            self.widget.view.vb.removeROI()
+
+    def setup_params(self, reset=False):
+        if len(self.widget.params) == 1 or reset:
+            self.widget.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
+        roi_indices = self.widget.params[self.Labels.roi_list_indices_label]
+        theQIndexObjects = [self.model().createIndex(rowIndex, 0) for rowIndex in
+                            roi_indices]
+        for Qindex in theQIndexObjects:
+            self.selectionModel().select(Qindex, QItemSelectionModel.Select)
+
+    def setup_param_signals(self):
+        self.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+
+    def prepare_roi_list_for_update(self, selected, deselected):
+        val = [v.row() for v in self.selectedIndexes()]
+        self.widget.update_plugin_params(self.Labels.roi_list_indices_label, val)
 
 class InfoWidget(QFrame):
     def __init__(self, text, parent=None):
