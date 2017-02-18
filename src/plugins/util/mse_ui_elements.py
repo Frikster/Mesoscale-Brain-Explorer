@@ -133,7 +133,7 @@ class RoiList(QListView):
         # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
         rois_selected = [str(self.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                          for x in range(len(self.selectionModel().selectedIndexes()))]
-        if 'None' == 1 and rois_selected[0] == 'None':
+        if 'None' in rois_selected:
             return
         rois_in_view = [self.widget.view.vb.rois[x].name for x in range(len(self.widget.view.vb.rois))]
         rois_to_add = [x for x in rois_selected if x not in rois_in_view]

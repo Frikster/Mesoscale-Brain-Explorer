@@ -84,7 +84,7 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
 
   win = pg.GraphicsWindow(title=win_title)
   win.resize(1000, 600)
-  #win.setWindowTitle('Activity across frames')
+  # win.setWindowTitle('Activity across frames')
   plot = win.addPlot(title=plot_title)
   plot.setLabel('bottom', "Image Stacks")
   plot.setLabel('left', "Activity")
