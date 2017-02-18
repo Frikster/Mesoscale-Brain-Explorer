@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 
 import imreg_dft as ird
 import numpy as np
@@ -8,82 +9,81 @@ from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util import mse_ui_elements as mue
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView
+from .util.plugin import PluginDefault
+from .util.plugin import WidgetDefault
+import functools
 
-class Labels:
-    pass
-    # start_cut_off_label = 'Cut off from start'
-    # end_cut_off_label = 'Cut off from end'
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
+        apply_scaling_label = 'Apply Scaling'
+        apply_rotation_label = 'Apply Rotation'
 
-class Defaults:
-    pass
-    # start_cut_off_default = 0
-    # end_cut_off_default = 0
+    class Defaults(WidgetDefault.Defaults):
+        list_display_type = ['ref_frame', 'video']
+        manip = 'align'
+        secondary_manip = 'ref_frame'
+        apply_scaling_default = True
+        apply_rotation_default = False
 
-class Widget(QWidget):
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
-        if not project:
+        if not project or not isinstance(plugin_position, int):
             return
         self.plugin_position = plugin_position
         self.project = project
 
         # define widgets and data
-        self.left = QFrame()
-        self.right = QFrame()
-        self.view = MyGraphicsView(self.project)
-        self.video_list = mue.Video_Selector()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+        # self.selected_videos = []
+        # self.shown_video_path = None
+        # self.left = QFrame()
+        # self.right = QFrame()
+        # self.view = MyGraphicsView(self.project)
+        # self.video_list = mue.Video_Selector()
+        # list_of_manips = pfs.get_list_of_project_manips(self.project)
+        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
         # self.video_list = MyListView()
         self.ref_no = QSpinBox()
         self.ref_no_min = QSpinBox()
         self.ref_no_max = QSpinBox()
+        self.main_button = QPushButton('&Align')
+        self.ref_button = QPushButton('&Compute Reference Frame')
         self.reference_frame = None
+        WidgetDefault.__init__(self, project, plugin_position)
 
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
-        self.setup_ui()
-        pfs.refresh_all_list(self.project, self.video_list)
+        # self.video_list.setModel(QStandardItemModel())
+        # self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
+        # self.video_list.doubleClicked.connect(self.video_triggered)
 
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
+        # self.setup_ui()
+        # if isinstance(plugin_position, int):
+        #     self.params = project.pipeline[self.plugin_position]
+        #     assert (self.params['name'] == 'alignment')
+        #     self.setup_param_signals()
+        #     try:
+        #         self.setup_params()
+        #     except:
+        #         self.setup_params(reset=True)
+        #     pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+        #                      Defaults.list_display_type, self.toolbutton_values)
+
+    # def video_triggered(self, index):
+    #     pfs.video_triggered(self, index)
 
     def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.left.setLayout(vbox_view)
-
-        vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Choose video:'))
-        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.video_list)
-
-        max_cut_off = 100000
-        vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
-        self.ref_no.setMinimum(0)
-        self.ref_no.setMaximum(max_cut_off)
-        self.ref_no.setValue(400)
-        vbox.addWidget(self.ref_no)
-
-        hbox = QHBoxLayout()
-        self.scaling_checkbox = QCheckBox("Apply Scaling")
-        self.scaling_checkbox.setChecked(False)
-        hbox.addWidget(self.scaling_checkbox)
-
-        self.rotation_checkbox = QCheckBox("Apply Rotation")
-        self.rotation_checkbox.setChecked(True)
-        hbox.addWidget(self.rotation_checkbox)
-        vbox.addLayout(hbox)
+        super().setup_ui()
+        # vbox_view = QVBoxLayout()
+        # vbox_view.addWidget(self.view)
+        # self.left.setLayout(vbox_view)
+        #
+        # vbox = QVBoxLayout()
+        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+        # vbox.addWidget(self.toolbutton)
+        # vbox.addWidget(QLabel('Choose video:'))
+        # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+        # vbox.addWidget(self.video_list)
+        self.vbox.addWidget(qtutil.separator())
 
         def min_handler(max_of_min):
             self.ref_no_min.setMaximum(max_of_min)
@@ -92,7 +92,7 @@ class Widget(QWidget):
         self.ref_no_min.valueChanged[int].connect(max_handler)
         self.ref_no_max.valueChanged[int].connect(min_handler)
         hbox = QHBoxLayout()
-        vbox.addWidget(QLabel('Set range averaged over to compute reference frame'))
+        self.vbox.addWidget(QLabel('Set range averaged over to compute reference frame'))
         self.ref_no_min.setMinimum(0)
         self.ref_no_min.setMaximum(405)
         self.ref_no_min.setValue(400)
@@ -103,35 +103,131 @@ class Widget(QWidget):
         self.ref_no_max.setMaximum(100000)
         self.ref_no_max.setValue(405)
         hbox.addWidget(self.ref_no_max)
-        vbox.addLayout(hbox)
+        self.vbox.addLayout(hbox)
 
-        pb = QPushButton('&Compute Reference Frame')
-        pb.clicked.connect(self.compute_ref_frame)
-        vbox.addWidget(pb)
-        pb = QPushButton('&Align')
-        pb.clicked.connect(self.align_clicked)
-        vbox.addWidget(pb)
-        self.right.setLayout(vbox)
+        self.vbox.addWidget(self.ref_button)
+        self.vbox.addWidget(qtutil.separator())
 
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
+        max_cut_off = 100000
+        self.vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
+        self.ref_no.setMinimum(0)
+        self.ref_no.setMaximum(max_cut_off)
+        self.ref_no.setValue(400)
+        self.vbox.addWidget(self.ref_no)
+
+        hbox = QHBoxLayout()
+        self.scaling_checkbox = QCheckBox("Apply Scaling")
+        self.scaling_checkbox.setChecked(False)
+        hbox.addWidget(self.scaling_checkbox)
+
+        self.rotation_checkbox = QCheckBox("Apply Rotation")
+        self.rotation_checkbox.setChecked(True)
+        hbox.addWidget(self.rotation_checkbox)
+        self.vbox.addLayout(hbox)
+
+
+
+        self.vbox.addWidget(self.main_button)
+        # self.right.setLayout(self.vbox)
+
+        # splitter = QSplitter(Qt.Horizontal)
+        # splitter.setHandleWidth(3)
+        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+        # splitter.addWidget(self.left)
+        # splitter.addWidget(self.right)
+        # hbox_global = QHBoxLayout()
+        # hbox_global.addWidget(splitter)
+        # self.setLayout(hbox_global)
 
         # hbox.addLayout(vbox)
         # hbox.setStretch(0, 1)
         # hbox.setStretch(1, 0)
         # self.setLayout(hbox)
 
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item, ref_version=True)
+    # def refresh_video_list_via_combo_box(self, trigger_item=None):
+    #     pfs.refresh_video_list_via_combo_box(self, Defaults.list_display_type, trigger_item)
+    #
+    # def selected_video_changed(self, selected, deselected):
+    #     pfs.selected_video_changed_multi(self, selected, deselected)
 
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
+    # def setup_params(self, reset=False):
+    #     if len(self.params) == 1 or reset:
+    #         self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
+    #         self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
+    #     self.video_list_indices = self.params[Labels.video_list_indices_label]
+    #     self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
+    #     manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+    #                               if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
+    #     for item in manip_items:
+    #         item.setCheckState(Qt.Checked)
+    #     not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
+    #                    if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
+    #     for item in not_checked:
+    #         item.setCheckState(Qt.Unchecked)
+            # The following works but doesn't set the brain image to pyqtgraph scene.
+        #ref_frame_indices = self.params[Labels.reference_frame_index_label]
+        # if len(ref_frame_indices) > 1:
+        #     theQIndexObjects = [self.video_list.model().createIndex(rowIndex, 0) for rowIndex in
+        #                         ref_frame_indices]
+        #     for Qindex in theQIndexObjects:
+        #         self.video_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+        # else:
+        #     self.video_list.setCurrentIndex(self.video_list.model().index(ref_frame_indices[0], 0))
+
+    # self.video_list.currentChanged(self.video_list.model().index(
+        #     self.params[Labels.reference_frame_index_label][0], 0), self.video_list.model().index(0, 0))
+        #self.video_list.currentChanged()
+        #self.video_list.setCurrentIndex(self.params[Labels.reference_frame_index_label])
+
+    # def setup_param_signals(self):
+    #     self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
+    #     self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
+        # This gets you the name and index connected to whatever function
+        # self.video_list.active_vid_changed[str, int].connect(
+        #     functools.partial(self.prepare_video_list_for_update, Labels.reference_frame_index_label))
+
+    # def prepare_video_list_for_update(self, selected, deselected):
+    #     val = [v.row() for v in self.video_list.selectedIndexes()]
+    #     if not val:
+    #         val = Defaults.video_list_indices_default
+    #     self.update_plugin_params(Labels.video_list_indices_label, val)
+    #
+    # def prepare_toolbutton_for_update(self, trigger_item):
+    #     val = self.params[Labels.last_manips_to_display_label]
+    #     selected = self.toolbutton.itemText(trigger_item)
+    #     if selected not in val:
+    #         val = val + [selected]
+    #         if trigger_item != 0:
+    #             val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
+    #     else:
+    #         val = [manip for manip in val if manip != selected]
+    #
+    #     self.update_plugin_params(Labels.last_manips_to_display_label, val)
+    #
+    # def update_plugin_params(self, key, val):
+    #     pfs.update_plugin_params(self, key, val)
+
+    def setup_signals(self):
+        super().setup_signals()
+        self.main_button.clicked.connect(self.execute_primary_function)
+        self.ref_button.clicked.connect(self.compute_ref_frame)
+
+    def setup_params(self, reset=False):
+        super().setup_params()
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.apply_rotation_label, self.Defaults.apply_rotation_default)
+            self.update_plugin_params(self.Labels.apply_scaling_label, self.Defaults.apply_scaling_default)
+        self.rotation_checkbox.setChecked(self.params[self.Labels.apply_rotation_label])
+        self.scaling_checkbox.setChecked(self.params[self.Labels.apply_scaling_label])
+
+
+    def setup_param_signals(self):
+        super().setup_param_signals()
+        self.rotation_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.apply_rotation_label))
+        self.scaling_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.apply_scaling_label))
+
 
     def compute_ref_frame(self):
         if not self.selected_videos:
@@ -165,19 +261,20 @@ class Widget(QWidget):
         # summed_reference_frame = np.divide(summed_reference_frame, divide_frame)
         self.reference_frame = np.reshape(self.reference_frame, (1, h, w))
         pfs.save_project(self.selected_videos[0], self.project, self.reference_frame, 'ref_frame', 'ref_frame')
-        # Refresh showing reference_frame
-        pfs.refresh_all_list(self.project, self.video_list)
+        pfs.refresh_list(self.project, self.video_list,
+                         self.params[self.Labels.video_list_indices_label],
+                         self.Defaults.list_display_type,
+                         self.params[self.Labels.last_manips_to_display_label])
 
-    def align_clicked(self, input_files=None):
+    def execute_primary_function(self, input_files=None):
         if not input_files:
             filenames = self.selected_videos
             reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
         else:
             filenames = input_files
-            reference_frame_file = self.selected_videos
-            if len([file for file in reference_frame_file if file[-13:] == 'ref_frame.npy']) != \
-                    len(reference_frame_file):
-                qutil.critical("Please only select a single reference frame for each alignment plugin used."
+            reference_frame_file = [f for f in input_files if f[-13:] == 'ref_frame.npy']
+            if len(reference_frame_file) != 1:
+                qtutil.critical("Please only select a single reference frame for each alignment plugin used."
                           "Automation will now close.")
                 return
 
@@ -207,19 +304,6 @@ class Widget(QWidget):
         #     }
         #     self.project.files.append(f)
         # self.project.save()
-
-    def compute_shift(self, template_frame, frame, progress_shifts):
-        def callback_shifts(x):
-            progress_shifts.setValue(x * 100)
-            QApplication.processEvents()
-        results = []
-        for i, frame in enumerate(frame):
-            if progress_shifts.wasCanceled():
-                return
-            callback_shifts(i / float(len(frame)))
-            results = results + [ird.translation(template_frame, frame)]
-        callback_shifts(1)
-        return results
 
     def compute_shifts(self, template_frame, frames, progress_shifts):
         def callback_shifts(x):
@@ -290,26 +374,69 @@ class Widget(QWidget):
             else:
                 shift = ird.translation(template_frame, reference_frame)
 
-
-
-            #shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
-            # if progress_shifts.wasCanceled():
-            #     return
+            # shifts = self.compute_shifts(reference_frame, frames, progress_shifts)
+            if progress_shifts.wasCanceled():
+                return
             shifted_frames = self.apply_shifts(frames, shift, callback_apply)
-            pfs.save_project(filename, self.project, shifted_frames, 'align', 'video')
-            pfs.refresh_all_list(self.project, self.video_list)
+            path = pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
+            pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                             self.Defaults.list_display_type, self.toolbutton_values)
             # path = os.path.join(os.path.dirname(filename), 'aligned_' + \
             #                     os.path.basename(filename))
             # np.save(path, shifted_frames)
-            # ret_filenames.append(path)
+            # name_before, ext = os.path.splitext(os.path.basename(filename))
+            # name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+            # path = str(os.path.join(self.project.path, name_after) + '.npy')
+            ret_filenames.append(path)
         callback_global(1)
         return ret_filenames
 
-
-class MyPlugin:
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.ref_no_min.setWhatsThis("All image stacks are aligned to a single reference frame. Here you can select "
+                                     "a single image stack above and choose which single frame is used by setting the "
+                                     "min = max. However, you can also average over a range of frames which may "
+                                     "improve noise-signal ratio and thereby emphasize consistent features suitable "
+                                     "for alignment (e.g. blood veins). Typically a single spatially filtered image "
+                                     "stack is used to compute the reference frame to emphasize features such as blood"
+                                     "veins ever further")
+        self.ref_no_max.setWhatsThis("All image stacks are aligned to a single reference frame. Here you can select "
+                                     "a single image stack above and choose which single frame is used by setting the "
+                                     "min = max. However, you can also average over a range of frames which may "
+                                     "improve noise-signal ratio and thereby emphasize consistent features suitable "
+                                     "for alignment (e.g. blood veins). Typically a single spatially filtered image "
+                                     "stack is used to compute the reference frame to emphasize features such as blood"
+                                     "veins ever further")
+        self.ref_button.setWhatsThis("Click to compute your reference frame using the single selected image stack and "
+                                     "the parameters above. The reference frame can afterwards be found at the top of "
+                                     "the video list to be used with the parameters below\n"
+                                     "Note that for automation, a reference frame must be selected")
+        self.ref_no.setWhatsThis("During alignment a single frame is selected from each image stack. This frame is "
+                                 "aligned to the reference frame you have previously computed. The shift required "
+                                 "(translation, rotation and scaling) to attain alignment between these two frames is "
+                                 "then applied to all frames in that image stack. Here the 400th frame is arbitrarily "
+                                 "the default because in our experience this is typically far enough so as to avoid "
+                                 "any potential artifacts at the start of the stack if these were not cut off")
+        self.scaling_checkbox.setWhatsThis("Set if scaling is performed to find the best alignment.")
+        self.rotation_checkbox.setWhatsThis("Set if rotation is performed to find the best alignment")
+        self.main_button.setWhatsThis("Note that without either rotation or scaling checked, only x-y translation is "
+                                      "performed")
+        
+class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Alignment'
         self.widget = Widget(project, plugin_position)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
-    def run(self):
-        pass
+    def check_ready_for_automation(self):
+        filenames = self.get_input_paths()
+        reference_frame_file = [file for file in filenames if file[-13:] == self.widget.Defaults.secondary_manip+'.npy']
+        if len(reference_frame_file) == 1:
+            return True
+        else:
+            return False
+
+    def automation_error_message(self):
+        return "Please select one reference frame for each alignment plugin used"
+
+

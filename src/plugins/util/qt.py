@@ -42,7 +42,7 @@ class JSObjectModel(QAbstractTableModel):
 class FileTableModel(JSObjectModel):
   def __init__(self, data, parent=None):
     super(FileTableModel, self).__init__(data, parent)
-  
+
   def get_path(self, index):
     return self.retrieve(index.row(), 'path')
   
@@ -67,17 +67,42 @@ class FileTable(QTableView):
     return filenames
 
 class MyListView(QListView):
-  def __init__(self, parent=None):
-    super(MyListView, self).__init__(parent)
-    self.setStyleSheet('QListView::item { height: 26px; }')
+    video_player_scaled_signal = pyqtSignal()
+    video_player_unscaled_signal = pyqtSignal()
+    delete_signal = pyqtSignal()
+    detatch_signal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(MyListView, self).__init__(parent)
+        self.setStyleSheet('QListView::item { height: 26px; }')
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+        submenu1 = menu.addMenu("Open Video Player")
+        submenu2 = menu.addMenu("Remove Files")
+        video_player_scaled_action = submenu1.addAction("Scaled (takes time to establish scale)")
+        video_player_unscaled_action = submenu1.addAction("Unscaled (loads fast)")
+        delete_action = submenu2.addAction("Delete Permanently")
+        detatch_action = submenu2.addAction("Detatch from Project")
+
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        if action == video_player_scaled_action:
+            self.video_player_scaled_signal.emit()
+        if action == video_player_unscaled_action:
+            self.video_player_unscaled_signal.emit()
+        if action == delete_action:
+            self.delete_signal.emit()
+        if action == detatch_action:
+            self.detatch_signal.emit()
 
 class MyProgressDialog(QProgressDialog):
   def __init__(self, title, desc, parent=None):
     super(MyProgressDialog, self).__init__(desc, str(), 0, 100, parent)
-    #super(MyProgressDialog, self).__init__(desc, QString(), 0, 100, parent)
+    # super(MyProgressDialog, self).__init__(desc, QString(), 0, 100, parent)
     self.setWindowTitle(title)
     self.setAutoClose(True)
     self.setMinimumDuration(0)
+
 
 class InfoWidget(QFrame):
   def __init__(self, text, parent=None):

@@ -8,7 +8,7 @@ import matplotlib
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.functions as fn
-from pyqtgraph.Qt import QtCore,QtGui
+from pyqtgraph.Qt import QtCore, QtGui
 
 from .custom_items import QMenuCustom, ImageExporterCustom
 from .roi import RectROIcustom, PolyLineROIcustom
@@ -311,13 +311,9 @@ class MultiRoiViewBox(pg.ViewBox):
             self.menu = QtGui.QMenu()
             # Submenu to add ROIs
             self.submenu = QtGui.QMenu("Add ROI", self.menu)
-            # self.addROIRectAct = QActionCustom("Rectangular",  self.submenu)
             self.addROIRectAct = QtGui.QAction("Rectangular", self.submenu)
-            # self.addROIPolyAct = QActionCustom("Polygon",  self.submenu)
             self.addROIPolyAct = QtGui.QAction("Polygon", self.submenu)
-            # self.addROIRectAct.clickEvent.connect(self.addRoiRequest)
             self.addROIRectAct.triggered.connect(self.addROI)
-            # self.addROIPolyAct.clickEvent.connect(self.addPolyRoiRequest)
             self.addROIPolyAct.triggered.connect(self.addPolyRoiRequest)
             self.submenu.addAction(self.addROIRectAct)
             self.submenu.addAction(self.addROIPolyAct)
