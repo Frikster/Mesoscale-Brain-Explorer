@@ -536,7 +536,7 @@ if __name__ == '__main__':
   app = QApplication(sys.argv)
   app.setApplicationName(APPNAME)
   app.setOrganizationName('University of British Columbia')
-  app.setOrganizationDomain('spc-corporation.com')
+  app.setOrganizationDomain('https://github.com/Frikster/Mesoscale-Brain-Explorer')
 
   w = MainWindow()
   w.resize(1600, 660)
