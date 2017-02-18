@@ -20,7 +20,7 @@ from plugins.util import mse_ui_elements as mue
 from plugins import set_coordinate_system as scs
 
 APPNAME = 'Mesoscale Brain Explorer'
-VERSION = open('VERSION').read()
+VERSION = open('../VERSION').read()
 
 def clear_layout(layout):
   while True:
@@ -381,7 +381,7 @@ class MainWindow(QMainWindow):
       try:
           plugin_name = plugin_dict['name']
       except:
-          attrs = json.load(open('templates/spcproject.json'))
+          attrs = json.load(open('../templates/spcproject.json'))
           pipeline_template = attrs['pipeline']
           # pipeline_names = [p['name'] for p in pipeline_template]
           # plugins = self.load_plugins()
