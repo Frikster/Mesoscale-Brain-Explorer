@@ -92,80 +92,13 @@ def calc_spc(video_path, x, y, progress):
 #                 del seed
 #                 break
 
-class SPCMapDialog(QDialog):
-    def __init__(self, project, video_path, spcmap, cm_type, roi_name=None):
-        super(SPCMapDialog, self).__init__()
-        self.project = project
-        self.video_path = video_path
-        self.spc = spcmap
-        self.cm_type = cm_type
-        self.setup_ui()
-        if roi_name:
-            basename, ext = os.path.splitext(os.path.basename(video_path))
-            display_name = basename + '_' + roi_name + ext
-            self.setWindowTitle(display_name)
-        else:
-            self.setWindowTitle(os.path.basename(video_path))
-        self.colorized_spc = self.colorize_spc(spcmap)
-        self.view.show(self.colorized_spc)
-        self.view.vb.clicked.connect(self.vbc_clicked)
-        self.view.vb.hovering.connect(self.vbc_hovering)
-
-        l = GradientLegend(-1.0, 1.0, cm_type)
-        l.setParentItem(self.view.vb)
-
-    def setup_ui(self):
-        vbox = QVBoxLayout()
-        self.the_label = QLabel()
-        vbox.addWidget(self.the_label)
-        self.view = MyGraphicsView(self.project)
-        vbox.addWidget(self.view)
-        self.setLayout(vbox)
-
-    def vbc_clicked(self, x, y):
-        progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
-        self.spc = calc_spc(self.video_path, x, y, progress)
-        self.view.show(self.colorize_spc(self.spc))
-
-    def colorize_spc(self, spc_map):
-        spc_map_with_nan = np.copy(spc_map)
-        spc_map[np.isnan(spc_map)] = 0
-        gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
-        spc_map = np.ma.masked_where(spc_map == 0, spc_map)
-        cmap = matplotlib.cm.ScalarMappable(
-          gradient_range, self.cm_type)
-        spc_map_color = cmap.to_rgba(spc_map, bytes=True)
-        # turn areas outside mask black
-        spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
-
-        # make regions where RGB values are taken from 0, black. take the top left corner value...
-
-        spc_map_color = spc_map_color.swapaxes(0, 1)
-        if spc_map_color.ndim == 2:
-          spc_map_color = spc_map_color[:, ::-1]
-        elif spc_map_color.ndim == 3:
-          spc_map_color = spc_map_color[:, ::-1, :]
-        return spc_map_color
-
-    def vbc_hovering(self, x, y):
-        x_origin, y_origin = self.project['origin']
-        unit_per_pixel = self.project['unit_per_pixel']
-        x = x / unit_per_pixel
-        y = y / unit_per_pixel
-        spc = self.spc.swapaxes(0, 1)
-        spc = spc[:, ::-1]
-        try:
-          value = str(spc[int(x)+int(x_origin), int(y)+int(y_origin)])
-        except:
-          value = '-'
-        self.the_label.setText('Correlation value at crosshair: {}'.format(value))
-
 class Widget(QWidget, WidgetDefault):
-    class Labels(WidgetDefault.Labels, RoiList.Labels):
+    class Labels(WidgetDefault.Labels):
         roi_list_indices_label = "ROIs"
 
-    class Defaults(WidgetDefault.Defaults, RoiList.Defaults):
+    class Defaults(WidgetDefault.Defaults):
         roi_list_indices_default = [0]
+        list_display_type = ['video']
         roi_list_types_displayed = ['auto_roi']
         manip = "spc"
 
@@ -280,7 +213,6 @@ class Widget(QWidget, WidgetDefault):
     def setup_params(self, reset=False):
         super().setup_params()
         self.roi_list.setup_params()
-        # self.roi_list
         # if len(self.params) == 1 or reset:
         #     self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
         # roi_indices = self.params[self.Labels.roi_list_indices_label]
@@ -487,6 +419,76 @@ class Widget(QWidget, WidgetDefault):
         scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
         #not working
         #png.from_array(spc_col, 'L').save(path_without_ext+".png")
+
+
+class SPCMapDialog(QDialog):
+    def __init__(self, project, video_path, spcmap, cm_type, roi_name=None):
+        super(SPCMapDialog, self).__init__()
+        self.project = project
+        self.video_path = video_path
+        self.spc = spcmap
+        self.cm_type = cm_type
+        self.setup_ui()
+        if roi_name:
+            basename, ext = os.path.splitext(os.path.basename(video_path))
+            display_name = basename + '_' + roi_name + ext
+            self.setWindowTitle(display_name)
+        else:
+            self.setWindowTitle(os.path.basename(video_path))
+        self.colorized_spc = self.colorize_spc(spcmap)
+        self.view.show(self.colorized_spc)
+        self.view.vb.clicked.connect(self.vbc_clicked)
+        self.view.vb.hovering.connect(self.vbc_hovering)
+
+        l = GradientLegend(-1.0, 1.0, cm_type)
+        l.setParentItem(self.view.vb)
+
+    def setup_ui(self):
+        vbox = QVBoxLayout()
+        self.the_label = QLabel()
+        vbox.addWidget(self.the_label)
+        self.view = MyGraphicsView(self.project)
+        vbox.addWidget(self.view)
+        self.setLayout(vbox)
+
+    def vbc_clicked(self, x, y):
+        progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
+        self.spc = calc_spc(self.video_path, x, y, progress)
+        self.view.show(self.colorize_spc(self.spc))
+
+    def colorize_spc(self, spc_map):
+        spc_map_with_nan = np.copy(spc_map)
+        spc_map[np.isnan(spc_map)] = 0
+        gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+        spc_map = np.ma.masked_where(spc_map == 0, spc_map)
+        cmap = matplotlib.cm.ScalarMappable(
+          gradient_range, self.cm_type)
+        spc_map_color = cmap.to_rgba(spc_map, bytes=True)
+        # turn areas outside mask black
+        spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
+
+        # make regions where RGB values are taken from 0, black. take the top left corner value...
+
+        spc_map_color = spc_map_color.swapaxes(0, 1)
+        if spc_map_color.ndim == 2:
+          spc_map_color = spc_map_color[:, ::-1]
+        elif spc_map_color.ndim == 3:
+          spc_map_color = spc_map_color[:, ::-1, :]
+        return spc_map_color
+
+    def vbc_hovering(self, x, y):
+        x_origin, y_origin = self.project['origin']
+        unit_per_pixel = self.project['unit_per_pixel']
+        x = x / unit_per_pixel
+        y = y / unit_per_pixel
+        spc = self.spc.swapaxes(0, 1)
+        spc = spc[:, ::-1]
+        try:
+          value = str(spc[int(x)+int(x_origin), int(y)+int(y_origin)])
+        except:
+          value = '-'
+        self.the_label.setText('Correlation value at crosshair: {}'.format(value))
+
 
 
 class MyPlugin(PluginDefault):
