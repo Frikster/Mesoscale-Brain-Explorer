@@ -2,8 +2,8 @@
 
 ## Installation
 Windows users simply have to download and extract the most recent 
-release and run pipegui.exe contained within.
-The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.6.2)
+release and run the .exe contained within the pipegui folder.
+The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.0)
 
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed:
@@ -31,7 +31,7 @@ python3.5 pipegui.py
 The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
 
 ### Seed/ROI Placement csv/txt format
-For the Seed/ROI Placement plugins a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns.  Coordinates were adapted from the [Allen Mouse Brain Connectivity Atlas](http://connectivity.brain-map.org/). We previously [mapped functional and anatomical coordinates of transgenic mice using sensory stimulation](https://www.ncbi.nlm.nih.gov/pubmed/22435052) in combination with in vivo large-scale cortical mapping using Channelrhodopsin-2 stimulation to confirm the coordinates.
+The ROI Import plugin a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns.  Coordinates were adapted from the [Allen Mouse Brain Connectivity Atlas](http://connectivity.brain-map.org/). We previously [mapped functional and anatomical coordinates of transgenic mice using sensory stimulation](https://www.ncbi.nlm.nih.gov/pubmed/22435052) in combination with in vivo large-scale cortical mapping using Channelrhodopsin-2 stimulation to confirm the coordinates.
 
 | 1) ROI Name   | 2) Length     | 3) X Coord (ML)  | 4) Y Coord (AP) |
 | ------------- | ------------- | ---------------- | ----------------|
@@ -85,7 +85,9 @@ For the Seed/ROI Placement plugins a specific format is *required* for your coor
 | R-V1          | 1             |  2516.8          |   -4267.8        |
 
 
-For your coordinates, there *must* be 4 columns if you are importing for the ROI Placement plugin. Otherwise, there *must* be 3 with the length column omitted for the Seed Placement plugin (Seeds have length 1). Next, for the column names the "1)" *must* exist for the column with ROI names, a "2)" for the length column, a "3)" for X Coordinates and "4)" for the Y Coordinate. For seeds omit the length column. Thus "2)" for X Coordinate and "3)" for Y Coordinate columns. Your coordinates can be named whatever you please. 
+For your coordinates, there *must* be 4 columns. Next, for the column names the "1)" *must* exist for the column with ROI names, a "2)" for the length column, a "3)" for X Coordinates and "4)" for the Y Coordinate. Your coordinates can be named whatever you please. 
+
+Note that if coordinates are being used as seeds for seed pixel correlation (SPC) mapping that the length column is still required for import, however will not be used by the SPC plugin as all seeds have a length of 1 pixel.
 
 ## For Developers
 If you are developing on Ubuntu simply follow the installation 
