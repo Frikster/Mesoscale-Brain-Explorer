@@ -134,11 +134,13 @@ class WidgetDefault(object):
     def setup_params(self, reset=False):
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.video_list_indices_label, self.Defaults.video_list_indices_default)
-            self.update_plugin_params(self.Labels.last_manips_to_display_label, self.Defaults.last_manips_to_display_default)
+            self.update_plugin_params(self.Labels.last_manips_to_display_label,
+                                      self.Defaults.last_manips_to_display_default)
         self.video_list_indices = self.params[self.Labels.video_list_indices_label]
         self.toolbutton_values = self.params[self.Labels.last_manips_to_display_label]
         manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
-                                  if self.toolbutton.itemText(i) in self.params[self.Labels.last_manips_to_display_label]]
+                                  if self.toolbutton.itemText(i) in self.params[
+                           self.Labels.last_manips_to_display_label]]
         for item in manip_items:
             item.setCheckState(Qt.Checked)
         not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())

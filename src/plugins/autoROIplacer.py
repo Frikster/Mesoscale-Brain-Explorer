@@ -107,6 +107,10 @@ class Widget(QWidget, WidgetDefault):
     self.headers = None
     self.data = None
     self.text_file_path = None
+    self.load_table_pb = QPushButton('Load CSV of ROI coordinates relative to origin')
+    self.update_table_pb = QPushButton('Update Table')
+
+
     # self.view = MyGraphicsView(self.project)
     self.table_widget = AutoROICoords(self.data, 0, 4)
     # self.left = QFrame()
@@ -207,15 +211,13 @@ class Widget(QWidget, WidgetDefault):
     # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     # vbox.addWidget(self.video_list)
-    pb = QPushButton('Load ROIs (origin required)')
-    pb.clicked.connect(self.load_ROI_table)
-    self.vbox.addWidget(pb)
+    # pb = QPushButton('Load ROIs (origin required)')
+    # self.load_table_pb.clicked.connect(self.load_ROI_table)
+    self.vbox.addWidget(self.load_table_pb )
     self.vbox.addWidget(self.table_widget)
-    self.table_widget.itemChanged.connect(self.update_auto_rois)
-    pb = QPushButton('Update ROIs')
-    pb.clicked.connect(self.load_ROI_table_intermediate)
+    # pb = QPushButton('Update ROIs')
 
-    self.vbox.addWidget(pb)
+    self.vbox.addWidget(self.update_table_pb)
     # vbox2 = QVBoxLayout()
     # w = QWidget()
     # w.setLayout(vbox2)
@@ -240,7 +242,10 @@ class Widget(QWidget, WidgetDefault):
 
   def setup_signals(self):
       super().setup_signals()
+      self.load_table_pb.clicked.connect(self.load_ROI_table)
       self.view.vb.roi_placed.connect(self.update_project_roi)
+      self.table_widget.itemChanged.connect(self.update_auto_rois)
+      self.update_table_pb.clicked.connect(self.load_ROI_table_intermediate)
       self.roi_list.model().textChanged.connect(self.update_project_roi)
       self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_roi_changed)
@@ -497,6 +502,47 @@ class Widget(QWidget, WidgetDefault):
         self.auto_ROI()
 
 
+  def setup_whats_this(self):
+    super().setup_whats_this()
+    self.load_table_pb.setWhatsThis("For the Seed/ROI Placement plugins a specific format is required for your "
+                                    "coordinates to see proper importation into your MBE project. Click Help -> About "
+                                    "and follow the link to the online tutorial to find a section that shows an "
+                                    "example that is in acceptable format. For your csv containing coordinates, there "
+                                    "must be 4 columns. Next, for the column names '1)' must precede the column name"
+                                    " of the column with ROI names, a '2)' must precede the column specifying the "
+                                    "length of each square ROI, a '3)' precedes the X Coordinate column and '4)'  the "
+                                    "Y Coordinate column. Your columns can otherwise be named whatever you please. ")
+    self.table_widget.setWhatsThis("Imported coordinates will be shown here. Select ROIs in the below list to view "
+                                   "their location on the scene and then adjust the origin and units per pixel in the "
+                                   "left sidepanel to see change in real-time to adjust and shift the ROIs to your "
+                                   "liking. Changing the values of length and the x and y coordinates in this table "
+                                   "changes the corresponding ROI. You can see the change by clicking on the ROI after "
+                                   "in the below list. *However*, although you can see the ROIs shift from changing "
+                                   "the table values these changes are not saved and are meant for exploratory "
+                                   "purposes. The only way for changes to be saved is to make the change in the csv. "
+                                   "So if you find one of your coordinates is slightly off and you want to nudge it, \
+                                   you can change its coordinates in this table and watch how that changes where its "
+                                   "location is. Once you are happy with its placement, copy and paste the new "
+                                   "coordinates and replace the coordinates in your csv and save the csv. Now reload "
+                                   "this csv and the change will be made.")
+    self.update_table_pb.setWhatsThis("ROIs sometimes are misplaced by MBE. The cause of this is still unknown so "
+                                      "please click here to refresh which solves this issue most of the time. Also,"
+                                      "if you've made changes to the table above you can click here to revert to the "
+                                      "version you have saved on file")
+    self.roi_list.setWhatsThis("Imported ROIs will be shown here. Select ROIs in the this list to view "
+                               "their location on the scene and then adjust the origin and units per pixel in the "
+                               "left sidepanel to see change in real-time to adjust and shift the ROIs to your "
+                               "liking. Changing the values of length and the x and y coordinates in the above table "
+                               "changes the corresponding ROI. You can see the change by clicking on the ROI after "
+                               "in this list. *However*, although you can see the ROIs shift from changing the "
+                               "table values these changes are not saved and are meant for exploratory purposes. "
+                               "The only way for changes to be saved is to make the change in the csv. So if you "
+                               "find one of your coordinates is slightly off and you want to nudge it, you can "
+                               "change its coordinates in the above table and watch how that changes where its "
+                               "location is. "
+                               "Once you are happy with its placement, copy and paste the new coordinates and "
+                               "replace the coordinates in your csv and save the csv. Now reload this csv and the "
+                               "change will be made.")
 
 
 class AutoROICoords(QTableWidget):
@@ -525,7 +571,7 @@ class AutoROICoords(QTableWidget):
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'ROI placer'
+    self.name = 'Import CSV ROI Coordinates'
     self.widget = Widget(project, plugin_position)
     super().__init__(self.widget, self.widget.Labels, self.name)
   

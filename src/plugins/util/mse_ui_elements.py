@@ -8,7 +8,7 @@ from PyQt4.QtGui import *
 
 from . import fileloader
 from .mygraphicsview import MyGraphicsView
-
+import qtutil
 
 class Video_Selector(QListView):
   active_vid_changed = pyqtSignal(str, int)
@@ -122,19 +122,38 @@ class RoiList(QListView):
                                                         QItemSelection].connect(self.selected_roi_changed)
 
     def selected_roi_changed(self, selection):
-        if self.selected_roi_changed_flag == 0:
-            self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
-            return
+        # if self.selected_roi_changed_flag == 0:
+        #   self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
+        #   return
         if not selection.indexes() or self.widget.view.vb.drawROImode:
             return
-
         self.remove_all_rois()
+
+        # todo: re-explain how you can figure out to go from commented line to uncommented line
+        # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
         rois_selected = [str(self.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-                          for x in range(len(self.selectionModel().selectedIndexes()))]
+                         for x in range(len(self.selectionModel().selectedIndexes()))]
+        if 'None' == 1 and rois_selected[0] == 'None':
+            return
         rois_in_view = [self.widget.view.vb.rois[x].name for x in range(len(self.widget.view.vb.rois))]
         rois_to_add = [x for x in rois_selected if x not in rois_in_view]
         for roi_to_add in rois_to_add:
             self.widget.view.vb.loadROI([self.widget.project.path + '/' + roi_to_add + '.roi'])
+
+    # def selected_roi_changed(self, selection):
+    #     if self.selected_roi_changed_flag == 0:
+    #         self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
+    #         return
+    #     if not selection.indexes() or self.widget.view.vb.drawROImode:
+    #         return
+    #
+    #     self.widget.remove_all_rois()
+    #     rois_selected = [str(self.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+    #                       for x in range(len(self.selectionModel().selectedIndexes()))]
+    #     rois_in_view = [self.widget.view.vb.rois[x].name for x in range(len(self.widget.view.vb.rois))]
+    #     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+    #     for roi_to_add in rois_to_add:
+    #         self.widget.view.vb.loadROI([self.widget.project.path + '/' + roi_to_add + '.roi'])
 
     def remove_all_rois(self):
         rois = self.widget.view.vb.rois[:]
@@ -144,7 +163,7 @@ class RoiList(QListView):
             self.widget.view.vb.removeROI()
 
     def setup_params(self, reset=False):
-        if len(self.widget.params) == 1 or reset:
+        if len(self.widget.params) == 3 or reset:
             self.widget.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
         roi_indices = self.widget.params[self.Labels.roi_list_indices_label]
         theQIndexObjects = [self.model().createIndex(rowIndex, 0) for rowIndex in
