@@ -245,19 +245,19 @@ class Widget(QWidget, WidgetDefault):
                                                       QItemSelection].connect(self.selected_roi_changed)
 
 
-  def setup_params(self, reset=False):
-      super().setup_params()
-      if len(self.params) == 1 or reset:
-          self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
-      roi_indices = self.params[self.Labels.roi_list_indices_label]
-      theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
-                          roi_indices]
-      for Qindex in theQIndexObjects:
-          self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
-
-  def setup_param_signals(self):
-      super().setup_param_signals()
-      self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+  # def setup_params(self, reset=False):
+  #     super().setup_params()
+  #     if len(self.params) == 1 or reset:
+  #         self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
+  #     roi_indices = self.params[self.Labels.roi_list_indices_label]
+  #     theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
+  #                         roi_indices]
+  #     for Qindex in theQIndexObjects:
+  #         self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+  #
+  # def setup_param_signals(self):
+  #     super().setup_param_signals()
+  #     self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
 
   def prepare_roi_list_for_update(self, selected, deselected):
       val = [v.row() for v in self.roi_list.selectedIndexes()]
@@ -291,6 +291,8 @@ class Widget(QWidget, WidgetDefault):
     # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole))
     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
                      for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
+    if len(rois_selected) == 1 and rois_selected[0] == 'None':
+        return
     rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
     rois_to_add = [x for x in rois_selected if x not in rois_in_view]
     for roi_to_add in rois_to_add:
@@ -439,11 +441,12 @@ class Widget(QWidget, WidgetDefault):
 
   def update_project_roi(self, roi):
     name = roi.name
-    if not name:
+    if not name or name == 'None':
       raise ValueError('ROI has no name')
     if self.view.vb.drawROImode:
       return
 
+    roi.setName(name)
     path = os.path.join(self.project.path, name + '.roi')
     #if self.view.vb.isActive():
     self.view.vb.saveROI(path)
