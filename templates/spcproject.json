@@ -1,0 +1,53 @@
+{
+  "files": [],
+  "unit_per_pixel": 41.01563,
+  "pipeline": [
+    {
+		"name":"fileimporter"
+	},
+	{
+		"name":"spatial_filter"
+	},
+	{
+		"name":"cut_off"
+	},
+	{
+		"name":"alignment"
+	},
+	{
+		"name":"set_coordinate_system"
+	},
+	{
+		"name":"roi_creator"
+	},
+	{
+		"name":"temporal_filter"
+	},
+	{
+		"name":"calculate_df_f0"
+	},
+	{
+		"name":"gsr"
+	},
+    {
+		"name":"autoROIplacer"
+	},
+	{
+		"name":"spc_map"
+	},
+	{
+		"name":"connectivity_matrix"
+	},
+	{
+		"name":"roi_activity_plot"
+	},
+	{
+		"name":"fileexporter"
+	}   
+  ],
+  "name": "",
+  "origin": [
+    0.0,
+    0.0
+  ]
+}
