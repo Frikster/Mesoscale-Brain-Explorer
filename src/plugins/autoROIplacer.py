@@ -130,6 +130,7 @@ class Widget(QWidget, WidgetDefault):
     self.roi_list = QListView()
     self.roi_list.setModel(RoiItemModel())
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.roi_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
     WidgetDefault.__init__(self, project, plugin_position)
