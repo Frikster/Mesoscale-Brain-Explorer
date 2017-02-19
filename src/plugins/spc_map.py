@@ -25,7 +25,6 @@ from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 from .util.mse_ui_elements import RoiItemModel
 
-
 def calc_spc(video_path, x, y, progress):
     frame = fileloader.load_reference_frame(video_path)
     width, height = frame.shape

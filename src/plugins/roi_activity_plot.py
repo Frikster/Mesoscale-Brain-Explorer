@@ -14,7 +14,9 @@ from .util import fileloader
 from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import WidgetDefault
+from .util.plugin import PluginDefault
 
+from .util.mse_ui_elements import RoiList
 
 class Color:
   def __init__(self, name, rgb):
@@ -127,91 +129,106 @@ class Widget(QWidget, WidgetDefault):
     roi_list_types_displayed = ['auto_roi', 'roi']
     manip = "plot"
 
-  def __init__(self, project, parent=None):
+  def __init__(self, project, plugin_position, parent=None):
     super(Widget, self).__init__(parent)
 
-    if not project:
-      return
+    if not project or not isinstance(plugin_position, int):
+        return
     self.project = project
 
     # Define UI components and global data
-    self.view = MyGraphicsView(self.project)
-    self.video_list = QListView()
-    self.roi_list = QListView()
-    self.left = QFrame()
-    self.right = QFrame()
+    # self.view = MyGraphicsView(self.project)
+    # self.video_list = QListView()
+    self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
+    self.plot_pb = QPushButton('Plot &activity')
 
-    self.setup_ui()
+    WidgetDefault.__init__(self, project, plugin_position)
 
-    self.open_dialogs = []
-    self.selected_videos = []
+    # self.left = QFrame()
+    # self.right = QFrame()
 
-    self.video_list.setModel(QStandardItemModel())
-    self.video_list.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_video_changed)
-    self.video_list.doubleClicked.connect(self.video_triggered)
+    # self.setup_ui()
+    #
+    # self.open_dialogs = []
+    # self.selected_videos = []
+    #
+    # self.video_list.setModel(QStandardItemModel())
+    # self.video_list.selectionModel().selectionChanged[QItemSelection,
+    #   QItemSelection].connect(self.selected_video_changed)
+    # self.video_list.doubleClicked.connect(self.video_triggered)
+    #
+    # self.roi_list.setModel(QStandardItemModel())
+    # self.roi_list.selectionModel().selectionChanged[QItemSelection,
+    #   QItemSelection].connect(self.selected_roi_changed)
 
-    self.roi_list.setModel(QStandardItemModel())
-    self.roi_list.selectionModel().selectionChanged[QItemSelection,
-      QItemSelection].connect(self.selected_roi_changed)
+    # for f in project.files:
+    #   if f['type'] == 'video':
+    #     self.video_list.model().appendRow(QStandardItem(f['name']))
+    #   elif f['type'] == 'roi' or f['type'] == 'auto_roi':
+    #     item = QStandardItem(f['name'])
+    #     item.setData(f['path'], Qt.UserRole)
+    #     self.roi_list.model().appendRow(item)
+    #
+    # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
+    # self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
 
-    for f in project.files:
-      if f['type'] == 'video':
-        self.video_list.model().appendRow(QStandardItem(f['name']))
-      elif f['type'] == 'roi' or f['type'] == 'auto_roi':
-        item = QStandardItem(f['name'])
-        item.setData(f['path'], Qt.UserRole)
-        self.roi_list.model().appendRow(item)
-
-    self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-    self.roi_list.setCurrentIndex(self.roi_list.model().index(0, 0))
-
-  def video_triggered(self, index):
-      pfs.video_triggered(self, index)
+  # def video_triggered(self, index):
+  #     pfs.video_triggered(self, index)
 
   def setup_ui(self):
-    vbox_view = QVBoxLayout()
-    vbox_view.addWidget(self.view)
-    self.view.vb.crosshair_visible = False
-    self.left.setLayout(vbox_view)
-
-    vbox = QVBoxLayout()
-    list_of_manips = pfs.get_list_of_project_manips(self.project)
-    self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    vbox.addWidget(self.toolbutton)
-    vbox.addWidget(QLabel('Select video:'))
-    self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-    self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    vbox.addWidget(self.video_list)
-    vbox.addWidget(QLabel('Select ROI:'))
-    self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    vbox.addWidget(self.roi_list)
-    pb = QPushButton('Plot &activity')
-    pb.clicked.connect(self.plot_triggered)
-    vbox.addWidget(pb)
-    self.right.setLayout(vbox)
-
-    splitter = QSplitter(Qt.Horizontal)
-    splitter.setHandleWidth(3)
-    splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    splitter.addWidget(self.left)
-    splitter.addWidget(self.right)
-    hbox_global = QHBoxLayout()
-    hbox_global.addWidget(splitter)
-    self.setLayout(hbox_global)
+    super().setup_ui()
+    # vbox_view = QVBoxLayout()
+    # vbox_view.addWidget(self.view)
+    # self.view.vb.crosshair_visible = False
+    # self.left.setLayout(vbox_view)
+    #
+    # vbox = QVBoxLayout()
+    # list_of_manips = pfs.get_list_of_project_manips(self.project)
+    # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
+    # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
+    # vbox.addWidget(self.toolbutton)
+    # vbox.addWidget(QLabel('Select video:'))
+    # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
+    # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    # vbox.addWidget(self.video_list)
+    # vbox.addWidget(QLabel('Select ROI:'))
+    # self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    self.vbox.addWidget(self.roi_list)
+    self.vbox.addWidget(self.plot_pb)
+    # self.right.setLayout(vbox)
+    #
+    # splitter = QSplitter(Qt.Horizontal)
+    # splitter.setHandleWidth(3)
+    # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
+    # splitter.addWidget(self.left)
+    # splitter.addWidget(self.right)
+    # hbox_global = QHBoxLayout()
+    # hbox_global.addWidget(splitter)
+    # self.setLayout(hbox_global)
 
     # hbox.addLayout(vbox)
     # hbox.setStretch(0, 1)
     # hbox.setStretch(1, 0)
     # self.setLayout(hbox)
 
-  def refresh_video_list_via_combo_box(self, trigger_item=None):
-      pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  def setup_signals(self):
+      super().setup_signals()
+      self.plot_pb.clicked.connect(self.plot_triggered)
 
-  def selected_video_changed(self, selected, deselected):
-      pfs.selected_video_changed_multi(self, selected, deselected)
+  def setup_params(self, reset=False):
+      super().setup_params()
+      self.roi_list.setup_params()
+
+  def setup_param_signals(self):
+      super().setup_param_signals()
+      self.roi_list.setup_param_signals()
+
+  # def refresh_video_list_via_combo_box(self, trigger_item=None):
+  #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
+  #
+  # def selected_video_changed(self, selected, deselected):
+  #     pfs.selected_video_changed_multi(self, selected, deselected)
 
   # def selected_video_changed(self, selection):
   #   if not selection.indexes():
@@ -222,14 +239,14 @@ class Widget(QWidget, WidgetDefault):
   #   frame = fileloader.load_reference_frame(self.video_path)
   #   self.view.show(frame)
 
-  def selected_roi_changed(self, selected, deselected):
-    for index in deselected.indexes():
-      roiname = str(index.data(Qt.DisplayRole))
-      self.view.vb.removeRoi(roiname)
-    for index in selected.indexes():
-      roiname = str(index.data(Qt.DisplayRole))
-      roipath = str(index.data(Qt.UserRole))
-      self.view.vb.addRoi(roipath, roiname)
+  # def selected_roi_changed(self, selected, deselected):
+  #   for index in deselected.indexes():
+  #     roiname = str(index.data(Qt.DisplayRole))
+  #     self.view.vb.removeRoi(roiname)
+  #   for index in selected.indexes():
+  #     roiname = str(index.data(Qt.DisplayRole))
+  #     roipath = str(index.data(Qt.UserRole))
+  #     self.view.vb.addRoi(roipath, roiname)
 
   def plot_triggered(self):
     global_progress = QProgressDialog('Generating Activity Plots of Selected ROIs', 'Abort', 0, 100, self)
@@ -259,10 +276,11 @@ class Widget(QWidget, WidgetDefault):
       self.open_dialogs.append(win)
     global_callback(1)
 
-class MyPlugin:
+class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Plot ROI activity'
-    self.widget = Widget(project)
-  
+    self.widget = Widget(project, plugin_position)
+    super().__init__(self.widget, self.widget.Labels, self.name)
+
   def run(self):
     pass
