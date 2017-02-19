@@ -13,6 +13,8 @@ import qtutil
 from .util import fileloader
 from .util import project_functions as pfs
 from .util.mygraphicsview import MyGraphicsView
+from .util.plugin import WidgetDefault
+
 
 class Color:
   def __init__(self, name, rgb):
@@ -117,7 +119,14 @@ def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress
   return win
 
 
-class Widget(QWidget):
+class Widget(QWidget, WidgetDefault):
+  class Labels(WidgetDefault.Labels):
+    pass
+
+  class Defaults(WidgetDefault.Defaults):
+    roi_list_types_displayed = ['auto_roi', 'roi']
+    manip = "plot"
+
   def __init__(self, project, parent=None):
     super(Widget, self).__init__(parent)
 

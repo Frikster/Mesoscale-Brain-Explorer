@@ -94,11 +94,9 @@ def calc_spc(video_path, x, y, progress):
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
-        roi_list_indices_label = "ROIs"
+        pass
 
     class Defaults(WidgetDefault.Defaults):
-        roi_list_indices_default = [0]
-        list_display_type = ['video']
         roi_list_types_displayed = ['auto_roi']
         manip = "spc"
 
