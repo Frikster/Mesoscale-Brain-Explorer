@@ -476,6 +476,9 @@ class MainWindow(QMainWindow):
 
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
+      if not ordered_q_model_indexes:
+          qtutil.info("Select all the plugins you want to process through. Use shift or ctrl to select multiple")
+
       # ensure all selected plugins are ready for automation
       for q_model_index in ordered_q_model_indexes:
           p = self.plugins[q_model_index.data(Qt.UserRole)]
