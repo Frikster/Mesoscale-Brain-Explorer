@@ -128,55 +128,56 @@ def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
           qtutil.critical("No video selected.")
           return
 
-      win = QMainWindow()
+      main_window = QMainWindow()
       area = DockArea()
-      win.setCentralWidget(area)
-      win.resize(1000, 600)
-      win.setWindowTitle("Test")
+      main_window.setCentralWidget(area)
+      main_window.resize(2000, 900)
+      main_window.setWindowTitle("Test")
 
-      d1 = Dock("Save/Load", size=(1, 1))  ## give this dock the minimum possible size
+     # d1 = Dock("Save/Load", size=(1, 1))  ## give this dock the minimum possible size
       d2 = Dock("Dock2", size=(500, 200), closable=True)
-      d3 = Dock("Dock3", size=(500, 200))
-      d4 = Dock("Dock4", size=(500, 200))
-      d5 = Dock("Dock5", size=(500, 200))
-      area.addDock(d1, 'top')
-      area.addDock(d2, 'bottom', d1)
+      d3 = Dock("Dock3", size=(500, 200), closable=True)
+      d4 = Dock("Dock4", size=(500, 200), closable=True)
+      d5 = Dock("Dock5", size=(500, 200), closable=True)
+      # area.addDock(d1, 'top')
+      area.addDock(d2)
       area.addDock(d3, 'bottom', d2)
       area.addDock(d4, 'right', d3)
       area.addDock(d5, 'top', d4)
+      area.moveDock(d5, 'right', d2)
 
+      # Code for adding a dock window which can save restore dock state. Uncomment to include
       ## first dock gets save/restore buttons
-      w1 = pg.LayoutWidget()
-      label = QLabel("""
-      This window has 4 Dock widgets in it. Each dock can be dragged
-      by its title bar to occupy a different space within the window
-      but note that one dock has its title bar hidden). Additionally,
-      the borders between docks may be dragged to resize. Docks that are dragged on top
-      of one another are stacked in a tabbed layout. Double-click a dock title
-      bar to place it in its own window.
-      """)
-      saveBtn = QPushButton('Save dock state')
-      restoreBtn = QPushButton('Restore dock state')
-      restoreBtn.setEnabled(False)
-      w1.addWidget(label, row=0, col=0)
-      w1.addWidget(saveBtn, row=1, col=0)
-      w1.addWidget(restoreBtn, row=2, col=0)
-      d1.addWidget(w1)
-      dock_state = None
-
-      def save():
-          global dock_state
-          dock_state = area.saveState()
-          restoreBtn.setEnabled(True)
-      def load():
-          global dock_state
-          area.restoreState(dock_state)
-
-      saveBtn.clicked.connect(save)
-      restoreBtn.clicked.connect(load)
+      # w1 = pg.LayoutWidget()
+      # label = QLabel("""
+      # This window has 4 Dock widgets in it. Each dock can be dragged
+      # by its title bar to occupy a different space within the window
+      # but note that one dock has its title bar hidden). Additionally,
+      # the borders between docks may be dragged to resize. Docks that are dragged on top
+      # of one another are stacked in a tabbed layout. Double-click a dock title
+      # bar to place it in its own window.
+      # """)
+      # saveBtn = QPushButton('Save dock state')
+      # restoreBtn = QPushButton('Restore dock state')
+      # restoreBtn.setEnabled(False)
+      # w1.addWidget(label, row=0, col=0)
+      # w1.addWidget(saveBtn, row=1, col=0)
+      # w1.addWidget(restoreBtn, row=2, col=0)
+      # d1.addWidget(w1)
+      # dock_state = None
+      # def save():
+      #     global dock_state
+      #     dock_state = area.saveState()
+      #     restoreBtn.setEnabled(True)
+      # def load():
+      #     global dock_state
+      #     area.restoreState(dock_state)
+      # saveBtn.clicked.connect(save)
+      # restoreBtn.clicked.connect(load)
 
       # Collect ROI activities for each selected vid
-      progress_load = QProgressDialog('Loading files and collecting ROI data', 'Abort', 0, 100)
+      progress_load = QProgressDialog('Loading files and collecting ROI data. This may take a while '
+                                      'for large files.', 'Abort', 0, 100)
       progress_load.setAutoClose(True)
       progress_load.setMinimumDuration(0)
       def callback_load(x):
@@ -195,7 +196,11 @@ def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
               mask = roi.getROIMask(frames, image, axes=(1, 2))
               size = np.count_nonzero(mask)
               if size <= 0:
-                  qtutil.critical("No ROI selected.")
+                  qtutil.critical("No ROI selected. If you do have ROIs selected then the most likely cause is that "
+                                  "you have modified the unit per pixel and not updated the size of the ROIs which "
+                                  "don't adjust automatically. So for example any ROI with length 1 might now be less "
+                                  "than 1 pixel after you changed the unit per pixel. To update the ROIs against your "
+                                  "new unit per pixel, go to the import ROI plugin and press the 'Update Table' button")
                   return
               roi_frames = frames * mask[np.newaxis, :, :]
               roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
@@ -206,24 +211,43 @@ def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
           video_path_to_plots_dict[video_path] = roi_activity_dict
       callback_load(1)
 
-      # regroup ROIs of same type together and add to docs
-      plot_docs = [d2, d3, d4, d5]
-      plot_docs_cycle = cycle(plot_docs)
+      # regroup ROIs of same type together and add to Docks dynamically
+      plot_docks = [0, 1, 2, 3]
+      plot_docs_cycle = cycle(plot_docks)
       for roi in rois:
         warning_issued = False
         plots_for_roi = []
         source_names = []
         for video_path in video_path_to_plots_dict.keys():
             root, ext = os.path.splitext(video_path)
-            source_names = source_names + [root]
+            source_name = os.path.basename(root)
+            source_names = source_names + [source_name]
             plots_for_roi = plots_for_roi + [video_path_to_plots_dict[video_path][roi.name]]
 
         # put all plots from one ROI on a single plot and place on one of the 4 docs
-        w = pg.PlotWidget(title="Dock plot")
-        w.setLabel('bottom', "Image Frames")
-        w.setLabel('left', "Activity")
-        w.addLegend()
-        for p, source_name in plots_for_roi, source_names:
+        next_dock = next(plot_docs_cycle)
+        d = Dock(roi.name, size=(500, 200), closable=True)
+        if next_dock == 0:
+            area.addDock(d, 'above', d2)
+        if next_dock == 1:
+            area.addDock(d, 'above', d3)
+        if next_dock == 2:
+            area.addDock(d, 'above', d4)
+        if next_dock == 3:
+            area.addDock(d, 'above', d5)
+
+        doc_window = pg.GraphicsWindow(title="Dock plot")
+        plot = doc_window.addPlot(title=roi.name)
+        plot.setLabel('bottom', "Image Frames")
+        plot.setLabel('left', "Activity")
+        plot.addLegend()
+        # w = pg.GraphicsWindow(title="Dock plot")
+        # # w = pg.PlotWidget(title="Dock plot")
+        # w.setLabel('bottom', "Image Frames")
+        # w.setLabel('left', "Activity")
+        # w.addLegend()
+        assert(len(plots_for_roi) == len(source_names))
+        for i, (p, source_name) in enumerate(zip(plots_for_roi, source_names)):
             if i < len(brewer_colors):
                 color = brewer_colors[i].rgb
             else:
@@ -236,10 +260,9 @@ def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
                 else:
                     qtutil.critical(
                         'Colour limit reached. Please plot your data over multiple plots or output solely to csv')
-                    return win
-            w.plot(p, pen=color, name=source_name)
-            next_doc = plot_docs_cycle.next()
-            next_doc.addWidget(w)
+                    return doc_window
+            plot.plot(p, pen=color, name=source_name)
+        d.addWidget(doc_window)
 
         # Save plot to file
         ps = [list(p) for p in plots_for_roi]
@@ -252,7 +275,13 @@ def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
             for i, row in enumerate(ps_rows):
                 # progress_callback(i / len(rois))
                 writer.writerow([str(p) for p in row])
-      return win
+
+      # close placeholder docks
+      d2.close()
+      d3.close()
+      d4.close()
+      d5.close()
+      return main_window
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
@@ -394,6 +423,7 @@ class Widget(QWidget, WidgetDefault):
     roinames = [index.data(Qt.DisplayRole) for index in indexes]
     rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
     win = plot_rois_same_axis(self.selected_videos, rois, self.view.vb.img)
+    win.show()
     self.open_dialogs.append(win)
 
     for selected_vid_no, video_path in enumerate(self.selected_videos):
@@ -410,7 +440,7 @@ class Widget(QWidget, WidgetDefault):
       rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
       plot_title = 'Activity Across Frames for ' + os.path.basename(video_path)
       win_title = self.project.name
-      win = plot_roi_activities(video_path, rois, self.view.vb.img, plot_title, win_title, callback)
+      #win = plot_roi_activities(video_path, rois, self.view.vb.img, plot_title, win_title, callback)
       self.open_dialogs.append(win)
     global_callback(1)
 
