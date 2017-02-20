@@ -3,6 +3,7 @@
 import csv
 import os
 
+import functools
 import matplotlib
 import numpy as np
 import qtutil
@@ -93,9 +94,10 @@ def calc_spc(video_path, x, y, progress):
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
-        pass
+        colormap_index_label = "Choose Colormap:"
 
     class Defaults(WidgetDefault.Defaults):
+        colormap_index_default = 0
         roi_list_types_displayed = ['auto_roi']
         manip = "spc"
 
@@ -210,17 +212,15 @@ class Widget(QWidget, WidgetDefault):
     def setup_params(self, reset=False):
         super().setup_params()
         self.roi_list.setup_params()
-        # if len(self.params) == 1 or reset:
-        #     self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
-        # roi_indices = self.params[self.Labels.roi_list_indices_label]
-        # theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
-        #                     roi_indices]
-        # for Qindex in theQIndexObjects:
-        #     self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)
+        self.cm_comboBox.setCurrentIndex(self.params[self.Labels.colormap_index_label])
 
     def setup_param_signals(self):
         super().setup_param_signals()
         self.roi_list.setup_param_signals()
+        self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.colormap_index_label))
 
         # self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
 
@@ -419,6 +419,12 @@ class Widget(QWidget, WidgetDefault):
 
 
 class SPCMapDialog(QDialog):
+    # video_player_scaled_signal = pyqtSignal()
+    # video_player_unscaled_signal = pyqtSignal()
+    # delete_signal = pyqtSignal()
+    # detatch_signal = pyqtSignal()
+
+
     def __init__(self, project, video_path, spcmap, cm_type, roi_name=None):
         super(SPCMapDialog, self).__init__()
         self.project = project
@@ -442,8 +448,13 @@ class SPCMapDialog(QDialog):
 
     def setup_ui(self):
         vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
         self.the_label = QLabel()
-        vbox.addWidget(self.the_label)
+        hbox.addWidget(self.the_label)
+        hbox.addWidget(QDoubleSpinBox())
+        hbox.addWidget(QDoubleSpinBox())
+
+        vbox.addLayout(hbox)
         self.view = MyGraphicsView(self.project)
         vbox.addWidget(self.view)
         self.setLayout(vbox)
@@ -485,6 +496,25 @@ class SPCMapDialog(QDialog):
         except:
           value = '-'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
+
+    # def contextMenuEvent(self, event):
+    #     menu = QMenu(self)
+    #     submenu1 = menu.addMenu("Open Video Player")
+    #     submenu2 = menu.addMenu("Remove Files")
+    #     video_player_scaled_action = submenu1.addAction("Scaled (takes time to establish scale)")
+    #     video_player_unscaled_action = submenu1.addAction("Unscaled (loads fast)")
+    #     delete_action = submenu2.addAction("Delete Permanently")
+    #     detatch_action = submenu2.addAction("Detatch from Project")
+    #
+    #     action = menu.exec_(self.mapToGlobal(event.pos()))
+    #     if action == video_player_scaled_action:
+    #         self.video_player_scaled_signal.emit()
+    #     if action == video_player_unscaled_action:
+    #         self.video_player_unscaled_signal.emit()
+    #     if action == delete_action:
+    #         self.delete_signal.emit()
+    #     if action == detatch_action:
+    #         self.detatch_signal.emit()
 
 
 

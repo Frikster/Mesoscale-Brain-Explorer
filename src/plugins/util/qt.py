@@ -55,7 +55,7 @@ class FileTable(QTableView):
 
     self.verticalHeader().hide()
     self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-    #self.horizontalHeader().setStretchLastSection(True)
+    # self.horizontalHeader().setStretchLastSection(True)
     self.setSelectionBehavior(QAbstractItemView.SelectRows) 
 
     if project:
