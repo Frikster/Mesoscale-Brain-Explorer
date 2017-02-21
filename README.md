@@ -1,5 +1,7 @@
 # Mesoscale-Brain-Explorer (MBE)
 
+## Note: a "ret_files" error typically means you have run out of space on your hard drive.
+
 ## Installation
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
