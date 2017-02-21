@@ -365,13 +365,13 @@ class Widget(QWidget, WidgetDefault):
 
         spc_docks = [0, 1, 2, 3, 4, 5]
         spc_docs_cycle = cycle(spc_docks)
-        for video_path in video_paths:
-            for roi_name in roi_names:
+        for roi_name in roi_names:
+            for video_path in video_paths:
                 # put all plots from one ROI on a single plot and place on one of the 4 docs
                 next_dock = next(spc_docs_cycle)
-                root, ext = os.path.splitext(video_path)
-                source_name = os.path.basename(root)
-                d = Dock(source_name, size=(500, 200), closable=True)
+                # root, ext = os.path.splitext(video_path)
+                # source_name = os.path.basename(root)
+                d = Dock(roi_name, size=(500, 200), closable=True)
                 area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
 
                 spc = video_path_to_spc_dict[video_path][roi_name]
