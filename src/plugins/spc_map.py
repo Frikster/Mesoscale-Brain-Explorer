@@ -2,7 +2,10 @@
 
 import csv
 import os
+from pyqtgraph.dockarea import *
 
+from itertools import cycle
+import uuid
 import functools
 import matplotlib
 import numpy as np
@@ -26,15 +29,35 @@ from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 from .util.mse_ui_elements import RoiItemModel
 
-def calc_spc(video_path, x, y, progress):
-    frame = fileloader.load_reference_frame(video_path)
-    width, height = frame.shape
+UUID_SIZE = len(str(uuid.uuid4()))
 
+# def calc_spc(video_path, x, y, progress):
+#     frame = fileloader.load_reference_frame(video_path)
+#     width, height = frame.shape
+#
+#     x = int(x)
+#     y = int(height - y)
+#
+#     frames = fileloader.load_file(video_path)
+#     spc_map = filter_jeff.correlation_map(y, x, frames, progress)
+#
+#     # Make the location of the roi - self.image[y,x] - blatantly obvious
+#     spc_map[y+1, x+1] = 1
+#     spc_map[y+1, x] = 1
+#     spc_map[y, x+1] = 1
+#     spc_map[y-1, x-1] = 1
+#     spc_map[y-1, x] = 1
+#     spc_map[y, x-1] = 1
+#     spc_map[y+1, x-1] = 1
+#     spc_map[y-1, x+1] = 1
+#
+#     return spc_map
+
+
+def calc_spc(frames, x, y, progress):
+    width, height = frames[0].shape
     x = int(x)
     y = int(height - y)
-
-    frames = fileloader.load_file(video_path)
-
     spc_map = filter_jeff.correlation_map(y, x, frames, progress)
 
     # Make the location of the roi - self.image[y,x] - blatantly obvious
@@ -114,7 +137,7 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
         self.bulk_background_pb = QPushButton('Save all SPC maps from table ROIs to file')
         self.spc_from_rois_pb = QPushButton('Generate SPC maps from selected ROIs (display windows and save to file)')
-
+        self.open_dialogs_data_dict = []
         # self.left = QFrame()
         # self.right = QFrame()
 
@@ -204,8 +227,10 @@ class Widget(QWidget, WidgetDefault):
     def setup_signals(self):
         super().setup_signals()
         self.view.vb.clicked.connect(self.vbc_clicked)
-        self.bulk_background_pb.clicked.connect(self.spc_bulk_clicked)
-        self.spc_from_rois_pb.clicked.connect(self.spc_bulk_clicked_display)
+        #self.bulk_background_pb.clicked.connect(self.spc_bulk_clicked)
+        #self.spc_from_rois_pb.clicked.connect(self.spc_bulk_clicked_display)
+
+        self.spc_from_rois_pb.clicked.connect(self.spc_triggered)
         # self.roi_list.selectionModel().selectionChanged[QItemSelection,
         #                                                 QItemSelection].connect(self.selected_roi_changed)
 
@@ -222,7 +247,161 @@ class Widget(QWidget, WidgetDefault):
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
 
-        # self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
+    def get_video_path_to_spc_dict(self):
+        # retrieve ROIs in view and their coordinates
+        if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+            qtutil.critical("There's no ROI table associated with this project. "
+                            "ROIs coordinates are used as seeds to create seed pixel correlation maps")
+            return
+        text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+                          if self.project.files[x]['type'] == 'roi_table']
+        assert (len(text_file_path) == 1)
+        text_file_path = text_file_path[0]
+        roi_table = []
+        with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+            roi_table_it = csv.reader(csvfile, delimiter=',')
+            for row in roi_table_it:
+                roi_table = roi_table + [row]
+        roi_table = np.array(roi_table)
+        roi_table_range = range(len(roi_table))[1:]
+        roi_names = [roi_table[x, 0] for x in roi_table_range]
+        roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+        roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
+        roi_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in roi_coord_x]
+        roi_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in roi_coord_y]
+        rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+        selected_videos = self.selected_videos
+        if not rois_in_view:
+            qtutil.critical("No ROI(s) selected as seed(s)")
+            return
+        if not selected_videos:
+            qtutil.critical("No image stack selected")
+            return
+
+        # progress_load = QProgressDialog('Loading files and processing Seed Pixel Correlation maps. '
+        #                                 'This may take a while for large files.', 'Abort', 0, 100)
+        # progress_load.setAutoClose(True)
+        # progress_load.setMinimumDuration(0)
+        # def callback_load(x):
+        #     progress_load.setValue(x * 100)
+        #     QApplication.processEvents()
+
+        progress_load = MyProgressDialog('Processing...', 'Loading files and processing Seed Pixel Correlation maps. '
+                                    'This may take a while for large files.', self)
+        video_path_to_plots_dict = {}
+        for selected_vid_no, video_path in enumerate(selected_videos):
+            progress_load.setValue(selected_vid_no / len(selected_videos))
+            frames = fileloader.load_file(video_path)
+            if progress_load.wasCanceled():
+                return
+            roi_activity_dict = {}
+            progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+            for i, roi_name in enumerate(roi_names):
+                if roi_name in rois_in_view:
+                    x = roi_coord_x[i]
+                    y = roi_coord_y[i]
+                    spc = calc_spc(frames, x, y, progress)
+                    roi_activity_dict[roi_name] = spc
+            progress.setValue(1)
+            video_path_to_plots_dict[video_path] = roi_activity_dict
+        progress_load.setValue(1)
+        return video_path_to_plots_dict
+
+            # progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+            # progress.setAutoClose(True)
+            # progress.setMinimumDuration(0)
+            # def callback(x):
+            #     progress.setValue(x * 100)
+            #     QApplication.processEvents()
+
+
+
+            # for roi in self.view.vb.rois:
+            #     roi.print('')
+            #     roi.getROIMask(frames, self.view.vb.img., axes=(1, 2))
+            # roi_paths = [os.path.normpath(self.project.files[i]['path'])
+            #              for i in range(len(self.project.files))
+            #              if self.project.files[i]['type'] == 'roi']
+            #
+            # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+            # rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+            # for roi_to_add in rois_to_add:
+            #     self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
+
+
+
+        #     for i, roi_name in enumerate(roi_names):
+        #         if roi_name in rois_in_view:
+        #             callback(i / len(roi_names))
+        #             x = roi_coord_x[i]
+        #             y = roi_coord_y[i]
+        #             roi_name = roi_names[i]
+        #             self.spc_to_windows(x, y, roi_name, video_path)
+        #     callback(1)
+        # global_callback(1)
+
+
+    def setup_docks(self):
+        area = DockArea()
+        d1 = Dock("d1", size=(500, 200), closable=True)
+        d2 = Dock("d2", size=(500, 200), closable=True)
+        d3 = Dock("d3", size=(500, 200), closable=True)
+        d4 = Dock("d4", size=(500, 200), closable=True)
+        d5 = Dock("d5", size=(500, 200), closable=True)
+        d6 = Dock("d6", size=(500, 200), closable=True)
+        area.addDock(d1)
+        area.addDock(d2, 'bottom', d1)
+        area.addDock(d3, 'right', d2)
+        area.addDock(d4, 'right', d3)
+        area.moveDock(d5, 'right', d1)
+        area.moveDock(d6, 'left', d5)
+        return area
+
+    def plot_spc_to_docks(self, video_path_to_spc_dict, area):
+        if not video_path_to_spc_dict:
+            return
+        roi_names = list(list(video_path_to_spc_dict.values())[0].keys())
+        video_paths = list(video_path_to_spc_dict.keys())
+
+        spc_docks = [0, 1, 2, 3, 4, 5]
+        spc_docs_cycle = cycle(spc_docks)
+        for video_path in video_paths:
+            for roi_name in roi_names:
+                # put all plots from one ROI on a single plot and place on one of the 4 docs
+                next_dock = next(spc_docs_cycle)
+                root, ext = os.path.splitext(video_path)
+                source_name = os.path.basename(root)
+                d = Dock(source_name, size=(500, 200), closable=True)
+                area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
+
+                spc = video_path_to_spc_dict[video_path][roi_name]
+                doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(), roi_name)
+                d.addWidget(doc_window)
+
+                # save to file
+                spc_col = doc_window.colorized_spc
+                path_without_ext = os.path.join(self.project.path, video_path + "_" + roi_name)
+                scipy.misc.toimage(spc_col).save(path_without_ext + '.jpg')
+
+        # close placeholder docks
+        for spc_dock in spc_docks:
+            area.docks['d'+str(spc_dock+1)].close()
+
+
+    def spc_triggered(self):
+        main_window = QMainWindow()
+        area = self.setup_docks()
+        main_window.setCentralWidget(area)
+        main_window.resize(2000, 900)
+        main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
+                                   ". Use Help -> What's This on this window for contextual tips")
+
+        video_path_to_spc_dict = self.get_video_path_to_spc_dict()
+        self.plot_spc_to_docks(video_path_to_spc_dict, area)
+        main_window.show()
+        self.open_dialogs.append(main_window)
+        self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
+
 
     # def prepare_roi_list_for_update(self, selected, deselected):
     #     val = [v.row() for v in self.roi_list.selectedIndexes()]
@@ -234,7 +413,8 @@ class Widget(QWidget, WidgetDefault):
     #         return
     #     if not selection.indexes() or self.view.vb.drawROImode:
     #         return
-    #
+
+
     #     self.remove_all_rois()
     #     rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
     #                       for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
@@ -250,112 +430,112 @@ class Widget(QWidget, WidgetDefault):
     #             self.view.vb.selectROI(roi)
     #         self.view.vb.removeROI()
 
-    def spc_bulk_clicked(self):
-        global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
-        global_progress.setAutoClose(True)
-        global_progress.setMinimumDuration(0)
-        def global_callback(x):
-            global_progress.setValue(x * 100)
-            QApplication.processEvents()
-        total = len(self.selected_videos)
-        for selected_vid_no, video_path in enumerate(self.selected_videos):
-            global_callback(selected_vid_no / total)
-            progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
-            progress.setAutoClose(True)
-            progress.setMinimumDuration(0)
-            def callback(x):
-                progress.setValue(x * 100)
-                QApplication.processEvents()
-            # setup roi table
-            if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
-                qtutil.critical("There's no roi table associated with this project")
-                return
-            text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
-                              if self.project.files[x]['type'] == 'roi_table']
-            assert(len(text_file_path) == 1)
-            text_file_path = text_file_path[0]
-            roi_table = []
-            with open(text_file_path, 'rt', encoding='ascii') as csvfile:
-                roi_table_it = csv.reader(csvfile, delimiter=',')
-                for row in roi_table_it:
-                    roi_table = roi_table + [row]
-            roi_table = np.array(roi_table)
-            roi_table_range = range(len(roi_table))[1:]
-            roi_names = [roi_table[x, 0] for x in roi_table_range]
-            roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
-            roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
-            roi_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in roi_coord_x]
-            roi_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in roi_coord_y]
-            for i, ind in enumerate(range(len(roi_names))):
-                callback(i / len(roi_names))
-                x = roi_coord_x[ind]
-                y = roi_coord_y[ind]
-                roi_name = roi_names[ind]
-                self.spc_to_file(x, y, roi_name, video_path)
-            callback(1)
-        global_callback(1)
-
-    def spc_bulk_clicked_display(self):
-        global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
-        global_progress.setAutoClose(True)
-        global_progress.setMinimumDuration(0)
-        def global_callback(x):
-            global_progress.setValue(x * 100)
-            QApplication.processEvents()
-        total = len(self.selected_videos)
-        for selected_vid_no, video_path in enumerate(self.selected_videos):
-            global_callback(selected_vid_no / total)
-            progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
-            progress.setAutoClose(True)
-            progress.setMinimumDuration(0)
-            def callback(x):
-                progress.setValue(x * 100)
-                QApplication.processEvents()
-
-            # for roi in self.view.vb.rois:
-            #     roi.print('')
-            #     roi.getROIMask(frames, self.view.vb.img., axes=(1, 2))
-            # roi_paths = [os.path.normpath(self.project.files[i]['path'])
-            #              for i in range(len(self.project.files))
-            #              if self.project.files[i]['type'] == 'roi']
-            #
-            # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-            # rois_to_add = [x for x in rois_selected if x not in rois_in_view]
-            # for roi_to_add in rois_to_add:
-            #     self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
-
-
-            # setup roi table
-            if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
-                qtutil.critical("There's no ROI table associated with this project. "
-                                "ROIs coordinates are used as seeds to create seed pixel correlation maps")
-                return
-            text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
-                              if self.project.files[x]['type'] == 'roi_table']
-            assert(len(text_file_path) == 1)
-            text_file_path = text_file_path[0]
-            roi_table = []
-            with open(text_file_path, 'rt', encoding='ascii') as csvfile:
-                roi_table_it = csv.reader(csvfile, delimiter=',')
-                for row in roi_table_it:
-                    roi_table = roi_table + [row]
-            roi_table = np.array(roi_table)
-            roi_table_range = range(len(roi_table))[1:]
-            roi_names = [roi_table[x, 0] for x in roi_table_range]
-            roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
-            roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
-            roi_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in roi_coord_x]
-            roi_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in roi_coord_y]
-            rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-            for i, roi_name in enumerate(roi_names):
-                if roi_name in rois_in_view:
-                    callback(i / len(roi_names))
-                    x = roi_coord_x[i]
-                    y = roi_coord_y[i]
-                    roi_name = roi_names[i]
-                    self.spc_to_windows(x, y, roi_name, video_path)
-            callback(1)
-        global_callback(1)
+    # def spc_bulk_clicked(self):
+    #     global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
+    #     global_progress.setAutoClose(True)
+    #     global_progress.setMinimumDuration(0)
+    #     def global_callback(x):
+    #         global_progress.setValue(x * 100)
+    #         QApplication.processEvents()
+    #     total = len(self.selected_videos)
+    #     for selected_vid_no, video_path in enumerate(self.selected_videos):
+    #         global_callback(selected_vid_no / total)
+    #         progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+    #         progress.setAutoClose(True)
+    #         progress.setMinimumDuration(0)
+    #         def callback(x):
+    #             progress.setValue(x * 100)
+    #             QApplication.processEvents()
+    #         # setup roi table
+    #         if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+    #             qtutil.critical("There's no roi table associated with this project")
+    #             return
+    #         text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+    #                           if self.project.files[x]['type'] == 'roi_table']
+    #         assert(len(text_file_path) == 1)
+    #         text_file_path = text_file_path[0]
+    #         roi_table = []
+    #         with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+    #             roi_table_it = csv.reader(csvfile, delimiter=',')
+    #             for row in roi_table_it:
+    #                 roi_table = roi_table + [row]
+    #         roi_table = np.array(roi_table)
+    #         roi_table_range = range(len(roi_table))[1:]
+    #         roi_names = [roi_table[x, 0] for x in roi_table_range]
+    #         roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+    #         roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
+    #         roi_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in roi_coord_x]
+    #         roi_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in roi_coord_y]
+    #         for i, ind in enumerate(range(len(roi_names))):
+    #             callback(i / len(roi_names))
+    #             x = roi_coord_x[ind]
+    #             y = roi_coord_y[ind]
+    #             roi_name = roi_names[ind]
+    #             self.spc_to_file(x, y, roi_name, video_path)
+    #         callback(1)
+    #     global_callback(1)
+    #
+    # def spc_bulk_clicked_display(self):
+    #     global_progress = QProgressDialog('Saving all Requested Maps to Project Dir', 'Abort', 0, 100, self)
+    #     global_progress.setAutoClose(True)
+    #     global_progress.setMinimumDuration(0)
+    #     def global_callback(x):
+    #         global_progress.setValue(x * 100)
+    #         QApplication.processEvents()
+    #     total = len(self.selected_videos)
+    #     for selected_vid_no, video_path in enumerate(self.selected_videos):
+    #         global_callback(selected_vid_no / total)
+    #         progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
+    #         progress.setAutoClose(True)
+    #         progress.setMinimumDuration(0)
+    #         def callback(x):
+    #             progress.setValue(x * 100)
+    #             QApplication.processEvents()
+    #
+    #         # for roi in self.view.vb.rois:
+    #         #     roi.print('')
+    #         #     roi.getROIMask(frames, self.view.vb.img., axes=(1, 2))
+    #         # roi_paths = [os.path.normpath(self.project.files[i]['path'])
+    #         #              for i in range(len(self.project.files))
+    #         #              if self.project.files[i]['type'] == 'roi']
+    #         #
+    #         # rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+    #         # rois_to_add = [x for x in rois_selected if x not in rois_in_view]
+    #         # for roi_to_add in rois_to_add:
+    #         #     self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
+    #
+    #
+    #         # setup roi table
+    #         if 'roi_table' not in [self.project.files[x]['type'] for x in range(len(self.project.files))]:
+    #             qtutil.critical("There's no ROI table associated with this project. "
+    #                             "ROIs coordinates are used as seeds to create seed pixel correlation maps")
+    #             return
+    #         text_file_path = [self.project.files[x]['path'] for x in range(len(self.project.files))
+    #                           if self.project.files[x]['type'] == 'roi_table']
+    #         assert(len(text_file_path) == 1)
+    #         text_file_path = text_file_path[0]
+    #         roi_table = []
+    #         with open(text_file_path, 'rt', encoding='ascii') as csvfile:
+    #             roi_table_it = csv.reader(csvfile, delimiter=',')
+    #             for row in roi_table_it:
+    #                 roi_table = roi_table + [row]
+    #         roi_table = np.array(roi_table)
+    #         roi_table_range = range(len(roi_table))[1:]
+    #         roi_names = [roi_table[x, 0] for x in roi_table_range]
+    #         roi_coord_x = [float(roi_table[x, 2]) for x in roi_table_range]
+    #         roi_coord_y = [float(roi_table[x, 3]) for x in roi_table_range]
+    #         roi_coord_x = [self.convert_coord_to_numpy_reference(x, 'x') for x in roi_coord_x]
+    #         roi_coord_y = [self.convert_coord_to_numpy_reference(y, 'y') for y in roi_coord_y]
+    #         rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
+    #         for i, roi_name in enumerate(roi_names):
+    #             if roi_name in rois_in_view:
+    #                 callback(i / len(roi_names))
+    #                 x = roi_coord_x[i]
+    #                 y = roi_coord_y[i]
+    #                 roi_name = roi_names[i]
+    #                 self.spc_to_windows(x, y, roi_name, video_path)
+    #         callback(1)
+    #     global_callback(1)
 
     def convert_coord_to_numpy_reference(self, coord, dim):
         assert(dim == 'x' or dim == 'y')
@@ -382,22 +562,22 @@ class Widget(QWidget, WidgetDefault):
             dialog.show()
             self.open_dialogs.append(dialog)
 
-    def spc_to_windows(self, x, y, name, vid_path):
-        assert self.selected_videos
-        # define base name
-        vid_name = os.path.basename(vid_path)
-        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
-        # compute spc
-        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
-        spc = calc_spc(vid_path, x, y, progress)
-        # save to npy
-        np.save(path_without_ext + '.npy', spc)
-        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText(), name)
-        dialog_object.show()
-        self.open_dialogs.append(dialog_object)
-        spc_col = dialog_object.colorized_spc
-        # Save as png and jpeg
-        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
+    # def spc_to_windows(self, x, y, name, vid_path):
+    #     assert self.selected_videos
+    #     # define base name
+    #     vid_name = os.path.basename(vid_path)
+    #     path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+    #     # compute spc
+    #     progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+    #     spc = calc_spc(vid_path, x, y, progress)
+    #     # save to npy
+    #     np.save(path_without_ext + '.npy', spc)
+    #     dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText(), name)
+    #     dialog_object.show()
+    #     self.open_dialogs.append(dialog_object)
+    #     spc_col = dialog_object.colorized_spc
+    #     # Save as png and jpeg
+    #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
 
 
     def spc_to_file(self, x, y, name, vid_path):

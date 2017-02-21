@@ -437,7 +437,6 @@ class Widget(QWidget, WidgetDefault):
                                       'for large files.', 'Abort', 0, 100)
       progress_load.setAutoClose(True)
       progress_load.setMinimumDuration(0)
-
       def callback_load(x):
           progress_load.setValue(x * 100)
           QApplication.processEvents()
