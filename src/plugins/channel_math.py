@@ -4,7 +4,6 @@ from .temporal_filter import *
 from .util import mse_ui_elements as mue
 import qtutil
 import psutil
-from .videoplayer import PlayerDialog
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 

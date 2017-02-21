@@ -27,7 +27,12 @@ class MyGraphicsView(pg.GraphicsView):
     l.setVerticalSpacing(0)
 
     self.vb = MultiRoiViewBox(lockAspect=True, enableMenu=True)
+    # todo: hovering for pyqtgraph
+    #self.vb.hovering.connect(self.vbc_hovering)
     self.vb.enableAutoRange()
+
+    # self.the_label = pg.LabelItem()
+    # l.addItem(self.the_label, 1, 0)
 
     l.addItem(self.vb, 0, 1)
     self.xScale = pg.AxisItem(orientation='bottom', linkView=self.vb)
@@ -66,3 +71,15 @@ class MyGraphicsView(pg.GraphicsView):
 
   def update(self):
     self._update_rect()
+
+  def vbc_hovering(self, x, y):
+      #todo: hovering for pyqtgraph
+    x_origin, y_origin = self.project['origin']
+    unit_per_pixel = self.project['unit_per_pixel']
+    x = round(x * unit_per_pixel, 2)
+    y = round(y * unit_per_pixel, 2)
+
+    try:
+        self.the_label.setText('X:{}, '.format(x) + 'Y:{}'.format(y))
+    except:
+        self.the_label.setText('X:-, Y:-')

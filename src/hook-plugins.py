@@ -21,5 +21,4 @@ hiddenimports = [
     "plugins.spc_map",
     "plugins.stdev_map",
     "plugins.temporal_filter",
-    "plugins.videoplayer"
 ]

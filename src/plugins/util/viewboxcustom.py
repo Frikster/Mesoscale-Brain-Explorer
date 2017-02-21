@@ -186,7 +186,7 @@ class MultiRoiViewBox(pg.ViewBox):
         if ev.button() == QtCore.Qt.LeftButton:
             if roi is None:
                 roi = PolyLineROIcustom(removable = False)
-                #roi.setName('ROI-%i'% self.getROIid()) # Do this before self.selectROIs(roi)
+                # roi.setName('ROI-%i'% self.getROIid()) # Do this before self.selectROIs(roi)
                 self.drawingROI = roi                  
                 roi.addFreeHandle(pos)
                 roi.addFreeHandle(pos)
