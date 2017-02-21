@@ -115,13 +115,18 @@ class WidgetDefault(object):
             self.detatch_clicked()
 
     def remove_clicked(self):
-        self.detatch_clicked()
+        for path in self.selected_videos:
+            norm_path = os.path.normpath(path)
+            self.project.files[:] = [f for f in self.project.files if os.path.normpath(f['path']) != norm_path]
+        self.project.save()
         for path in self.selected_videos:
             try:
                 os.remove(path)
             except:
                 qtutil.critical('Could not delete file ' + path)
                 return
+        pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                         self.Defaults.list_display_type, self.toolbutton_values)
 
     def detatch_clicked(self):
        for path in self.selected_videos:
@@ -207,10 +212,12 @@ class PluginDefault:
         return self.widget.execute_primary_function(input_paths)
 
     def get_input_paths(self):
-        fs = self.widget.project.files
-        indices = self.widget.params[self.widget_labels.video_list_indices_label]
-        fs_sub_types = [f for f in fs if f['type'] in self.widget.Defaults.list_display_type]
-        return [fs_sub_types[i]['path'] for i in range(len(fs_sub_types)) if i in indices]
+        return self.widget.selected_videos
+
+        # fs = self.widget.project.files
+        # indices = self.widget.params[self.widget_labels.video_list_indices_label]
+        # fs_sub_types = [f for f in fs if f['type'] in self.widget.Defaults.list_display_type]
+        # return [fs_sub_types[i]['path'] for i in range(len(fs_sub_types)) if i in indices]
 
     def check_ready_for_automation(self):
         return False

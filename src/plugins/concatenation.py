@@ -145,7 +145,7 @@ class Widget(QWidget, WidgetDefault):
                          self.params[self.Labels.video_list_indices_label],
                          self.Defaults.list_display_type,
                          self.params[self.Labels.last_manips_to_display_label])
-        return output_path
+        return [output_path]
         # path = os.path.join(self.project.path, str(uuid.uuid4()) + 'Concat.npy')
         # np.save(path, frames)
         # self.project.files.append({

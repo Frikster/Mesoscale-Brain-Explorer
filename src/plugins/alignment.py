@@ -269,27 +269,27 @@ class Widget(QWidget, WidgetDefault):
     def execute_primary_function(self, input_files=None):
         if not input_files:
             filenames = self.selected_videos
-            reference_frame_file = [file for file in filenames if file[-13:] == 'ref_frame.npy']
+            reference_frame_file = [path for path in filenames if self.Defaults.secondary_manip in path]
         else:
             filenames = input_files
-            reference_frame_file = [f for f in input_files if f[-13:] == 'ref_frame.npy']
+            reference_frame_file = self.selected_videos
             if len(reference_frame_file) != 1:
                 qtutil.critical("Please only select a single reference frame for each alignment plugin used."
-                          "Automation will now close.")
-                return
+                          " Automation will now close.")
+                raise ValueError("Please only select a single reference frame for each alignment plugin used")
 
         if len(reference_frame_file) == 0:
             qtutil.critical("No reference frame selected")
-            return
+            raise ValueError("No reference frame selected")
         if len(reference_frame_file) > 1:
             qtutil.critical("Multiple reference frames selected. Please only pick one")
-            return
+            raise ValueError("Multiple reference frames selected. Please only pick one")
         assert(len(reference_frame_file) == 1)
         reference_frame_file = reference_frame_file[0]
 
         assert ('ref_frame' in reference_frame_file)
         reference_frame = np.load(reference_frame_file)[0]
-        not_reference_frames = [file for file in filenames if file[-13:] != 'ref_frame.npy']
+        not_reference_frames = [path for path in filenames if self.Defaults.secondary_manip not in path]
         return self.align_videos(not_reference_frames, reference_frame)
 
         # for filename in filenames:
@@ -430,7 +430,7 @@ class MyPlugin(PluginDefault):
 
     def check_ready_for_automation(self):
         filenames = self.get_input_paths()
-        reference_frame_file = [file for file in filenames if file[-13:] == self.widget.Defaults.secondary_manip+'.npy']
+        reference_frame_file = [path for path in filenames if self.widget.Defaults.secondary_manip in path]
         if len(reference_frame_file) == 1:
             return True
         else:
