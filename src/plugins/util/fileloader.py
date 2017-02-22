@@ -37,9 +37,15 @@ def get_name_after_no_overwrite(name_before, manip, project):
     return name_after
 
 def save_file(path, data):
-  if os.path.isfile(path):
-    os.remove(path)
-  np.save(path, data)
+    total, used, free = psutil.disk_usage(path)
+    if data.nbytes > free:
+        qtutil.critical('Not enough space on drive. File is of size ' + str(data.nbytes) +
+                        ' and available space is: ' + str(free))
+        raise IOError('Not enough space on drive. File is of size ' + str(data.nbytes) +
+                        ' and available space is: ' + str(free))
+    if os.path.isfile(path):
+        os.remove(path)
+    np.save(path, data)
 
 def load_file(filename, progress_callback=None):
   file_size = os.path.getsize(filename)
