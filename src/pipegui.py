@@ -313,6 +313,10 @@ class MainWindow(QMainWindow):
     a.setStatusTip('Close project')
     a.triggered.connect(self.close_project)
     m.addAction(a)
+    a = QAction("&Reset All Plugin Parameters", self)
+    a.setStatusTip('This is useful if you experience JSON-related issues allowing for a clean slate')
+    a.triggered.connect(self.reset_all_params)
+    m.addAction(a)
     self.project_menu = m
 
     # settings_menu = self.menu.addMenu('&Settings')
@@ -325,6 +329,32 @@ class MainWindow(QMainWindow):
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
     help_menu.addAction(whats_this_action)
+
+  def reset_all_params(self):
+      for plugin_name in self.plugins.keys():
+          plugin = self.plugins[plugin_name]
+          if hasattr(plugin, 'widget'):
+              if hasattr(plugin.widget, 'setup_params'):
+                  try:
+                    plugin.widget.setup_params(reset=True)
+                  except:
+                    print("Failed to reset " + plugin_name)
+
+
+      # for i, plugin_name in enumerate(self.pipeline_model.get_plugin_names()):
+      #     p = self.load_plugin('plugins.' + plugin_name, i)
+      #     if p:
+      #         self.plugins[plugin_name] = p
+      #         # def set_x(val):
+      #         #     self.sidebar.x_origin.setValue(val)
+      #         # def set_y(val):
+      #         #     self.sidebar.y_origin.setValue(val)
+      #         # if plugin_name == 'set_coordinate_system':
+      #         #     p.widget.x_origin_changed[float].connect(self.set_x)
+      #         #     p.widget.y_origin_changed[float].connect(set_y)
+      # if self.current_plugin:
+      #     self.set_plugin(self.current_plugin, None)
+
 
 
   def setup_signals(self):

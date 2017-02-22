@@ -176,7 +176,7 @@ class Widget(QWidget, WidgetDefault):
 
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.kernal_size_label, self.Defaults.kernal_size_default)
         self.kernal_size.setValue(self.params[self.Labels.kernal_size_label])

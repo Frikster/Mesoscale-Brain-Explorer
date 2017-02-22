@@ -388,7 +388,7 @@ class Widget(QWidget, WidgetDefault):
       self.load_pb.clicked.connect(self.load_triggered)
 
   def setup_params(self, reset=False):
-      super().setup_params()
+      super().setup_params(reset)
       self.roi_list.setup_params()
 
   def setup_param_signals(self):

@@ -261,7 +261,7 @@ class Widget(QWidget, WidgetDefault):
         #                                                 QItemSelection].connect(self.selected_roi_changed)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         self.roi_list.setup_params()
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)

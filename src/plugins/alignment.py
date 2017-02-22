@@ -213,7 +213,7 @@ class Widget(QWidget, WidgetDefault):
         self.ref_button.clicked.connect(self.compute_ref_frame)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.apply_rotation_label, self.Defaults.apply_rotation_default)
             self.update_plugin_params(self.Labels.apply_scaling_label, self.Defaults.apply_scaling_default)
