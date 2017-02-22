@@ -218,7 +218,7 @@ class Widget(QWidget, WidgetDefault):
 
 
   def setup_params(self, reset=False):
-      super().setup_params()
+      super().setup_params(reset)
       self.roi_list.setup_params()
 
       # if len(self.params) == 1 or reset:

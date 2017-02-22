@@ -252,7 +252,7 @@ class Widget(QWidget, WidgetDefault):
 
 
   # def setup_params(self, reset=False):
-  #     super().setup_params()
+  #     super().setup_params(reset)
   #     if len(self.params) == 1 or reset:
   #         self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
   #     roi_indices = self.params[self.Labels.roi_list_indices_label]

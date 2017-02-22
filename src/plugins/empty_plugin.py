@@ -50,7 +50,7 @@ class Widget(QWidget, WidgetDefault):
     self.main_button.clicked.connect(self.execute_primary_function)
 
   def setup_params(self, reset=False):
-      super().setup_params()
+      super().setup_params(reset)
       if len(self.params) == 1 or reset:
         # todo: setup plugin paramaters (e.g. UI component starting values) initial values here
         # in this example the default value for the spinbox is associated with the label and saved to file

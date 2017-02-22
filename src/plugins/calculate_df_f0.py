@@ -110,7 +110,7 @@ class Widget(QWidget, WidgetDefault):
         self.df_d0_pb.clicked.connect(self.execute_primary_function)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.f0_source_index_label, self.Defaults.f0_source_index_default)
         self.video_list2_index = self.params[self.Labels.f0_source_index_label]

@@ -182,7 +182,7 @@ class Widget(QWidget, WidgetDefault):
         self.temp_filter_pb.clicked.connect(self.execute_primary_function)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.f_low_label, self.Defaults.f_low_default)
             self.update_plugin_params(self.Labels.f_high_label, self.Defaults.f_high_default)
