@@ -384,8 +384,8 @@ class Widget(QWidget, WidgetDefault):
   def setup_signals(self):
       super().setup_signals()
       self.plot_pb.clicked.connect(self.plot_triggered)
-      self.save_pb.clicked.connect(self.save_triggered)
-      self.load_pb.clicked.connect(self.load_triggered)
+      self.save_pb.clicked.connect(self.save_dock_windows)
+      self.load_pb.clicked.connect(self.load_dock_windows)
 
   def setup_params(self, reset=False):
       super().setup_params(reset)
@@ -650,90 +650,11 @@ class Widget(QWidget, WidgetDefault):
       filename = filename + ext
     return filename
 
-  def save_triggered(self):
-    if not self.open_dialogs:
-        qtutil.info('No plot windows are open. ')
-        return
+  def save_dock_windows(self):
+      pfs.save_dock_windows(self, 'plot_window')
 
-    qtutil.info('There are ' + str(len(self.open_dialogs)) + ' plot windows open. We will now choose a path to '
-                                                             'save each one to')
-    for (dialog, video_path_to_plots_dict) in self.open_dialogs_data_dict:
-        win_title = dialog.windowTitle()
-        win_title = win_title[12:UUID_SIZE+12]
-        filters = {
-            '.pkl': 'Python pickle file (*.pkl)'
-        }
-        default = win_title
-        pickle_path = self.filedialog(default, filters)
-        if not pickle_path:
-            return
-
-        self.project.files.append({
-        'path': pickle_path,
-        'type': 'plot_window',
-        'name': os.path.basename(pickle_path)
-        })
-        self.project.save()
-
-        # Now save the actual file
-        # area = dialog.centralWidget()
-        # state = area.saveState()
-        try:
-            with open(pickle_path, 'wb') as output:
-                pickle.dump(video_path_to_plots_dict, output, -1)
-        except:
-            qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
-                                          "that another program isn't using this file.")
-
-    qtutil.info("All files have been saved")
-
-  def load_triggered(self):
-      paths = [p['path'] for p in self.project.files if p['type'] == 'plot_window']
-
-      if not paths:
-          qtutil.info("Your project has no plot windows. Make and save some!")
-          return
-
-      for pickle_path in paths:
-          try:
-              with open(pickle_path, 'rb') as input:
-                  video_path_to_plots_dict = pickle.load(input)
-          except:
-              del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
-                                      "location and that another program isn't using this file " \
-                                      "" \
-                                      "\n \nOtherwise, would you like to detatch this file from your project? "
-              reply = QMessageBox.question(self, 'File Load Error',
-                                           del_msg, QMessageBox.Yes, QMessageBox.No)
-              if reply == QMessageBox.Yes:
-                  norm_path = os.path.normpath(pickle_path)
-                  self.project.files[:] = [f for f in self.project.files if os.path.normpath(f['path']) != norm_path]
-                  self.project.save()
-                  load_msg = pickle_path + " detatched from your project." \
-                                           "" \
-                                           "\n \n Would you like to continue loading the " \
-                                           "remaining project plot windows?"
-                  reply = QMessageBox.question(self, 'Continue?',
-                                               load_msg, QMessageBox.Yes, QMessageBox.No)
-              if reply == QMessageBox.No:
-                return
-              continue
-          main_window = QMainWindow()
-          area = self.setup_docks()
-          main_window.setCentralWidget(area)
-          main_window.resize(2000, 900)
-          main_window.setWindowTitle("Window ID - " + os.path.basename(os.path.splitext(pickle_path)[0]) +
-                                     ". Use Help -> What's This on this window for contextual tips")
-          self.plot_rois_same_axis(video_path_to_plots_dict, area)
-          main_window.show()
-          self.open_dialogs.append(main_window)
-          self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
-
-          # area = self.setup_docks()
-          # win = QMainWindow()
-          # win.setCentralWidget(area)
-          # self.plot_rois_same_axis(open_dialogs_data_dict, area)
-          # win.show()
+  def load_dock_windows(self):
+      pfs.load_dock_windows(self, 'plot_window')
 
 
 class MyPlugin(PluginDefault):

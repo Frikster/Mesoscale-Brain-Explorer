@@ -11,6 +11,9 @@ from .fileloader import load_reference_frame
 from .mse_ui_elements import CheckableComboBox, PlayerDialog
 from . import fileloader
 from . import constants
+import qtutil
+import uuid
+import pickle
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -209,3 +212,82 @@ def update_plugin_params(widget, key, val):
     widget.params[key] = val
     widget.project.pipeline[widget.plugin_position] = widget.params
     widget.project.save()
+
+def save_dock_windows(widget, window_type):
+    if not widget.open_dialogs:
+        qtutil.info('No plot windows are open. ')
+        return
+
+    qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows open. We will now choose a path to '
+                                                             'save each one to')
+    for (dialog, video_path_to_plots_dict) in widget.open_dialogs_data_dict:
+        win_title = dialog.windowTitle()
+        win_title = win_title[12:len(str(uuid.uuid4())) + 12]
+        filters = {
+            '.pkl': 'Python pickle file (*.pkl)'
+        }
+        default = win_title
+        pickle_path = widget.filedialog(default, filters)
+        if not pickle_path:
+            return
+
+        widget.project.files.append({
+            'path': pickle_path,
+            'type': window_type,
+            'name': os.path.basename(pickle_path)
+        })
+        widget.project.save()
+
+        # Now save the actual file
+        # area = dialog.centralWidget()
+        # state = area.saveState()
+        try:
+            with open(pickle_path, 'wb') as output:
+                pickle.dump(video_path_to_plots_dict, output, -1)
+        except:
+            qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
+                                          "that another program isn't using this file.")
+
+    qtutil.info("All files have been saved")
+
+def load_dock_windows(widget, window_type):
+    paths = [p['path'] for p in widget.project.files if p['type'] == window_type]
+
+    if not paths:
+        qtutil.info("Your project has no spc windows. Make and save some!")
+        return
+
+    for pickle_path in paths:
+        try:
+            with open(pickle_path, 'rb') as input:
+                video_path_to_plots_dict = pickle.load(input)
+        except:
+            del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
+                                    "location and that another program isn't using this file " \
+                                    "" \
+                                    "\n \nOtherwise, would you like to detatch this file from your project? "
+            reply = QMessageBox.question(widget, 'File Load Error',
+                                         del_msg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                norm_path = os.path.normpath(pickle_path)
+                widget.project.files[:] = [f for f in widget.project.files if os.path.normpath(f['path']) != norm_path]
+                widget.project.save()
+                load_msg = pickle_path + " detatched from your project." \
+                                         "" \
+                                         "\n \n Would you like to continue loading the " \
+                                         "remaining project spc windows?"
+                reply = QMessageBox.question(widget, 'Continue?',
+                                             load_msg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.No:
+                return
+            continue
+        main_window = QMainWindow()
+        area = widget.setup_docks()
+        main_window.setCentralWidget(area)
+        main_window.resize(2000, 900)
+        main_window.setWindowTitle("Window ID - " + os.path.basename(os.path.splitext(pickle_path)[0]) +
+                                   ". Use Help -> What's This on this window for contextual tips")
+        widget.plot_rois_same_axis(video_path_to_plots_dict, area)
+        main_window.show()
+        widget.open_dialogs.append(main_window)
+        widget.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
