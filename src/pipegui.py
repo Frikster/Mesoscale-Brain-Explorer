@@ -18,6 +18,7 @@ from project import ProjectManager
 
 from plugins.util import mse_ui_elements as mue
 from plugins import set_coordinate_system as scs
+import traceback
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -200,7 +201,9 @@ class MainWindow(QMainWindow):
                 try:
                     self.open_project(last)
                 except:
-                    qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
+                    qtutil.critical('Previous project appears to have been corrupted.\n \n'
+                                    + traceback.format_exc(), self)
+                    #qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
             self.sidebar.setup_sidebar_values(self.project)
 
   def load_plugins(self):
@@ -331,31 +334,19 @@ class MainWindow(QMainWindow):
     help_menu.addAction(whats_this_action)
 
   def reset_all_params(self):
-      for plugin_name in self.plugins.keys():
-          plugin = self.plugins[plugin_name]
+      for plugin_position, p in enumerate(self.project.pipeline):
+          if p['name'] in self.plugins.keys():
+            plugin = self.plugins[p['name']]
           if hasattr(plugin, 'widget'):
               if hasattr(plugin.widget, 'setup_params'):
+                  if not hasattr(plugin.widget, 'params'):
+                      plugin.widget.params = self.project.pipeline[plugin_position]
+                      plugin.widget.project = self.project
+                      plugin.widget.plugin_position = plugin_position
                   try:
                     plugin.widget.setup_params(reset=True)
                   except:
-                    print("Failed to reset " + plugin_name)
-
-
-      # for i, plugin_name in enumerate(self.pipeline_model.get_plugin_names()):
-      #     p = self.load_plugin('plugins.' + plugin_name, i)
-      #     if p:
-      #         self.plugins[plugin_name] = p
-      #         # def set_x(val):
-      #         #     self.sidebar.x_origin.setValue(val)
-      #         # def set_y(val):
-      #         #     self.sidebar.y_origin.setValue(val)
-      #         # if plugin_name == 'set_coordinate_system':
-      #         #     p.widget.x_origin_changed[float].connect(self.set_x)
-      #         #     p.widget.y_origin_changed[float].connect(set_y)
-      # if self.current_plugin:
-      #     self.set_plugin(self.current_plugin, None)
-
-
+                    print("Failed to reset " + p['name'])
 
   def setup_signals(self):
       self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
