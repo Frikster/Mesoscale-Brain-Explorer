@@ -125,8 +125,8 @@ class Widget(QWidget, WidgetDefault):
         colormap_index_default = 1
         roi_list_types_displayed = ['auto_roi']
         manip = "spc"
-        sb_min_default = -1.0
-        sb_max_default = 1.0
+        sb_min_default = -1.00
+        sb_max_default = 1.00
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -265,13 +265,21 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_params()
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)
+            self.update_plugin_params(self.Labels.sb_min_label, self.Defaults.sb_min_default)
+            self.update_plugin_params(self.Labels.sb_max_label, self.Defaults.sb_max_default)
         self.cm_comboBox.setCurrentIndex(self.params[self.Labels.colormap_index_label])
+        self.min_sb.setValue(self.params[self.Labels.sb_min_label])
+        self.max_sb.setValue(self.params[self.Labels.sb_max_label])
 
     def setup_param_signals(self):
         super().setup_param_signals()
         self.roi_list.setup_param_signals()
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
+        self.min_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_min_label))
+        self.max_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_max_label))
 
     def get_video_path_to_spc_dict(self):
         # retrieve ROIs in view and their coordinates
@@ -586,9 +594,14 @@ class Widget(QWidget, WidgetDefault):
                                     'This may take a while for large files.', self)
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for i, selected in enumerate(self.selected_videos):
+            progress_load.show()
             progress_load.setValue(i / len(self.selected_videos))
             frames = fileloader.load_npy(selected)
+            progress_load.close()
+            progress.show()
+            progress.setValue(0)
             spc = calc_spc(frames, x, y, progress)
+            progress.close()
             dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_comboBox.currentText(),
                                   (self.min_sb.value(), self.max_sb.value()))
             dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowStaysOnTopHint)
@@ -654,7 +667,7 @@ class SPCMapDialog(QDialog):
         else:
             self.setWindowTitle(os.path.basename(video_path))
         self.colorized_spc = self.colorize_spc(spcmap)
-        self.view.show(self.colorized_spc, self.corr_min, self.corr_max)
+        self.view.show(self.colorized_spc)
         self.view.vb.clicked.connect(self.vbc_clicked)
         self.view.vb.hovering.connect(self.vbc_hovering)
 
@@ -677,12 +690,12 @@ class SPCMapDialog(QDialog):
     def vbc_clicked(self, x, y):
         progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
         self.spc = calc_spc(self.video_path, x, y, progress)
-        self.view.show(self.colorize_spc(self.spc), self.corr_min.value(), self.corr_max.value())
+        self.view.show(self.colorize_spc(self.spc), self.corr_min, self.corr_max)
 
     def colorize_spc(self, spc_map):
         spc_map_with_nan = np.copy(spc_map)
         spc_map[np.isnan(spc_map)] = 0
-        gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+        gradient_range = matplotlib.colors.Normalize(self.corr_min, self.corr_max)
         spc_map = np.ma.masked_where(spc_map == 0, spc_map)
         cmap = matplotlib.cm.ScalarMappable(
           gradient_range, self.cm_type)
