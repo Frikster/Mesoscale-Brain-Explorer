@@ -329,23 +329,22 @@ class Widget(QWidget, WidgetDefault):
         progress_load = MyProgressDialog('Processing...', 'Loading files and processing Seed Pixel Correlation maps. '
                                     'This may take a while for large files.', parent=self)
         video_path_to_plots_dict = {}
+        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for selected_vid_no, video_path in enumerate(selected_videos):
-            progress_load.show()
-            if progress_load.wasCanceled():
-                return
-            progress_load.setValue(selected_vid_no / len(selected_videos))
             frames = fileloader.load_file(video_path)
-            progress_load.setValue(1)
             roi_activity_dict = {}
-            progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
             for i, roi_name in enumerate(roi_names):
+                if progress_load.wasCanceled():
+                    return
+                progress_load.setValue((selected_vid_no * i) / (len(selected_videos) * len(roi_names)) * 100)
                 if roi_name in rois_in_view:
                     x = roi_coord_x[i]
                     y = roi_coord_y[i]
                     spc = calc_spc(frames, x, y, progress)
-                    progress.close()
                     roi_activity_dict[roi_name] = spc
             video_path_to_plots_dict[video_path] = roi_activity_dict
+            progress.close()
+        progress_load.close()
         return video_path_to_plots_dict
 
             # progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
@@ -396,7 +395,7 @@ class Widget(QWidget, WidgetDefault):
         area.moveDock(d6, 'left', d5)
         return area
 
-    def plot_spc_to_docks(self, video_path_to_spc_dict, area):
+    def plot_to_docks(self, video_path_to_spc_dict, area):
         if not video_path_to_spc_dict:
             return
         roi_names = list(list(video_path_to_spc_dict.values())[0].keys())
@@ -413,7 +412,7 @@ class Widget(QWidget, WidgetDefault):
 
                 spc = video_path_to_spc_dict[video_path][roi_name]
                 doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
-                                          (self.min_sb.value(), self.max_sb.value()), roi_name)
+                                          (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
                 root, ext = os.path.splitext(video_path)
                 source_name = os.path.basename(root)
                 doc_window.setWindowTitle(source_name)
@@ -437,7 +436,7 @@ class Widget(QWidget, WidgetDefault):
                                    ". Use Help -> What's This on this window for contextual tips")
 
         video_path_to_spc_dict = self.get_video_path_to_spc_dict()
-        self.plot_spc_to_docks(video_path_to_spc_dict, area)
+        self.plot_to_docks(video_path_to_spc_dict, area)
         main_window.show()
         self.open_dialogs.append(main_window)
         self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
@@ -625,20 +624,17 @@ class Widget(QWidget, WidgetDefault):
                                     'This may take a while for large files.', self)
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for i, selected in enumerate(self.selected_videos):
-            progress_load.show()
-            progress_load.setValue(i / len(self.selected_videos))
+            progress_load.setValue((i / len(self.selected_videos)) * 100)
             frames = fileloader.load_npy(selected)
-            progress_load.close()
             progress.show()
-            progress.setValue(0)
             spc = calc_spc(frames, x, y, progress)
             progress.close()
-            dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_comboBox.currentText(),
-                                  (self.min_sb.value(), self.max_sb.value()))
+            dialog = SPCMapDialog(self.project, selected, spc, self.cm_comboBox.currentText(),
+                                  (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)))
             dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowStaysOnTopHint)
             dialog.show()
             self.open_dialogs.append(dialog)
-
+        progress_load.close()
 
     # todo: NOT FINISHED
     def setup_whats_this(self):
@@ -741,8 +737,11 @@ class SPCMapDialog(QDialog):
 
     def vbc_clicked(self, x, y):
         progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
-        self.spc = calc_spc(self.video_path, x, y, progress)
-        self.view.show(self.colorize_spc(self.spc), self.corr_min, self.corr_max)
+        progress.show()
+        progress.setValue(0)
+        frames = fileloader.load_npy(self.video_path)
+        self.spc = calc_spc(frames, x, y, progress)
+        self.view.show(self.colorize_spc(self.spc))
 
     def colorize_spc(self, spc_map):
         spc_map_with_nan = np.copy(spc_map)

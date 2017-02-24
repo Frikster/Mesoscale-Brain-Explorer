@@ -287,7 +287,7 @@ def load_dock_windows(widget, window_type):
         main_window.resize(2000, 900)
         main_window.setWindowTitle("Window ID - " + os.path.basename(os.path.splitext(pickle_path)[0]) +
                                    ". Use Help -> What's This on this window for contextual tips")
-        widget.plot_rois_same_axis(video_path_to_plots_dict, area)
+        widget.plot_to_docks(video_path_to_plots_dict, area)
         main_window.show()
         widget.open_dialogs.append(main_window)
         widget.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))

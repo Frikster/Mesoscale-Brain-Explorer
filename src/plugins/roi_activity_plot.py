@@ -467,7 +467,7 @@ class Widget(QWidget, WidgetDefault):
       return video_path_to_plots_dict
 
 
-  def plot_rois_same_axis(self, video_path_to_plots_dict, area):
+  def plot_to_docks(self, video_path_to_plots_dict, area):
       if not video_path_to_plots_dict:
           return
       roi_names = list(list(video_path_to_plots_dict.values())[0].keys())
@@ -607,7 +607,7 @@ class Widget(QWidget, WidgetDefault):
                                ". Use Help -> What's This on this window for contextual tips")
 
     video_path_to_plots_dict = self.get_video_path_to_plots_dict()
-    self.plot_rois_same_axis(video_path_to_plots_dict, area)
+    self.plot_to_docks(video_path_to_plots_dict, area)
     main_window.show()
     self.open_dialogs.append(main_window)
     self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
