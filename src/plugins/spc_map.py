@@ -28,6 +28,7 @@ from .util.mse_ui_elements import RoiList
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 from .util.mse_ui_elements import RoiItemModel
+import pickle
 
 UUID_SIZE = len(str(uuid.uuid4()))
 
@@ -125,8 +126,8 @@ class Widget(QWidget, WidgetDefault):
         colormap_index_default = 1
         roi_list_types_displayed = ['auto_roi']
         manip = "spc"
-        sb_min_default = -1.0
-        sb_max_default = 1.0
+        sb_min_default = -1.00
+        sb_max_default = 1.00
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -139,8 +140,10 @@ class Widget(QWidget, WidgetDefault):
         # self.video_list = MyListView()
         self.cm_comboBox = QtGui.QComboBox(self)
         self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
+        self.save_pb = QPushButton("&Save spc windows")
+        self.load_pb = QPushButton("&Load project spc windows")
         self.bulk_background_pb = QPushButton('Save all SPC maps from table ROIs to file')
-        self.spc_from_rois_pb = QPushButton('Generate SPC maps from selected ROIs (display windows and save to file)')
+        self.spc_from_rois_pb = QPushButton('Generate SPC maps')
         self.open_dialogs_data_dict = []
         self.min_sb = QDoubleSpinBox()
         self.max_sb = QDoubleSpinBox()
@@ -198,12 +201,12 @@ class Widget(QWidget, WidgetDefault):
         # todo: colormap list should be dealt with in a seperate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("viridis")
-        self.cm_comboBox.addItem("coolwarm")
-        self.cm_comboBox.addItem("PRGn")
-        self.cm_comboBox.addItem("seismic")
         self.cm_comboBox.addItem("inferno")
         self.cm_comboBox.addItem("plasma")
         self.cm_comboBox.addItem("magma")
+        self.cm_comboBox.addItem("coolwarm")
+        self.cm_comboBox.addItem("PRGn")
+        self.cm_comboBox.addItem("seismic")
         self.vbox.addWidget(self.cm_comboBox)
         hbox = QHBoxLayout()
         hbox.addWidget(QLabel(self.Labels.sb_min_label))
@@ -228,7 +231,8 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(QLabel('Seeds'))
         self.vbox.addWidget(self.roi_list)
         # pb = QPushButton('Save all SPC maps from table seeds to file')
-        self.vbox.addWidget(self.bulk_background_pb)
+        self.vbox.addWidget(self.save_pb)
+        self.vbox.addWidget(self.load_pb)
         # pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
         self.vbox.addWidget(self.spc_from_rois_pb)
         self.vbox.addStretch()
@@ -257,6 +261,8 @@ class Widget(QWidget, WidgetDefault):
         #self.spc_from_rois_pb.clicked.connect(self.spc_bulk_clicked_display)
 
         self.spc_from_rois_pb.clicked.connect(self.spc_triggered)
+        self.save_pb.clicked.connect(self.save_dock_windows)
+        self.load_pb.clicked.connect(self.load_dock_windows)
         # self.roi_list.selectionModel().selectionChanged[QItemSelection,
         #                                                 QItemSelection].connect(self.selected_roi_changed)
 
@@ -265,13 +271,21 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_params()
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)
+            self.update_plugin_params(self.Labels.sb_min_label, self.Defaults.sb_min_default)
+            self.update_plugin_params(self.Labels.sb_max_label, self.Defaults.sb_max_default)
         self.cm_comboBox.setCurrentIndex(self.params[self.Labels.colormap_index_label])
+        self.min_sb.setValue(self.params[self.Labels.sb_min_label])
+        self.max_sb.setValue(self.params[self.Labels.sb_max_label])
 
     def setup_param_signals(self):
         super().setup_param_signals()
         self.roi_list.setup_param_signals()
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
+        self.min_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_min_label))
+        self.max_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_max_label))
 
     def get_video_path_to_spc_dict(self):
         # retrieve ROIs in view and their coordinates
@@ -313,24 +327,24 @@ class Widget(QWidget, WidgetDefault):
         #     QApplication.processEvents()
 
         progress_load = MyProgressDialog('Processing...', 'Loading files and processing Seed Pixel Correlation maps. '
-                                    'This may take a while for large files.', self)
+                                    'This may take a while for large files.', parent=self)
         video_path_to_plots_dict = {}
+        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for selected_vid_no, video_path in enumerate(selected_videos):
-            progress_load.setValue(selected_vid_no / len(selected_videos))
             frames = fileloader.load_file(video_path)
-            if progress_load.wasCanceled():
-                return
             roi_activity_dict = {}
-            progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
             for i, roi_name in enumerate(roi_names):
+                if progress_load.wasCanceled():
+                    return
+                progress_load.setValue((selected_vid_no * i) / (len(selected_videos) * len(roi_names)) * 100)
                 if roi_name in rois_in_view:
                     x = roi_coord_x[i]
                     y = roi_coord_y[i]
                     spc = calc_spc(frames, x, y, progress)
                     roi_activity_dict[roi_name] = spc
-            progress.setValue(1)
             video_path_to_plots_dict[video_path] = roi_activity_dict
-        progress_load.setValue(1)
+            progress.close()
+        progress_load.close()
         return video_path_to_plots_dict
 
             # progress = QProgressDialog('Generating SPC Map(s) for ' + video_path, 'Abort', 0, 100, self)
@@ -381,7 +395,7 @@ class Widget(QWidget, WidgetDefault):
         area.moveDock(d6, 'left', d5)
         return area
 
-    def plot_spc_to_docks(self, video_path_to_spc_dict, area):
+    def plot_to_docks(self, video_path_to_spc_dict, area):
         if not video_path_to_spc_dict:
             return
         roi_names = list(list(video_path_to_spc_dict.values())[0].keys())
@@ -398,7 +412,7 @@ class Widget(QWidget, WidgetDefault):
 
                 spc = video_path_to_spc_dict[video_path][roi_name]
                 doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
-                                          (self.min_sb.value(), self.max_sb.value()), roi_name)
+                                          (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
                 root, ext = os.path.splitext(video_path)
                 source_name = os.path.basename(root)
                 doc_window.setWindowTitle(source_name)
@@ -408,11 +422,10 @@ class Widget(QWidget, WidgetDefault):
                 spc_col = doc_window.colorized_spc
                 path_without_ext = os.path.join(self.project.path, video_path + "_" + roi_name)
                 scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.cm_comboBox.currentText() + '.jpg')
-
+                np.save(path_without_ext + '.npy', spc)
         # close placeholder docks
         for spc_dock in spc_docks:
             area.docks['d'+str(spc_dock+1)].close()
-
 
     def spc_triggered(self):
         main_window = QMainWindow()
@@ -423,11 +436,36 @@ class Widget(QWidget, WidgetDefault):
                                    ". Use Help -> What's This on this window for contextual tips")
 
         video_path_to_spc_dict = self.get_video_path_to_spc_dict()
-        self.plot_spc_to_docks(video_path_to_spc_dict, area)
+        self.plot_to_docks(video_path_to_spc_dict, area)
         main_window.show()
         self.open_dialogs.append(main_window)
         self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
 
+    def save_dock_windows(self):
+        pfs.save_dock_windows(self, 'spc_window')
+
+    def load_dock_windows(self):
+        pfs.load_dock_windows(self, 'spc_window')
+
+    def filedialog(self, name, filters):
+        path = self.project.path
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle('Export to')
+        dialog.setDirectory(str(path))
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setOption(QFileDialog.DontUseNativeDialog)
+        dialog.selectFile(name)
+        dialog.setFilter(';;'.join(filters.values()))
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if not dialog.exec_():
+            return None
+        filename = str(dialog.selectedFiles()[0])
+        QSettings().setValue('export_path', os.path.dirname(filename))
+        filter_ = str(dialog.selectedNameFilter())
+        ext = [f for f in filters if filters[f] == filter_][0]
+        if not filename.endswith(ext):
+            filename = filename + ext
+        return filename
 
     # def prepare_roi_list_for_update(self, selected, deselected):
     #     val = [v.row() for v in self.roi_list.selectedIndexes()]
@@ -586,14 +624,25 @@ class Widget(QWidget, WidgetDefault):
                                     'This may take a while for large files.', self)
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for i, selected in enumerate(self.selected_videos):
-            progress_load.setValue(i / len(self.selected_videos))
+            progress_load.setValue((i / len(self.selected_videos)) * 100)
             frames = fileloader.load_npy(selected)
+            progress.show()
             spc = calc_spc(frames, x, y, progress)
-            dialog = SPCMapDialog(self.project, self.shown_video_path, spc, self.cm_comboBox.currentText(),
-                                  (self.min_sb.value(), self.max_sb.value()))
+            progress.close()
+            dialog = SPCMapDialog(self.project, selected, spc, self.cm_comboBox.currentText(),
+                                  (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)))
             dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowStaysOnTopHint)
             dialog.show()
             self.open_dialogs.append(dialog)
+        progress_load.close()
+
+    # todo: NOT FINISHED
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.spc_from_rois_pb.setWhatsThis("Creates seed pixel correlation maps (SPC) from the seeds selected for each "
+                                           "image stack selected. Seeds are taken from the coordinates imported "
+                                           "through the import ROIs plugin. SPC maps are automatically saved to file "
+                                           "as numpy arrays")
 
     # def spc_to_windows(self, x, y, name, vid_path):
     #     assert self.selected_videos
@@ -613,22 +662,34 @@ class Widget(QWidget, WidgetDefault):
     #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
 
 
-    # def spc_to_file(self, x, y, name, vid_path):
-    #     assert self.selected_videos
-    #     #define base name
-    #     vid_name = os.path.basename(vid_path)
-    #     path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
-    #     # compute spc
-    #     progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
-    #     spc = calc_spc(vid_path, x, y, progress)
-    #     # save to npy
-    #     np.save(path_without_ext + '.npy', spc)
-    #     dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
-    #     spc_col = dialog_object.colorized_spc
-    #     #Save as png and jpeg
-    #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
-    #     #not working
-    #     #png.from_array(spc_col, 'L').save(path_without_ext+".png")
+    def spc_to_file(self, spc, name, vid_path):
+        assert self.selected_videos
+        #define base name
+        vid_name = os.path.basename(vid_path)
+        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+        # save to npy
+        np.save(path_without_ext + '.npy', spc)
+        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
+        spc_col = dialog_object.colorized_spc
+        #Save as png and jpeg
+        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
+
+    def spc_to_file(self, x, y, name, vid_path):
+        assert self.selected_videos
+        #define base name
+        vid_name = os.path.basename(vid_path)
+        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+        # compute spc
+        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+        spc = calc_spc(vid_path, x, y, progress)
+        # save to npy
+        np.save(path_without_ext + '.npy', spc)
+        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
+        spc_col = dialog_object.colorized_spc
+        #Save as png and jpeg
+        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
+        #not working
+        #png.from_array(spc_col, 'L').save(path_without_ext+".png")
 
 
 class SPCMapDialog(QDialog):
@@ -654,7 +715,7 @@ class SPCMapDialog(QDialog):
         else:
             self.setWindowTitle(os.path.basename(video_path))
         self.colorized_spc = self.colorize_spc(spcmap)
-        self.view.show(self.colorized_spc, self.corr_min, self.corr_max)
+        self.view.show(self.colorized_spc)
         self.view.vb.clicked.connect(self.vbc_clicked)
         self.view.vb.hovering.connect(self.vbc_hovering)
 
@@ -676,13 +737,16 @@ class SPCMapDialog(QDialog):
 
     def vbc_clicked(self, x, y):
         progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
-        self.spc = calc_spc(self.video_path, x, y, progress)
-        self.view.show(self.colorize_spc(self.spc), self.corr_min.value(), self.corr_max.value())
+        progress.show()
+        progress.setValue(0)
+        frames = fileloader.load_npy(self.video_path)
+        self.spc = calc_spc(frames, x, y, progress)
+        self.view.show(self.colorize_spc(self.spc))
 
     def colorize_spc(self, spc_map):
         spc_map_with_nan = np.copy(spc_map)
         spc_map[np.isnan(spc_map)] = 0
-        gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+        gradient_range = matplotlib.colors.Normalize(self.corr_min, self.corr_max)
         spc_map = np.ma.masked_where(spc_map == 0, spc_map)
         cmap = matplotlib.cm.ScalarMappable(
           gradient_range, self.cm_type)
@@ -735,7 +799,7 @@ class SPCMapDialog(QDialog):
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'SPC map'
+        self.name = 'Seed pixel correlation map'
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
