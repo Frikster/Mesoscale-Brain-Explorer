@@ -254,7 +254,7 @@ def load_dock_windows(widget, window_type):
     paths = [p['path'] for p in widget.project.files if p['type'] == window_type]
 
     if not paths:
-        qtutil.info("Your project has no spc windows. Make and save some!")
+        qtutil.info("Your project has no windows. Make and save some!")
         return
 
     for pickle_path in paths:
@@ -275,7 +275,7 @@ def load_dock_windows(widget, window_type):
                 load_msg = pickle_path + " detatched from your project." \
                                          "" \
                                          "\n \n Would you like to continue loading the " \
-                                         "remaining project spc windows?"
+                                         "remaining project windows?"
                 reply = QMessageBox.question(widget, 'Continue?',
                                              load_msg, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:

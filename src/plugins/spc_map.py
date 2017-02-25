@@ -15,6 +15,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 from pyqtgraph.graphicsItems.UIGraphicsItem import *
+import matplotlib.pyplot as plt
 
 from .util import fileloader
 from .util import filter_jeff
@@ -197,7 +198,7 @@ class Widget(QWidget, WidgetDefault):
         # vbox.addWidget(QLabel('Choose video:'))
         # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # vbox.addWidget(self.video_list)
-        self.vbox.addWidget(QLabel('Choose colormap:'))
+        self.vbox.addWidget(QLabel(self.Labels.colormap_index_label))
         # todo: colormap list should be dealt with in a seperate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("viridis")
@@ -749,7 +750,7 @@ class SPCMapDialog(QDialog):
         gradient_range = matplotlib.colors.Normalize(self.corr_min, self.corr_max)
         spc_map = np.ma.masked_where(spc_map == 0, spc_map)
         cmap = matplotlib.cm.ScalarMappable(
-          gradient_range, self.cm_type)
+          gradient_range, plt.get_cmap(self.cm_type))
         spc_map_color = cmap.to_rgba(spc_map, bytes=True)
         # turn areas outside mask black
         spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])

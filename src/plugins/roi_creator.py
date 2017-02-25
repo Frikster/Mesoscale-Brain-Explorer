@@ -314,7 +314,9 @@ class Widget(QWidget, WidgetDefault):
     roi.setName(str(new_name_str))
     for i in range(len(self.project.files)):
       if self.project.files[i]['path'].endswith(str(prev_name_str) + '.roi'):
-        os.rename(self.project.files[i]['path'], self.project.files[i]['path'].replace(prev_name_str, new_name_str))
+        new_path = self.project.files[i]['path'].replace(prev_name_str, new_name_str)
+        os.rename(self.project.files[i]['path'], new_path)
+        self.view.vb.saveROI(new_path)
         self.project.files[i]['path'] = self.project.files[i]['path'].replace(prev_name_str, new_name_str)
         self.project.files[i]['name'] = new_name_str
     self.project.save()
