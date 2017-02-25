@@ -201,12 +201,12 @@ class Widget(QWidget, WidgetDefault):
         # todo: colormap list should be dealt with in a seperate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("viridis")
-        self.cm_comboBox.addItem("coolwarm")
-        self.cm_comboBox.addItem("PRGn")
-        self.cm_comboBox.addItem("seismic")
         self.cm_comboBox.addItem("inferno")
         self.cm_comboBox.addItem("plasma")
         self.cm_comboBox.addItem("magma")
+        self.cm_comboBox.addItem("coolwarm")
+        self.cm_comboBox.addItem("PRGn")
+        self.cm_comboBox.addItem("seismic")
         self.vbox.addWidget(self.cm_comboBox)
         hbox = QHBoxLayout()
         hbox.addWidget(QLabel(self.Labels.sb_min_label))
@@ -799,7 +799,7 @@ class SPCMapDialog(QDialog):
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'SPC map'
+        self.name = 'Seed pixel correlation map'
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
