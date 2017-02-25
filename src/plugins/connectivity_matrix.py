@@ -166,7 +166,8 @@ class Widget(QWidget, WidgetDefault):
         super().setup_signals()
         # self.cm_comboBox.activated[str].connect(self.cm_choice)
         self.cm_pb.clicked.connect(self.connectivity_triggered)
-        self.save_pb.clicked.connect(self.save_open_dialogs_to_csv)
+        self.save_pb.clicked.connect(self.save_triggered)
+        self.load_pb.clicked.connect(self.load_triggered)
 
     def setup_params(self, reset=False):
         super().setup_params(reset)
@@ -214,14 +215,31 @@ class Widget(QWidget, WidgetDefault):
         elif not rois:
             qtutil.critical('Select Roi(s).')
         else:
-
-            win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
-                                   rois, cm_type, callback)
-
-            # win = ConnectivityDialog(roinames, cm_type, self, callback)
+            win = ConnectivityDialog(self, roinames, cm_type, progress_callback=callback)
             callback(1)
             win.show()
             self.open_dialogs.append(win)
+            self.save_open_dialogs_to_csv()
+
+    def filedialog(self, name, filters):
+        path = self.project.path
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle('Export to')
+        dialog.setDirectory(str(path))
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setOption(QFileDialog.DontUseNativeDialog)
+        dialog.selectFile(name)
+        dialog.setFilter(';;'.join(filters.values()))
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if not dialog.exec_():
+            return None
+        filename = str(dialog.selectedFiles()[0])
+        QSettings().setValue('export_path', os.path.dirname(filename))
+        filter_ = str(dialog.selectedNameFilter())
+        ext = [f for f in filters if filters[f] == filter_][0]
+        if not filename.endswith(ext):
+            filename = filename + ext
+        return filename
 
     def save_triggered(self):
         if not self.open_dialogs:
@@ -231,7 +249,7 @@ class Widget(QWidget, WidgetDefault):
         qtutil.info(
             'There are ' + str(len(self.open_dialogs)) + ' matrix windows open. We will now choose a path to '
                                                            'save each one to')
-        for dialog in self.open_dialogs_data_dict:
+        for dialog in self.open_dialogs:
             win_title = dialog.windowTitle()
             filters = {
                 '.pkl': 'Python pickle file (*.pkl)'
@@ -251,9 +269,11 @@ class Widget(QWidget, WidgetDefault):
             # Now save the actual file
             # area = dialog.centralWidget()
             # state = area.saveState()
+
+            matrix_output_data = (pickle_path, dialog.model.roinames, dialog.model._data)
             try:
                 with open(pickle_path, 'wb') as output:
-                    pickle.dump(dialog.model._data, output, -1)
+                    pickle.dump(matrix_output_data, output, -1)
             except:
                 qtutil.critical(
                     pickle_path + " could not be saved. Ensure MBE has write access to this location and "
@@ -261,8 +281,14 @@ class Widget(QWidget, WidgetDefault):
 
         qtutil.info("All files have been saved")
 
+        csv_msg = "Save csv files of all open Connectivity Matrix windows as well?"
+        reply = QMessageBox.question(self, 'Save All',
+                                     csv_msg, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.save_open_dialogs_to_csv()
+
     def load_triggered(self):
-        paths = [p['path'] for p in widget.project.files if p['type'] == self.Defaults.window_type]
+        paths = [p['path'] for p in self.project.files if p['type'] == self.Defaults.window_type]
         if not paths:
             qtutil.info("Your project has no connectivity matrices. Make and save some!")
             return
@@ -270,7 +296,7 @@ class Widget(QWidget, WidgetDefault):
         for pickle_path in paths:
             try:
                 with open(pickle_path, 'rb') as input:
-                    (avg_data, stdev_dict) = pickle.load(input)
+                    (title, roinames, (avg_data, stdev_dict)) = pickle.load(input)
             except:
                 del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
                                         "location and that another program isn't using this file " \
@@ -293,40 +319,31 @@ class Widget(QWidget, WidgetDefault):
                     return
                 continue
 
-        main_window = QMainWindow()
-        area = self.setup_docks()
-        main_window.setCentralWidget(area)
-        main_window.resize(2000, 900)
-        main_window.setWindowTitle("Window ID - " + os.path.basename(os.path.splitext(pickle_path)[0]) +
-                                   ". Use Help -> What's This on this window for contextual tips")
-        self.plot_to_docks(video_path_to_plots_dict, area)
+        main_window = ConnectivityDialog(self, roinames, self.cm_comboBox.currentText(), (avg_data, stdev_dict))
+        main_window.setWindowTitle(title)
         main_window.show()
         self.open_dialogs.append(main_window)
-        self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
-
-
-        (avg_data, stdev_dict) = dialog.model._data
 
     def save_open_dialogs_to_csv(self):
         if not self.open_dialogs:
             qtutil.info('No connectivity matrix windows are open. ')
             return
 
-        progress = QProgressDialog('Generating csv files...',
-                                   'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
+        # progress = QProgressDialog('Generating csv files...',
+        #                            'Abort', 0, 100, self)
+        # progress.setAutoClose(True)
+        # progress.setMinimumDuration(0)
+        #
+        # def callback(x):
+        #     progress.setValue(x * 100)
+        #     QApplication.processEvents()
 
         for i, dialog in enumerate(self.open_dialogs):
-            callback(i / len(self.open_dialogs))
+            # callback(i / len(self.open_dialogs))
             rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
             unique_id = str(uuid.uuid4())
-            file_name_avg = dialog.windowTitle() + '_averaged_connectivity_matrix_.csv'
-            file_name_stdev = dialog.windowTitle() + '_stdev_connectivity_matrix_.csv'
+            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_connectivity_matrix.csv'
+            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_connectivity_matrix.csv'
 
             with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
@@ -345,8 +362,8 @@ class Widget(QWidget, WidgetDefault):
                     row = [row[x][1] for x in range(len(row))]
                     writer.writerow(row)
                 writer.writerow(['Selected videos:'] + self.selected_videos)
-        callback(1)
-        qtutil.info("All matrices saved to project directory")
+        # callback(1)
+        # qtutil.info("All matrices saved to project directory")
                 # for row_ind in range(len(dialog.model._data)):
                 #     row = dialog.model._data[row_ind]
                 #     row = [row[x][0] for x in range(len(row))]
@@ -376,59 +393,66 @@ class Widget(QWidget, WidgetDefault):
 
 # todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
-    def __init__(self, selected_videos, rois, cm_type, image, parent=None, progress_callback=None):
-        super(ConnectivityModel, self).__init__(parent)
+    def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
+        super(ConnectivityModel, self).__init__()
         self.cm_type = cm_type
-        self.rois = rois
-        self.matrix_list = []
-        avg_data = []
-        tot_data = []
-        dict_for_stdev = {}
+        self.roinames = roinames
+        self.rois = [widget.view.vb.getRoi(roiname) for roiname in roinames]
 
-        for key in [i for i in list(itertools.product(range(len(rois)), range(len(rois))))]:
-            dict_for_stdev[key] = []
+        if loaded_data:
+            self._data = loaded_data
+        else:
+            selected_videos = widget.selected_videos
+            image = widget.view.vb.img
+            self.matrix_list = []
+            avg_data = []
+            tot_data = []
+            dict_for_stdev = {}
 
-        for i, video_path in enumerate(selected_videos):
-            if progress_callback:
-                progress_callback(i / len(selected_videos))
-            self._data = calc_connectivity(video_path, image, rois)
-            self.matrix_list = self.matrix_list + [self._data]
-            if tot_data == []:
-                tot_data = self._data
-            if avg_data == []:
-                avg_data = self._data
+            for key in [i for i in list(itertools.product(range(len(self.rois)), range(len(self.rois))))]:
+                dict_for_stdev[key] = []
+
+            for i, video_path in enumerate(selected_videos):
+                if progress_callback:
+                    progress_callback(i / len(selected_videos))
+                self._data = calc_connectivity(video_path, image, self.rois)
+                self.matrix_list = self.matrix_list + [self._data]
+                if tot_data == []:
+                    tot_data = self._data
+                if avg_data == []:
+                    avg_data = self._data
+                for i in range(len(tot_data)):
+                    for j in range(len(tot_data)):
+                        dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
+                        # ignore half of graph
+                        if i < j:
+                            dict_for_stdev[(i, j)] = [0]
+                        # Start above with self._data receiving= the first value before adding on the rest.
+                        # don't add the first value twice
+                        if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
+                            tot_data[i][j] = tot_data[i][j] + self._data[i][j]
+            # Finally compute averages
             for i in range(len(tot_data)):
                 for j in range(len(tot_data)):
-                    dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
+                    if progress_callback:
+                        progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                     # ignore half of graph
                     if i < j:
-                        dict_for_stdev[(i, j)] = [0]
-                    # Start above with self._data receiving= the first value before adding on the rest.
-                    # don't add the first value twice
-                    if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
-                        tot_data[i][j] = tot_data[i][j] + self._data[i][j]
-        # Finally compute averages
-        for i in range(len(tot_data)):
-            for j in range(len(tot_data)):
-                if progress_callback:
-                    progress_callback((i*j) / (len(tot_data)*len(tot_data)))
-                # ignore half of graph
-                if i < j:
-                    avg_data[i][j] = 0
-                else:
-                    avg_data[i][j] = tot_data[i][j] / len(selected_videos)
-        stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
-        assert(stdev_dict[(0, 0)] == 0)
+                        avg_data[i][j] = 0
+                    else:
+                        avg_data[i][j] = tot_data[i][j] / len(selected_videos)
+            stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
+            assert(stdev_dict[(0, 0)] == 0)
 
-        # combine stddev and avg data
-        for i in range(len(avg_data)):
-            for j in range(len(avg_data)):
-                if progress_callback:
-                    progress_callback((i*j) / (len(avg_data) * len(avg_data)))
-                avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
+            # combine stddev and avg data
+            for i in range(len(avg_data)):
+                for j in range(len(avg_data)):
+                    if progress_callback:
+                        progress_callback((i*j) / (len(avg_data) * len(avg_data)))
+                    avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
 
-        self._data = avg_data
-        assert(avg_data != [])
+            self._data = avg_data
+            assert(avg_data != [])
 
     def rowCount(self, parent):
         return len(self._data)
@@ -469,12 +493,12 @@ class ConnectivityTable(QTableView):
         self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
-    def __init__(self, selected_videos, image, rois, cm_type, progress_callback=None):
+    def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__()
         self.setWindowTitle('Connectivity Matrix - ' + str(uuid.uuid4()))
         self.table = ConnectivityTable()
         self.setup_ui()
-        self.model = ConnectivityModel(selected_videos, rois, cm_type, image, None, progress_callback)
+        self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
         self.table.setModel(self.model)
 
     def setup_ui(self):
