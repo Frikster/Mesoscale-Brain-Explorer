@@ -84,7 +84,6 @@ class Widget(QWidget):
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(qtutil.separator())
-    vbox.addWidget(QLabel())
     vbox.addWidget(self.origin_label)
     pb = QPushButton('Shift selected data to this project')
     pb.clicked.connect(self.shift_to_this)
