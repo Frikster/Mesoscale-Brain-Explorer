@@ -17,7 +17,7 @@ import qtutil
 
 from .util.qt import FileTable, MyProgressDialog
 from .util import fileloader
-
+import functools
 import tifffile as tiff
 import cv2
 from .util.plugin import PluginDefault
@@ -171,8 +171,13 @@ class Widget(QWidget, WidgetDefault):
       self.framerate_sb.setValue(self.params[self.Labels.export_framerate_label])
       self.cb_dtype.setCurrentIndex(self.params[self.Labels.export_dtype_label])
 
-
-  # def refresh_video_list_via_combo_box(self, trigger_item=None):
+  def setup_param_signals(self):
+      super().setup_param_signals()
+      self.framerate_sb.valueChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                    self.Labels.export_framerate_label))
+      self.cb_dtype.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                       self.Labels.export_dtype_label))
+      # def refresh_video_list_via_combo_box(self, trigger_item=None):
   #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
   #
   # def selected_video_changed(self, selected, deselected):
@@ -254,9 +259,12 @@ class Widget(QWidget, WidgetDefault):
     # f = self.table.model().get_entry(rows[0])
 
     #    f = self.shown_video_path
-    for selected_video in self.selected_videos:
+    progress = MyProgressDialog('Export Progress', 'Exporting files...', self)
+    progress.show()
+    for i, selected_video in enumerate(self.selected_videos):
+        progress.setValue((i/len(self.selected_videos)) * 100)
         self.export(selected_video)
-
+    progress.close()
   # def row_doubleclicked(self, index):
   #   """Retrieve fileinfo and call export"""
   #   f = self.table.model().get_entry(index)
