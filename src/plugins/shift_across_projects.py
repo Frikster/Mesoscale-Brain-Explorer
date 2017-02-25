@@ -48,7 +48,9 @@ class Widget(QWidget):
     self.selected_videos = []
     #self.projects_selected_videos_are_from = []
     [self.x, self.y] = self.project['origin']
-    self.origin_label.setText('Origin to align to: ({} | {})'.format(round(self.x, 2), round(self.y, 2)))
+    self.origin_from_project = QLabel("Make sure the origin of all external projects loaded is correct")
+    self.origin_label.setText('Origin of this project all files will be shifted to: ({} | {})'.format(round(self.x, 2),
+                                                                                                      round(self.y, 2)))
     self.left = QFrame()
     self.right = QFrame()
     self.setup_ui()
@@ -74,7 +76,6 @@ class Widget(QWidget):
     self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
-    vbox.addWidget(QLabel('Data from other projects'))
     pb = QPushButton('Load JSON files from other projects')
     pb.clicked.connect(self.new_json)
     vbox.addWidget(pb)
@@ -83,12 +84,12 @@ class Widget(QWidget):
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(qtutil.separator())
-    vbox.addWidget(QLabel('Data from other projects'))
+    vbox.addWidget(QLabel())
     vbox.addWidget(self.origin_label)
-    pb = QPushButton('Align selected data to this project')
+    pb = QPushButton('Shift selected data to this project')
     pb.clicked.connect(self.shift_to_this)
     vbox.addWidget(pb)
-    vbox.addWidget(QLabel('Shifted Data from other projects'))
+    vbox.addWidget(QLabel('Data imported to this project after shift'))
     self.list_shifted.setStyleSheet('QListView::item { height: 26px; }')
     self.list_shifted.setSelectionMode(QAbstractItemView.SingleSelection)
     vbox.addWidget(self.list_shifted)
@@ -183,12 +184,12 @@ class Widget(QWidget):
           shift = [y_shift, x_shift]
           shifted_frames = self.apply_shift(frames, shift, callback)
           # and save to project
-          pre_shifted_basename, ext = os.path.splitext(os.path.basename(video_path))
+          pre_shifted_basename = os.path.splitext(os.path.basename(video_path))[0]
           manip = '_shift_from_' + project_from.name
           manips = manips + [manip]
           path_after = str(os.path.join(self.project.path, pre_shifted_basename+manip) + '.npy')
           fileloader.save_file(path_after, shifted_frames)
-          name_after, ext = os.path.splitext(os.path.basename(path_after))
+          name_after = os.path.splitext(os.path.basename(path_after))[0]
           if path_after in [f['path'] for f in self.project.files]:
               raise FileAlreadyInProjectError(path_after)
           self.project.files.append({
@@ -254,7 +255,7 @@ class Widget(QWidget):
           progress_callback(frame_no / float(len(frames)))
           shifted_frames.append(ird.transform_img(frame, tvec=shift))
       progress_callback(1)
-      return shifted_frames
+      return np.array(shifted_frames)
 
   def import_files(self, filenames):
     for filename in filenames:
