@@ -237,7 +237,8 @@ class Widget(QWidget, WidgetDefault):
         # pb = QPushButton('Generate SPC maps from selected seeds (display windows and save to file)')
         self.vbox.addWidget(self.spc_from_rois_pb)
         self.vbox.addStretch()
-        self.vbox.addWidget(mue.InfoWidget('Click on the image to generate custom SPC map.'))
+        self.vbox.addWidget(mue.InfoWidget('You can also click on the image to right to generate custom SPC maps of '
+                                           'all image stacks selected in the list above.'))
         # self.right.setLayout(self.vbox)
         #
         # splitter = QSplitter(Qt.Horizontal)
@@ -414,6 +415,10 @@ class Widget(QWidget, WidgetDefault):
                 spc = video_path_to_spc_dict[video_path][roi_name]
                 doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
                                           (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
+                doc_window.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
+                                        "and roll the mouse wheel to zoom in and out. Moving the map resets the "
+                                        "position of the gradient legend. Right click to see further options. "
+                                        "Use View All to reset the view. ")
                 root, ext = os.path.splitext(video_path)
                 source_name = os.path.basename(root)
                 doc_window.setWindowTitle(source_name)
@@ -632,6 +637,9 @@ class Widget(QWidget, WidgetDefault):
             progress.close()
             dialog = SPCMapDialog(self.project, selected, spc, self.cm_comboBox.currentText(),
                                   (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)))
+            dialog.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around and roll "
+                                "the mouse wheel to zoom in and out. Moving the map resets the position of the "
+                                "gradient legend. Right click to see further options. Use View All to reset the view. ")
             dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowStaysOnTopHint)
             dialog.show()
             self.open_dialogs.append(dialog)
@@ -640,12 +648,28 @@ class Widget(QWidget, WidgetDefault):
     # todo: NOT FINISHED
     def setup_whats_this(self):
         super().setup_whats_this()
+        self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we strongly "
+                                      "discourage the use of jet. For a discussion on this please see "
+                                      "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
+                                      "In Proceedings of Human Vision and Electronic Imaging")
+        self.min_sb.setWhatsThis("Choose the correlation value at the lower end of your colormap range. Correlation "
+                                 "values below this value will all be the same color")
+        self.max_sb.setWhatsThis("Choose the correlation value at the upper end of your colormap range. Correlation "
+                                 "values above this value will all be the same color")
+        self.roi_list.setWhatsThis("Choose your square ROIs whose central coordinates will be used as seed pixels to "
+                                   "create seed pixel correlation maps. Note that the ROIs in this list must be "
+                                   "imported via csv that defines their coordinates. Ensure your pixel width is "
+                                   "correct and that its units agree with the units of the coordinates of these ROIs")
+        self.save_pb.setWhatsThis("Saves the data from all open plot windows to file and the project. Each window can "
+                                  "receive a custom name allowing for sets of analysis to occur on different windows "
+                                  "with different data plotted.")
+        self.load_pb.setWhatsThis("Loads all plot windows associated with this plugin that have been saved.")
         self.spc_from_rois_pb.setWhatsThis("Creates seed pixel correlation maps (SPC) from the seeds selected for each "
                                            "image stack selected. Seeds are taken from the coordinates imported "
                                            "through the import ROIs plugin. SPC maps are automatically saved to file "
-                                           "as numpy arrays")
+                                           "as numpy arrays and jpegs")
 
-    # def spc_to_windows(self, x, y, name, vid_path):
+            # def spc_to_windows(self, x, y, name, vid_path):
     #     assert self.selected_videos
     #     # define base name
     #     vid_name = os.path.basename(vid_path)
@@ -662,35 +686,35 @@ class Widget(QWidget, WidgetDefault):
     #     # Save as png and jpeg
     #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
 
+    #
+    # def spc_to_file(self, spc, name, vid_path):
+    #     assert self.selected_videos
+    #     #define base name
+    #     vid_name = os.path.basename(vid_path)
+    #     path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+    #     # save to npy
+    #     np.save(path_without_ext + '.npy', spc)
+    #     dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
+    #     spc_col = dialog_object.colorized_spc
+    #     #Save as png and jpeg
+    #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
 
-    def spc_to_file(self, spc, name, vid_path):
-        assert self.selected_videos
-        #define base name
-        vid_name = os.path.basename(vid_path)
-        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
-        # save to npy
-        np.save(path_without_ext + '.npy', spc)
-        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
-        spc_col = dialog_object.colorized_spc
-        #Save as png and jpeg
-        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
-
-    def spc_to_file(self, x, y, name, vid_path):
-        assert self.selected_videos
-        #define base name
-        vid_name = os.path.basename(vid_path)
-        path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
-        # compute spc
-        progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
-        spc = calc_spc(vid_path, x, y, progress)
-        # save to npy
-        np.save(path_without_ext + '.npy', spc)
-        dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
-        spc_col = dialog_object.colorized_spc
-        #Save as png and jpeg
-        scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
-        #not working
-        #png.from_array(spc_col, 'L').save(path_without_ext+".png")
+    # def spc_to_file(self, x, y, name, vid_path):
+    #     assert self.selected_videos
+    #     #define base name
+    #     vid_name = os.path.basename(vid_path)
+    #     path_without_ext = os.path.join(self.project.path, vid_name + "_" + name)
+    #     # compute spc
+    #     progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
+    #     spc = calc_spc(vid_path, x, y, progress)
+    #     # save to npy
+    #     np.save(path_without_ext + '.npy', spc)
+    #     dialog_object = SPCMapDialog(self.project, vid_path, spc, self.cm_comboBox.currentText())
+    #     spc_col = dialog_object.colorized_spc
+    #     #Save as png and jpeg
+    #     scipy.misc.toimage(spc_col).save(path_without_ext+'.jpg')
+    #     #not working
+    #     #png.from_array(spc_col, 'L').save(path_without_ext+".png")
 
 
 class SPCMapDialog(QDialog):
@@ -732,7 +756,7 @@ class SPCMapDialog(QDialog):
         # hbox.addWidget(QDoubleSpinBox())
 
         vbox.addLayout(hbox)
-        self.view = MyGraphicsView(self.project)
+        self.view = MyGraphicsView(self.project, image_view_on=True)
         vbox.addWidget(self.view)
         self.setLayout(vbox)
 

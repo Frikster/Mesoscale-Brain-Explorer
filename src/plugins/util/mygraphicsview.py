@@ -7,8 +7,9 @@ from PyQt4.QtGui import *
 from .viewboxcustom import MultiRoiViewBox
 
 class MyGraphicsView(pg.GraphicsView):
-  def __init__(self, project, parent=None):
+  def __init__(self, project, parent=None, image_view_on=None):
     super(MyGraphicsView, self).__init__(parent)
+    self.image_view_on = image_view_on
     self.unit_per_pixel = 'mm'
 
     self.project = project
@@ -25,8 +26,12 @@ class MyGraphicsView(pg.GraphicsView):
     self.centralWidget.setLayout(l)
     l.setHorizontalSpacing(0)
     l.setVerticalSpacing(0)
-
     self.vb = MultiRoiViewBox(lockAspect=True, enableMenu=True)
+
+    # if self.image_view_on:
+    #   self.vb = pg.ImageView()
+    # else:
+    #   self.vb = MultiRoiViewBox(lockAspect=True, enableMenu=True)
     # todo: hovering for pyqtgraph
     #self.vb.hovering.connect(self.vbc_hovering)
     self.vb.enableAutoRange()

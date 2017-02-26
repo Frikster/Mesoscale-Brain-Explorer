@@ -32,12 +32,12 @@ class ImageExporterCustom(ImageExporter):
     with png, as it creates some lines around the image 
     """
     def __init__(self, item):
-        ImageExporter.__init__(self,item)
+        ImageExporter.__init__(self, item)
     
     def export(self, fileName=None, toBytes=False, copy=False):
         if fileName is None and not toBytes and not copy:
             filter = ["*."+str(f) for f in QtGui.QImageWriter.supportedImageFormats()]
-            preferred = ['*.bmp','*.png', '*.tif', '*.jpg']
+            preferred = ['*.bmp', '*.png', '*.tif', '*.jpg']
             for p in preferred[::-1]:
                 if p in filter:
                     filter.remove(p)
