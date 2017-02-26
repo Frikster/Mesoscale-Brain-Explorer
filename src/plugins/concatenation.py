@@ -7,6 +7,7 @@ from .temporal_filter import *
 from .util import mse_ui_elements as mue
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+from .util.qt import MyListView, MyProgressDialog
 
 
 class Widget(QWidget, WidgetDefault):
@@ -82,7 +83,9 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(mue.InfoWidget('Note that there is no explicit progress bar. '
                                            'Note that videos can be dragged and dropped in the list but that the order '
                                            'in which they are *selected* determines concatenation order. The '
-                                           'dragging and dropping is for convenience'))
+                                           'dragging and dropping is for convenience so you can organize your desired '
+                                           'order and then shift select them from top to bottom to concatenate '
+                                           'that selection in that order'))
         hhbox = QHBoxLayout()
         hhbox.addWidget(self.concat_butt)
         self.vbox.addLayout(hhbox)
@@ -133,7 +136,11 @@ class Widget(QWidget, WidgetDefault):
             qtutil.warning('Select multiple files to concatenate.')
             return
         frames = [fileloader.load_file(f) for f in paths]
+        progress = MyProgressDialog('Concatenation', 'Concatenating files...', self)
+        progress.show()
+        progress.setValue(1)
         frames = np.concatenate(frames)
+        progress.setValue(99)
         # concat_name = '_'.join(filenames) + '.npy'
         # concat_path = os.path.join(self.project.path, concat_name)
         # First one has to take the name otherwise pfs.save_projects doesn't work
@@ -146,6 +153,7 @@ class Widget(QWidget, WidgetDefault):
                          self.params[self.Labels.video_list_indices_label],
                          self.Defaults.list_display_type,
                          self.params[self.Labels.last_manips_to_display_label])
+        progress.close()
         return [output_path]
         # path = os.path.join(self.project.path, str(uuid.uuid4()) + 'Concat.npy')
         # np.save(path, frames)
