@@ -166,6 +166,14 @@ class Sidebar(QWidget):
                                         "Units can be anything as long as the same units are used "
                                         "across all plugins. e.g. if you use microns for units per pixel "
                                         "then microns must be used for the coordinates in the ROI Placer plugin.")
+      self.pl_list.setWhatsThis("Each of these plugins performs a particular set of processing on your data. "
+                                "This list is called a pipeline since you can order this list using the Configure "
+                                "Pipeline button and then click then select some of the plugins and click Automate "
+                                "to perform the processing steps of all selected plugins in your custom order "
+                                "for a set of inputs. \n"
+                                "\n"
+                                "NOTE: There is a known bug where if you press and hold the up button in this list "
+                                "a new window occurs. This is a harmless bug and you can just close the window. ")
       self.auto_pb.setWhatsThis("If you are still unsure how to automate, watch a video tutorial. "
                                 "A link to where to find tutorials can be find by clicking Help -> About")
 
