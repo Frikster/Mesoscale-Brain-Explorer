@@ -26,6 +26,7 @@ from .util.mse_ui_elements import RoiList
 import functools
 import itertools
 import matplotlib.pyplot as plt
+import math
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -192,6 +193,13 @@ class Widget(QWidget, WidgetDefault):
             })
             self.project.save()
 
+            # for row in dialog.model._data:
+            #     for cell in row:
+            #         if math.isnan(cell[0]) or math.isnan(cell[0]):
+            #             qtutil.warning("File might not save properly since it has nan values. Make sure all your "
+            #                            "ROIs are inside your mask.")
+            #             break
+
             # Now save the actual file
             matrix_output_data = (pickle_path, dialog.model.roinames, dialog.model._data)
             try:
@@ -210,6 +218,10 @@ class Widget(QWidget, WidgetDefault):
         if reply == QMessageBox.Yes:
             self.save_open_dialogs_to_csv()
 
+        for dialog in self.open_dialogs:
+            dialog.close()
+        self.open_dialogs = []
+
     def load_triggered(self):
         paths = [p['path'] for p in self.project.files if p['type'] == self.Defaults.window_type]
         if not paths:
@@ -219,7 +231,7 @@ class Widget(QWidget, WidgetDefault):
         for pickle_path in paths:
             try:
                 with open(pickle_path, 'rb') as input:
-                    (title, roinames, (avg_data, stdev_dict)) = pickle.load(input)
+                    (title, roinames, dat) = pickle.load(input)
             except:
                 del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
                                         "location and that another program isn't using this file " \
@@ -242,10 +254,10 @@ class Widget(QWidget, WidgetDefault):
                     return
                 continue
 
-        main_window = ConnectivityDialog(self, roinames, self.cm_comboBox.currentText(), (avg_data, stdev_dict))
-        main_window.setWindowTitle(title)
-        main_window.show()
-        self.open_dialogs.append(main_window)
+            main_window = ConnectivityDialog(self, roinames, self.cm_comboBox.currentText(), dat)
+            main_window.setWindowTitle(title)
+            main_window.show()
+            self.open_dialogs.append(main_window)
 
     def save_open_dialogs_to_csv(self):
         if not self.open_dialogs:
@@ -303,6 +315,16 @@ class ConnectivityModel(QAbstractTableModel):
         super(ConnectivityModel, self).__init__()
         self.cm_type = cm_type
         self.roinames = roinames
+
+
+
+        project = widget.project
+        rois = widget.view.vb.rois[:]
+        for roi in rois:
+            widget.view.vb.removeRoi(roi.name)
+        widget.view.vb.currentROIindex = 0
+        roipaths = [os.path.join(project.path, roiname + '.roi') for roiname in roinames]
+        widget.view.vb.loadROI(roipaths)
         self.rois = [widget.view.vb.getRoi(roiname) for roiname in roinames]
 
         if loaded_data:
@@ -348,7 +370,7 @@ class ConnectivityModel(QAbstractTableModel):
                     else:
                         avg_data[i][j] = tot_data[i][j] / len(selected_videos)
             stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
-            assert(stdev_dict[(0, 0)] == 0)
+            assert(stdev_dict[(0, 0)] == 0 or math.isnan(stdev_dict[(0, 0)]))
 
             # combine stddev and avg data
             for i in range(len(avg_data)):
