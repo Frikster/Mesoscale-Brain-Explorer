@@ -109,7 +109,7 @@ class Widget(QWidget, WidgetDefault):
     self.text_file_path = None
     self.load_table_pb = QPushButton('Load CSV of ROI coordinates relative to origin')
     self.update_table_pb = QPushButton('Update Table')
-
+    self.special_warning_pb = QPushButton('Warning - Please click here if unfamiliar')
 
     # self.view = MyGraphicsView(self.project)
     self.table_widget = AutoROICoords(self.data, 0, 4)
@@ -139,7 +139,7 @@ class Widget(QWidget, WidgetDefault):
     self.selected_roi_changed_flag = 0
     WidgetDefault.__init__(self, project, plugin_position)
     roi_names = [str(f['name']) for f in project.files if f['type'] == 'auto_roi']
-    
+
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
           self.roi_list.model().appendRoi(roi_name)
@@ -219,6 +219,7 @@ class Widget(QWidget, WidgetDefault):
     # pb = QPushButton('Update ROIs')
 
     self.vbox.addWidget(self.update_table_pb)
+    self.vbox.addWidget(self.special_warning_pb)
     # vbox2 = QVBoxLayout()
     # w = QWidget()
     # w.setLayout(vbox2)
@@ -241,6 +242,16 @@ class Widget(QWidget, WidgetDefault):
   # def refresh_video_list_via_combo_box(self, trigger_item=None):
   #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
 
+  def special_warning(self):
+      qtutil.warning("Please note that you can move the ROIs in this view and even right click and save them which"
+                     " does alter this ROI for this project. After savng the moved version can be used for "
+                     "connectivity matrices and plotting activity over time. However, note that the coordinates "
+                     "associated with the ROI are not automatically shifted. Therefore, plugins that explicitly "
+                     "use the coordinates such as seed pixel correlation will not use your moved ROI \n"
+                     "\n"
+                     "To play things safe play around here to see where you want things and then make changes "
+                     "in your csv and reload")
+
   def setup_signals(self):
       super().setup_signals()
       self.load_table_pb.clicked.connect(self.load_ROI_table)
@@ -250,7 +261,8 @@ class Widget(QWidget, WidgetDefault):
       self.roi_list.model().textChanged.connect(self.update_project_roi)
       self.roi_list.selectionModel().selectionChanged[QItemSelection,
                                                       QItemSelection].connect(self.selected_roi_changed)
-
+      self.special_warning_pb.clicked.connect(self.special_warning)
+      self.view.vb.clicked.connect(self.special_warning)
 
   # def setup_params(self, reset=False):
   #     super().setup_params(reset)
@@ -544,10 +556,7 @@ class Widget(QWidget, WidgetDefault):
                                "location is. "
                                "Once you are happy with its placement, copy and paste the new coordinates and "
                                "replace the coordinates in your csv and save the csv. Now reload this csv and the "
-                               "change will be made. \n"
-                               "\n"
-                               "NOTE: Changing the values in the table and then navigating to another plugin and then "
-                               "back to this one makes the ROIs list blank.")
+                               "change will be made.")
 
 
 class AutoROICoords(QTableWidget):
