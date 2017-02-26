@@ -35,7 +35,6 @@ class Exporter(QWidget):
     try:
       frames = fileloader.load_file(filepath)
       frames = frames.astype(export_dtype)
-      # todo: 30 = export framerate needs to be user-decided
       video = cv2.VideoWriter(
         filename, cv2.VideoWriter_fourcc(*'DIVX'), export_framerate,
         (frames.shape[1], frames.shape[2]), False
@@ -47,31 +46,42 @@ class Exporter(QWidget):
       video.release()
     except:
       progress.close()
-      qtutil.critical('Video file could not be written.', self)
+      qtutil.critical(filename + ' could not be written. Ensure that dtype and framerate are properly set above. '
+                                 'This fixes this issue in most cases.', self)
   
   def export_tif(self, filepath, filename, export_dtype):
     frames = fileloader.load_file(filepath)
     frames = frames.astype(export_dtype)
-    tiff.imsave(filename, frames)
+    try:
+        tiff.imsave(filename, frames)
+    except:
+        qtutil.critical(filename + ' could not be written. Ensure that export dtype is properly set above. '
+                                   'This fixes this issue in most cases.', self)
   
   def export_raw(self, filepath, filename, export_dtype):
     frames = fileloader.load_file(filepath)
     frames = frames.astype(export_dtype)
-    frames.tofile(filename)
-  
-  def export_roi(self, fileinfo, filename):
     try:
-      shutil.copyfile(fileinfo['path'], filename)
+        frames.tofile(filename)
     except:
-      qtutil.critical('File could not be copied.\n' + traceback.format_exc(), self)
+        qtutil.critical(filename + ' could not be written. Ensure that export dtype is properly set. '
+                                   'This fixes this issue in most cases.', self)
+  
+  # def export_roi(self, fileinfo, filename):
+  #   try:
+  #     shutil.copyfile(fileinfo['path'], filename)
+  #   except:
+  #     qtutil.critical('File could not be copied.\n' + traceback.format_exc(), self)
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
     export_dtype_label = 'export_dtype_label'
     export_framerate_label = 'Export Framerate'
+    export_filetype_index_label = 0
 
   class Defaults(WidgetDefault.Defaults):
     export_dtype_default = 0
+    export_filetype_index_default = 0
     export_framerate_default = 30
 
   def __init__(self, project, plugin_position, parent=None):
@@ -94,9 +104,11 @@ class Widget(QWidget, WidgetDefault):
     # self.selected_videos = []
     # self.shown_video_path = None
     self.exporter = Exporter(self)
-    self.export_pb = QPushButton('Export')
+    self.export_pb = QPushButton('&Export')
     self.framerate_sb = QSpinBox()
     self.cb_dtype = QComboBox()
+    self.export_filetype_cb = QComboBox()
+    self.export_bulk_pb = QPushButton('Export in &Bulk')
 
     # self.video_list.setModel(QStandardItemModel())
     # self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
@@ -131,10 +143,16 @@ class Widget(QWidget, WidgetDefault):
       self.vbox.addWidget(self.framerate_sb)
       self.framerate_sb.setMinimum(1)
       self.framerate_sb.setMaximum(99999)
+      self.vbox.addWidget(QLabel("Export dtype"))
       for t in constants.DTYPES:
           self.cb_dtype.addItem(t)
       self.vbox.addWidget(self.cb_dtype)
       self.vbox.addWidget(self.export_pb)
+      self.vbox.addWidget(qtutil.separator())
+      self.vbox.addWidget(self.export_filetype_cb)
+      self.export_filetype_cb.addItems(['.avi', '.tif', '.raw'])
+      self.vbox.addWidget(self.export_bulk_pb)
+
       # self.right.setLayout(self.vbox)
       #
       # splitter = QSplitter(Qt.Horizontal)
@@ -161,14 +179,18 @@ class Widget(QWidget, WidgetDefault):
   def setup_signals(self):
       super().setup_signals()
       self.export_pb.clicked.connect(self.export_clicked)
+      self.export_bulk_pb.clicked.connect(self.export_bulk_clicked)
 
   def setup_params(self, reset=False):
       super().setup_params(reset)
       if len(self.params) == 1 or reset:
           self.update_plugin_params(self.Labels.export_framerate_label, self.Defaults.export_framerate_default)
           self.update_plugin_params(self.Labels.export_dtype_label, self.Defaults.export_dtype_default)
+          self.update_plugin_params(self.Labels.export_filetype_index_label,
+                                    self.Defaults.export_filetype_index_default)
       self.framerate_sb.setValue(self.params[self.Labels.export_framerate_label])
       self.cb_dtype.setCurrentIndex(self.params[self.Labels.export_dtype_label])
+      self.export_filetype_cb.setCurrentIndex(self.params[self.Labels.export_filetype_index_label])
 
   def setup_param_signals(self):
       super().setup_param_signals()
@@ -176,6 +198,8 @@ class Widget(QWidget, WidgetDefault):
                                                                     self.Labels.export_framerate_label))
       self.cb_dtype.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                        self.Labels.export_dtype_label))
+      self.export_filetype_cb.currentIndexChanged[int].connect(
+          functools.partial(self.update_plugin_params, self.Labels.export_filetype_index_label))
       # def refresh_video_list_via_combo_box(self, trigger_item=None):
   #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
   #
@@ -202,46 +226,55 @@ class Widget(QWidget, WidgetDefault):
       filename = filename + ext
     return filename
 
-  def export_roi(self, fileinfo):
-    """Ask for filename and call exporter function"""
-    filters = {
-      '.roi': 'ROI file (*.roi)'
-    }
-    default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
-    filename = self.filedialog(default, filters)
-    if filename:
-      assert(filename.endswith('.roi'))
-      self.exporter.export_roi(fileinfo, filename)
+  # def export_roi(self, fileinfo):
+  #   """Ask for filename and call exporter function"""
+  #   filters = {
+  #     '.roi': 'ROI file (*.roi)'
+  #   }
+  #   default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
+  #   filename = self.filedialog(default, filters)
+  #   if filename:
+  #     assert(filename.endswith('.roi'))
+  #     self.exporter.export_roi(fileinfo, filename)
 
-  def export_video(self, filepath):
+  def export_video(self, filepath, export_filename):
     """Ask for filename and dispatch based on requested file format"""
-    filters = {
-      #'.mp4': 'MP4 file (*.mp4)',
-      '.avi': 'AVI file (*.avi)',
-      '.tif': 'TIF file (*.tif)',
-      '.raw': 'RAW file (*.raw)'
-    }
-    default = os.path.basename(filepath) or 'untitled'
-    # default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
-    filename = self.filedialog(default, filters)
-    if not filename:
-      return
+    # filters = {
+    #   #'.mp4': 'MP4 file (*.mp4)',
+    #   '.avi': 'AVI file (*.avi)',
+    #   '.tif': 'TIF file (*.tif)',
+    #   '.raw': 'RAW file (*.raw)'
+    # }
+    # default = os.path.basename(filepath) or 'untitled'
+    # # default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
+    # filename = self.filedialog(default, filters)
+    # if not filename:
+    #   return
     export_dtype = self.cb_dtype.currentText()
     export_framerate = self.framerate_sb.value()
-
-    if filename.endswith('.avi'):
-      self.exporter.export_avi(filepath, filename, export_dtype, export_framerate)
-    elif filename.endswith('.mp4'):
-      self.exporter.export_mp4(filepath, filename)
-    elif filename.endswith('.tif'):
-      self.exporter.export_tif(filepath, filename, export_dtype)
-    elif filename.endswith('.raw'):
-      self.exporter.export_raw(filepath, filename, export_dtype)
+    if export_filename.endswith('.avi'):
+      self.exporter.export_avi(filepath, export_filename, export_dtype, export_framerate)
+    elif export_filename.endswith('.mp4'):
+      self.exporter.export_mp4(filepath, export_filename)
+    elif export_filename.endswith('.tif'):
+      self.exporter.export_tif(filepath, export_filename, export_dtype)
+    elif export_filename.endswith('.raw'):
+      self.exporter.export_raw(filepath, export_filename, export_dtype)
     else:
       assert(False)
 
-  def export(self, filepath):
-      self.export_video(filepath)
+  def export_bulk_clicked(self):
+      filetype = self.export_filetype_cb.currentText()
+      export_dir = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+
+      progress = MyProgressDialog('Export Progress', 'Exporting files...', self)
+      progress.show()
+      for i, selected_video in enumerate(self.selected_videos):
+          export_path = os.path.join(export_dir, os.path.basename(os.path.splitext(selected_video)[0]) + filetype)
+          progress.setValue((i / len(self.selected_videos)) * 100)
+          self.export_video(selected_video, export_path)
+      progress.close()
+      qtutil.info("Export to " + export_dir + " complete")
     # """Dispatch according to field 'type'"""
     # if fileinfo['type'] == 'roi':
     #   self.export_roi(fileinfo)
@@ -257,14 +290,25 @@ class Widget(QWidget, WidgetDefault):
     #   return
     # assert(len(rows) == 1)
     # f = self.table.model().get_entry(rows[0])
-
     #    f = self.shown_video_path
     progress = MyProgressDialog('Export Progress', 'Exporting files...', self)
     progress.show()
     for i, selected_video in enumerate(self.selected_videos):
         progress.setValue((i/len(self.selected_videos)) * 100)
-        self.export(selected_video)
+        filters = {
+            # '.mp4': 'MP4 file (*.mp4)',
+            '.avi': 'AVI file (*.avi)',
+            '.tif': 'TIF file (*.tif)',
+            '.raw': 'RAW file (*.raw)'
+        }
+        default = os.path.basename(selected_video) or 'untitled'
+        # default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
+        filename = self.filedialog(default, filters)
+        if not filename:
+            return
+        self.export_video(selected_video, filename)
     progress.close()
+    qtutil.info("File export for selected files complete")
   # def row_doubleclicked(self, index):
   #   """Retrieve fileinfo and call export"""
   #   f = self.table.model().get_entry(index)
