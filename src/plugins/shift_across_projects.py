@@ -51,6 +51,8 @@ class Widget(QWidget):
     self.origin_from_project = QLabel("Make sure the origin of all external projects loaded is correct")
     self.origin_label.setText('Origin of this project all files will be shifted to: ({} | {})'.format(round(self.x, 2),
                                                                                                       round(self.y, 2)))
+    self.new_json_pb = QPushButton('Load JSON files from other projects')
+    self.shift_pb = QPushButton('Shift selected data to this project')
     self.left = QFrame()
     self.right = QFrame()
     self.setup_ui()
@@ -65,6 +67,7 @@ class Widget(QWidget):
     for f in self.project.files:
       if f['type'] == 'shifted':
         self.video_list.model().appendRow(QStandardItem(f['path']))
+    self.setup_whats_this()
 
   def video_triggered(self, index):
       pfs.video_triggered(self, index)
@@ -76,18 +79,16 @@ class Widget(QWidget):
     self.left.setLayout(vbox_view)
 
     vbox = QVBoxLayout()
-    pb = QPushButton('Load JSON files from other projects')
-    pb.clicked.connect(self.new_json)
-    vbox.addWidget(pb)
+    self.new_json_pb.clicked.connect(self.new_json)
+    vbox.addWidget(self.new_json_pb)
     self.video_list.setStyleSheet('QListView::item { height: 26px; }')
     self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
     self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
     vbox.addWidget(self.video_list)
     vbox.addWidget(qtutil.separator())
     vbox.addWidget(self.origin_label)
-    pb = QPushButton('Shift selected data to this project')
-    pb.clicked.connect(self.shift_to_this)
-    vbox.addWidget(pb)
+    self.shift_pb.clicked.connect(self.shift_to_this)
+    vbox.addWidget(self.shift_pb)
     vbox.addWidget(QLabel('Data imported to this project after shift'))
     self.list_shifted.setStyleSheet('QListView::item { height: 26px; }')
     self.list_shifted.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -271,6 +272,16 @@ class Widget(QWidget):
                             traceback.format_exc())
         else:
             self.listview.model().appendRow(QStandardItem(filename))
+
+  def setup_whats_this(self):
+      self.new_json_pb.setWhatsThis("Select the folder of another project to load all files in that project that can "
+                                    "be shifted to the coordinate system of this project. After shifting one to "
+                                    "shift another, navigate to another plugin, then navigate back to this plugin and "
+                                    "you will be able to shift another project ")
+      self.video_list.setWhatsThis("This is a list of all image stacks from another project that can be shifted "
+                                   "and imported to this project so as to have the same coordinate system "
+                                   "as this project")
+      self.list_shifted.setWhatsThis("A list of all stacks that have been shifted from other projects to this project")
 
 #SLOW
 class FileDialog(QtGui.QFileDialog):
