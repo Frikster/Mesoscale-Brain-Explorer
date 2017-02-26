@@ -256,16 +256,8 @@ class MainWindow(QMainWindow):
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)
     self.datadialog = DataDialog(self)
-    # self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
-    #
-    # self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
-    # self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
-    # self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
 
     self.pl_frame = QFrame()
-
-    # self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
-    # self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
     splitter = QSplitter(self)
     self.enable = lambda yes: splitter.setEnabled(yes)
@@ -321,13 +313,6 @@ class MainWindow(QMainWindow):
     a.triggered.connect(self.reset_all_params)
     m.addAction(a)
     self.project_menu = m
-
-    # settings_menu = self.menu.addMenu('&Settings')
-    # a = QAction('&Pipeline Automation', self)
-    # a.setEnabled(False)
-    # a.setStatusTip('Not Available')
-    # a.triggered.connect(self.create_project)
-    # settings_menu.addAction(a)
 
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)

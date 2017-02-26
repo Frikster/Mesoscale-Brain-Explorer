@@ -30,15 +30,14 @@ class Exporter(QWidget):
   def export_mp4(self, fileinfo, filename):
     pass
   
-  def export_avi(self, filepath, filename):
+  def export_avi(self, filepath, filename, export_dtype, export_framerate):
     progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
       frames = fileloader.load_file(filepath)
-      if frames.dtype != np.uint8:
-        frames = frames.astype(np.uint8)
+      frames = frames.astype(export_dtype)
       # todo: 30 = export framerate needs to be user-decided
       video = cv2.VideoWriter(
-        filename, cv2.VideoWriter_fourcc(*'DIVX'), 30,
+        filename, cv2.VideoWriter_fourcc(*'DIVX'), export_framerate,
         (frames.shape[1], frames.shape[2]), False
       )
       for i, frame in enumerate(frames):
@@ -228,9 +227,10 @@ class Widget(QWidget, WidgetDefault):
     if not filename:
       return
     export_dtype = self.cb_dtype.currentText()
+    export_framerate = self.framerate_sb.value()
 
     if filename.endswith('.avi'):
-      self.exporter.export_avi(filepath, filename)
+      self.exporter.export_avi(filepath, filename, export_dtype, export_framerate)
     elif filename.endswith('.mp4'):
       self.exporter.export_mp4(filepath, filename)
     elif filename.endswith('.tif'):
