@@ -80,8 +80,9 @@ class Widget(QWidget, WidgetDefault):
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
         self.vbox.addWidget(mue.InfoWidget('Note that there is no explicit progress bar. '
-                                           'Note that videos can be dragged and dropped in the list but that the order'
-                                           'in which they are selected determines concatenation order.'))
+                                           'Note that videos can be dragged and dropped in the list but that the order '
+                                           'in which they are *selected* determines concatenation order. The '
+                                           'dragging and dropping is for convenience'))
         hhbox = QHBoxLayout()
         hhbox.addWidget(self.concat_butt)
         self.vbox.addLayout(hhbox)
