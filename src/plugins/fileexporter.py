@@ -314,6 +314,17 @@ class Widget(QWidget, WidgetDefault):
   #   f = self.table.model().get_entry(index)
   #   self.export(f)
 
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.framerate_sb.setWhatsThis("This is required only if exporting to .av")
+      self.export_pb.setWhatsThis("Pressing this option each selected image stack will be exported individually to "
+                                  "individual paths and types. ")
+      self.export_filetype_cb.setWhatsThis("Select what filetype to export to for bulk export. Note this is not used "
+                                           "for the above export option where each selected stack is exported "
+                                           "individually")
+      self.export_bulk_pb.setWhatsThis("Pressing this option all selected image stack will be exported to a single "
+                                       "location with their current names.")
+
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
     self.name = 'Export files'
