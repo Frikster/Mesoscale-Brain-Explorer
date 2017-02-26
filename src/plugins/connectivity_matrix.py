@@ -143,6 +143,7 @@ class Widget(QWidget, WidgetDefault):
             qtutil.critical('Select Roi(s).')
         else:
             win = ConnectivityDialog(self, roinames, cm_type, progress_callback=callback)
+            win.resize(900, 900)
             callback(1)
             win.show()
             self.open_dialogs.append(win)
@@ -256,6 +257,7 @@ class Widget(QWidget, WidgetDefault):
 
             main_window = ConnectivityDialog(self, roinames, self.cm_comboBox.currentText(), dat)
             main_window.setWindowTitle(title)
+            main_window.resize(900, 900)
             main_window.show()
             self.open_dialogs.append(main_window)
 
