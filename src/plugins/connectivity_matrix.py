@@ -121,7 +121,7 @@ class Widget(QWidget, WidgetDefault):
         # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
         self.vbox.addWidget(qtutil.separator())
-        self.vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder which'
+        self.vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder which '
                                            'modifies their order in the connectivity matrix.'))
         self.vbox.addWidget(QLabel('Select ROIs:'))
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -389,6 +389,26 @@ class Widget(QWidget, WidgetDefault):
             # unique_id_avg = str(uuid.uuid4())
             # path = os.path.join(self.project.path, unique_id_avg)
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.roi_list.setWhatsThis("Choose ROIs where the average value for each frame across frames is used for each "
+                                   "selected ROI. This set of values is correlated with the average of all other ROIs "
+                                   "to create the connectivity matrix. ")
+        self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your matrices. Note that we "
+                                      "discourage the use of jet. For a discussion on this please see "
+                                      "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
+                                      "In Proceedings of Human Vision and Electronic Imaging")
+        self.save_pb.setWhatsThis("Saves the data from all open matrix windows to file and the project. This includes "
+                                  "the option to save to csv - one for standard deviation and one for correlation "
+                                  "values for each matrix in view")
+        self.load_pb.setWhatsThis("Loads all matrix windows associated with this plugin that have been saved. Click "
+                                  "'Manage Data' to find each window associated with this project. Individual windows "
+                                  "can be deleted from there. ")
+        self.cm_pb.setWhatsThis("Creates a single connectivity matrix where each connectivity matrix from selected "
+                                "image stacks are averaged to create a single connectivity matrix that has a standard "
+                                "deviation displaying how correlation deviates across selected image stacks for each "
+                                "ROI. Correlation coefficient used = Pearson")
+
 
 
 # todo: explain why all the classes
@@ -495,6 +515,7 @@ class ConnectivityTable(QTableView):
 class ConnectivityDialog(QDialog):
     def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__()
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
         self.setWindowTitle('Connectivity Matrix - ' + str(uuid.uuid4()))
         self.table = ConnectivityTable()
         self.setup_ui()

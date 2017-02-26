@@ -214,7 +214,7 @@ class Widget(QWidget, WidgetDefault):
 
   def setup_whats_this(self):
       super().setup_whats_this()
-      self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we strongly "
+      self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we "
                                     "discourage the use of jet. For a discussion on this please see "
                                     "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
                                     "In Proceedings of Human Vision and Electronic Imaging")

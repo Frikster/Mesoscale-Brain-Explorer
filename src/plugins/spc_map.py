@@ -658,7 +658,7 @@ class Widget(QWidget, WidgetDefault):
     # todo: NOT FINISHED
     def setup_whats_this(self):
         super().setup_whats_this()
-        self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we strongly "
+        self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we "
                                       "discourage the use of jet. For a discussion on this please see "
                                       "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
                                       "In Proceedings of Human Vision and Electronic Imaging")
@@ -673,7 +673,7 @@ class Widget(QWidget, WidgetDefault):
         self.save_pb.setWhatsThis("Saves the data from all open plot windows to file and the project. Each window can "
                                   "receive a custom name allowing for sets of analysis to occur on different windows "
                                   "with different data plotted.")
-        self.load_pb.setWhatsThis("Loads all plot windows associated with this plugin that have been saved. Click "
+        self.load_pb.setWhatsThis("Loads all spc windows associated with this plugin that have been saved. Click "
                                   "'Manage Data' to find each window associated with this project. Individual windows "
                                   "can be deleted from there. ")
         self.spc_from_rois_pb.setWhatsThis("Creates seed pixel correlation maps (SPC) from the seeds selected for each "
