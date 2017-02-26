@@ -15,62 +15,7 @@ sys.path.append('..')
 import qtutil
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.mse_ui_elements import RoiItemModel
 from .util.mse_ui_elements import RoiList
-
-# class myQStringListModel(QStringListModel):
-#     def __init__(self, parent=None):
-#         super(myQStringListModel, self).__init__(parent)
-#
-#     def createIndex(self, *args, **kwargs):
-
-
-# class RoiItemModel(QAbstractListModel):
-#     textChanged = pyqtSignal(str, str)
-#
-#     def __init__(self, parent=None):
-#         super(RoiItemModel, self).__init__(parent)
-#         self.rois = []
-#
-#     def appendRoi(self, name):
-#         self.rois.append(name)
-#         row = len(self.rois) - 1
-#         self.dataChanged.emit(self.index(row), self.index(row))
-#
-#     def edit_roi_name(self, name, index):
-#         self.rois.append(name)
-#         row = len(self.rois) - 1
-#         self.dataChanged.emit(self.index(row), self.index(row))
-#
-#     def rowCount(self, parent):
-#         return len(self.rois)
-#
-#     def data(self, index, role):
-#         if role == Qt.DisplayRole:
-#             return self.rois[index.row()]
-#         return
-#
-#     def setData(self, index, value, role):
-#       if role == Qt.EditRole:
-#         value = str(value)
-#         if value in self.rois[index.row()]:
-#           pass
-#         elif value in self.rois:
-#           qtutil.critical('Roi name taken.')
-#         else:
-#           self.textChanged.emit(self.rois[index.row()], value)
-#           self.rois[index.row()] = value
-#         return True
-#       return super(RoiItemModel, self).setData(index, value, role)
-#
-#     def flags(self, index):
-#         return Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsEnabled
-#
-#     def removeRow(self, roi_to_remove):
-#         for roi in self.rois:
-#             if roi == roi_to_remove:
-#                 del roi
-#                 break
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
@@ -86,62 +31,12 @@ class Widget(QWidget, WidgetDefault):
     super(Widget, self).__init__(parent)
     if not project or not isinstance(plugin_position, int):
         return
-    # self.plugin_position = plugin_position
     self.project = project
-    #
-    # # define ui components and global data
-    # self.selected_videos = []
-    # #self.selected_rois = []
-    # self.view = MyGraphicsView(self.project)
-    # self.video_list = QListView()
     self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
     self.roi_list.model().textChanged.connect(self.roi_item_changed)
-
-    # self.roi_list = QListView()
     self.create_roi_button = QPushButton('Create ROI')
     self.crop_button = QPushButton('Crop to ROI(s) for selected files')
-
-    # self.left = QFrame()
-    # self.right = QFrame()
-
-    # self.video_list.setModel(QStandardItemModel())
-    # self.video_list.selectionModel().selectionChanged[QItemSelection,
-    #                                                   QItemSelection].connect(self.selected_video_changed)
-    # self.video_list.doubleClicked.connect(self.video_triggered)
-
-    # model = RoiItemModel()
-    # model.textChanged.connect(self.roi_item_changed)
-    # self.roi_list.setModel(model)
-    # self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    # A flag to see whether selected_roi_changed is being entered for the first time
-    # self.selected_roi_changed_flag = 0
-    # self.roi_list.selectionModel().selectionChanged[QItemSelection,
-    #   QItemSelection].connect(self.selected_roi_changed)
-
-    # for f in project.files:
-    #   if f['type'] != 'video':
-    #     continue
-    #   self.video_list.model().appendRow(QStandardItem(f['name']))
-
-    # roi_names = [f['name'] for f in project.files if f['type'] == 'roi']
-    # for roi_name in roi_names:
-    #   model.appendRoi(roi_name)
-    # self.view.vb.roi_placed.connect(self.update_project_roi)
     WidgetDefault.__init__(self, project, plugin_position)
-    # self.setup_ui()
-    # if isinstance(plugin_position, int):
-    #     self.params = project.pipeline[self.plugin_position]
-    #     assert (self.params['name'] == 'roi_creator')
-    #     self.setup_param_signals()
-    #     try:
-    #         self.setup_params()
-    #     except:
-    #         self.setup_params(reset=True)
-    #     pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
-    #                      Defaults.list_display_type, self.toolbutton_values)
-
-  # def video_triggered(self, index):
-  #     pfs.video_triggered(self, index)
 
   def roi_item_edited(self, item):
     new_name = item.text()
@@ -153,67 +48,15 @@ class Widget(QWidget, WidgetDefault):
 
   def setup_ui(self):
       super().setup_ui()
-    # vbox_view = QVBoxLayout()
-    # vbox_view.addWidget(self.view)
-    # self.view.vb.setCursor(Qt.CrossCursor)
-    # self.left.setLayout(vbox_view)
-    #
-    # vbox = QVBoxLayout()
-    # list_of_manips = pfs.get_list_of_project_manips(self.project)
-    # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    # vbox.addWidget(self.toolbutton)
-    # vbox.addWidget(QLabel('Choose video:'))
-    # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-    # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    # vbox.addWidget(self.video_list)
-    # pb = QPushButton('Create ROI')
-    # pb.clicked.connect(self.create_roi)
       self.vbox.addWidget(self.create_roi_button)
-    # pb = QPushButton('Crop to ROI(s) for selected files')
-    # pb.clicked.connect(self.crop_clicked)
       self.vbox.addWidget(self.crop_button)
-    # pb = QPushButton('Delete selected ROIs')
-    # pb.clicked.connect(self.delete_roi)
-    # vbox.addWidget(pb)
-    # vbox.addWidget(qtutil.separator())
-    # vbox2 = QVBoxLayout()
-    # w = QWidget()
-    # w.setLayout(vbox2)
-    # vbox.addWidget(w)
-    # vbox.addWidget(qtutil.separator())
       self.vbox.addWidget(QLabel(self.Labels.roi_list_indices_label))
       self.vbox.addWidget(self.roi_list)
-
-    # self.right.setLayout(self.vbox)
-    #
-    # splitter = QSplitter(Qt.Horizontal)
-    # splitter.setHandleWidth(3)
-    # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    # splitter.addWidget(self.left)
-    # splitter.addWidget(self.right)
-    # hbox_global = QHBoxLayout()
-    # hbox_global.addWidget(splitter)
-    # self.setLayout(hbox_global)
-
-    # hbox.addLayout(vbox)
-    # hbox.setStretch(0, 1)
-    # hbox.setStretch(1, 0)
-    # self.setLayout(hbox)
-
-  # def refresh_video_list_via_combo_box(self, trigger_item=None):
-  #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
-  #
-  # def selected_video_changed(self, selected, deselected):
-  #     pfs.selected_video_changed_multi(self, selected, deselected)
 
   def setup_signals(self):
       super().setup_signals()
       self.create_roi_button.clicked.connect(self.create_roi)
       self.crop_button.clicked.connect(self.execute_primary_function)
-      # self.roi_list.selectionModel().selectionChanged[QItemSelection,
-      #                                                 QItemSelection].connect(self.selected_roi_changed)
       self.view.vb.roi_placed.connect(self.update_project_roi)
 
 
@@ -221,58 +64,9 @@ class Widget(QWidget, WidgetDefault):
       super().setup_params(reset)
       self.roi_list.setup_params()
 
-      # if len(self.params) == 1 or reset:
-      #     self.update_plugin_params(self.Labels.roi_list_indices_label, self.Defaults.roi_list_indices_default)
-      #     # self.update_plugin_params(Labels.video_list_indices_label, Defaults.video_list_indices_default)
-      #     # self.update_plugin_params(Labels.last_manips_to_display_label, Defaults.last_manips_to_display_default)
-      #
-      # roi_indices = self.params[self.Labels.roi_list_indices_label]
-      # theQIndexObjects = [self.roi_list.model().createIndex(rowIndex, 0) for rowIndex in
-      #                     roi_indices]
-      # for Qindex in theQIndexObjects:
-      #     self.roi_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
-      # # self.video_list_indices = self.params[Labels.video_list_indices_label]
-      # self.toolbutton_values = self.params[Labels.last_manips_to_display_label]
-      # manip_items = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
-      #                if self.toolbutton.itemText(i) in self.params[Labels.last_manips_to_display_label]]
-      # for item in manip_items:
-      #     item.setCheckState(Qt.Checked)
-      # not_checked = [self.toolbutton.model().item(i, 0) for i in range(self.toolbutton.count())
-      #                if self.toolbutton.itemText(i) not in self.params[Labels.last_manips_to_display_label]]
-      # for item in not_checked:
-      #     item.setCheckState(Qt.Unchecked)
-
   def setup_param_signals(self):
       super().setup_param_signals()
       self.roi_list.setup_param_signals()
-      # self.video_list.selectionModel().selectionChanged.connect(self.prepare_video_list_for_update)
-      # self.toolbutton.activated.connect(self.prepare_toolbutton_for_update)
-      # self.roi_list.selectionModel().selectionChanged.connect(self.prepare_roi_list_for_update)
-
-  # def prepare_video_list_for_update(self, selected, deselected):
-  #     val = [v.row() for v in self.video_list.selectedIndexes()]
-  #     if not val:
-  #         val = Defaults.video_list_indices_default
-  #     self.update_plugin_params(Labels.video_list_indices_label, val)
-
-  # def prepare_toolbutton_for_update(self, trigger_item):
-  #     val = self.params[Labels.last_manips_to_display_label]
-  #     selected = self.toolbutton.itemText(trigger_item)
-  #     if selected not in val:
-  #         val = val + [selected]
-  #         if trigger_item != 0:
-  #             val = [manip for manip in val if manip not in Defaults.last_manips_to_display_default]
-  #     else:
-  #         val = [manip for manip in val if manip != selected]
-  #
-  #     self.update_plugin_params(Labels.last_manips_to_display_label, val)
-
-  # def prepare_roi_list_for_update(self, selected, deselected):
-  #     val = [v.row() for v in self.roi_list.selectedIndexes()]
-  #     self.update_plugin_params(self.Labels.roi_list_indices_label, val)
-
-  # def update_plugin_params(self, key, val):
-  #     pfs.update_plugin_params(self, key, val)
 
   def remove_all_rois(self):
     rois = self.view.vb.rois[:]
@@ -281,27 +75,7 @@ class Widget(QWidget, WidgetDefault):
         self.view.vb.selectROI(roi)
       self.view.vb.removeROI()
 
-  # def selected_roi_changed(self, selection):
-  #   # if self.selected_roi_changed_flag == 0:
-  #   #   self.selected_roi_changed_flag = self.selected_roi_changed_flag + 1
-  #   #   return
-  #   if not selection.indexes() or self.view.vb.drawROImode:
-  #     return
-  #   self.remove_all_rois()
-  #
-  #   # todo: re-explain how you can figure out to go from commented line to uncommented line
-  #   # rois_selected = str(selection.indexes()[0].data(Qt.DisplayRole).toString())
-  #   rois_selected = [str(self.roi_list.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
-  #                    for x in range(len(self.roi_list.selectionModel().selectedIndexes()))]
-  #   if len(rois_selected) == 1 and rois_selected[0] == 'None':
-  #       return
-  #   rois_in_view = [self.view.vb.rois[x].name for x in range(len(self.view.vb.rois))]
-  #   rois_to_add = [x for x in rois_selected if x not in rois_in_view]
-  #   for roi_to_add in rois_to_add:
-  #     self.view.vb.loadROI([self.project.path + '/' + roi_to_add + '.roi'])
-
   def roi_item_changed(self, prev_name, new_name):
-    # todo: Why not pass the paramaters as strings? Is it important to have them in this format?
     if prev_name == '':
       raise ValueError("The ROI already has no name... you monster")
     prev_name_str = str(prev_name)
@@ -369,13 +143,6 @@ class Widget(QWidget, WidgetDefault):
       self.roi_list.model().removeRow(roi_to_remove)
 
   def crop_clicked(self):
-      # progress = QProgressDialog('Cropping for selection', 'Abort', 0, 100, self)
-      # progress.setAutoClose(True)
-      # progress.setMinimumDuration(0)
-      #
-      # def callback(x):
-      #     progress.setValue(x * 100)
-      #     QApplication.processEvents()
       self.crop_ROI()
 
   def execute_primary_function(self, input_paths=None):
@@ -424,21 +191,13 @@ class Widget(QWidget, WidgetDefault):
       combined_mask = np.sum(arrRegion_masks, axis=0)
       callback(0.8)
       # Make all rows with all zeros na
-      # combined_mask[(combined_mask == 0)] = None
       self.mask = combined_mask
-      # TODO: save mask as well
-      # #combined_mask.astype(dtype_string).tofile(os.path.expanduser('/Downloads/')+"mask.raw")
-      # print("mask saved to " + os.path.expanduser('/Downloads/')+"mask.raw")
 
       # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
       # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
       # Dont forget to set Endian value and set to 64 bit
       roi_frames = (frames * combined_mask[np.newaxis, :, :])
       callback(1)
-      # name_before, ext = os.path.splitext(os.path.basename(video_path))
-      # name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
-      # path = str(os.path.join(self.project.path, name_after) + '.npy')
-      # path = os.path.join(self.project.path, 'roi' + '.npy')
       path = pfs.save_project(video_path, self.project, roi_frames, self.Defaults.manip, 'video')
       output_paths = output_paths + [path]
       pfs.refresh_list(self.project, self.video_list,
@@ -470,9 +229,6 @@ class MyPlugin(PluginDefault):
     self.name = 'Crop to ROIs'
     self.widget = Widget(project, plugin_position)
     super().__init__(self.widget, self.widget.Labels, self.name)
-
-  # def run(self):
-  #   pass
 
   def check_ready_for_automation(self):
       if len(self.widget.view.vb.rois) <= 0:

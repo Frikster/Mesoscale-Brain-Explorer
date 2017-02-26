@@ -20,17 +20,8 @@ def save_project(video_path, project, frames, manip, file_type):
     file_before = [files for files in project.files if files['name'] == name_before]
     assert(len(file_before) == 1)
     file_before = file_before[0]
-
-    name_after = fileloader.get_name_after_no_overwrite(name_before, manip, project)
     # check if one with same name already exists and don't overwrite if it does
-    # name_after = str(name_before + '_' + manip + '.')
-    # name_after_copy = str(name_before + '_' + manip + '(')
-    # file_after = [files for files in project.files if name_after in files['path'] or name_after_copy in files['name']]
-    #
-    # if len(file_after) > 0:
-    #     name_after = str(name_before + '_' + manip) + '(' + str(len(file_after)) + ')'
-    # else:
-    #     name_after = str(name_before + '_' + manip)
+    name_after = fileloader.get_name_after_no_overwrite(name_before, manip, project)
 
     path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
@@ -51,7 +42,7 @@ def save_project(video_path, project, frames, manip, file_type):
             progress.setValue(x * 100)
             QApplication.processEvents()
         callback_save(0)
-        np.save(path, frames)
+        fileloader.save_file(path, frames)
         callback_save(1)
     if not file_before['manipulations'] == []:
         project.files.append({

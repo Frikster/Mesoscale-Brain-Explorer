@@ -1,25 +1,21 @@
 #!/usr/bin/env python3
 
+import functools
 import os
 
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 
 from .util import fileloader
-from .util import project_functions as pfs
 from .util.gradient import GradientLegend
 from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView, MyProgressDialog
-
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-import functools
-from .util import constants
-import matplotlib.pyplot as plt
+from .util.qt import MyProgressDialog
 
 def calc_stddev(video_path, progress):
   progress.setValue(0)
@@ -57,49 +53,15 @@ class Widget(QWidget, WidgetDefault):
     if not project or not isinstance(plugin_position, int):
         return
     self.project = project
-
-    # define ui components and global data
-    # self.left = QFrame()
-    # self.right = QFrame()
     self.view = MyGraphicsView(self.project)
-    # self.video_list = MyListView()
     self.cm_comboBox = QtGui.QComboBox(self)
     self.max_checkbox = QCheckBox("Select maximum value of image stack as upper limit")
     self.max_stdev_cb = QDoubleSpinBox(decimals=4)
     self.execute_primary_function_button = QPushButton('Generate Std. Dev. Map')
-
-    # self.setup_ui()
-    # self.cm_type = self.cm_comboBox.itemText(0)
-
-    # self.video_path = None
-    # self.open_dialogs = []
-    # self.selected_videos = []
-
-    # self.video_list.setModel(QStandardItemModel())
-    # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    # self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
-    # for f in project.files:
-    #   if f['type'] != 'video':
-    #     continue
-    #   self.video_list.model().appendRow(QStandardItem(f['name']))
-    # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-    # self.cm_comboBox.activated[str].connect(self.cm_choice)
     WidgetDefault.__init__(self, project, plugin_position)
 
   def setup_ui(self):
     super().setup_ui()
-    # vbox_view = QVBoxLayout()
-    # vbox_view.addWidget(self.view)
-    # self.left.setLayout(vbox_view)
-    #
-    # vbox = QVBoxLayout()
-    # list_of_manips = pfs.get_list_of_project_manips(self.project)
-    # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-    # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-    # vbox.addWidget(self.toolbutton)
-    # vbox.addWidget(QLabel('Choose video:'))
-    # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    # vbox.addWidget(self.video_list)
     self.vbox.addWidget(QLabel(self.Labels.colormap_index_label))
     # todo: colormap list should be dealt with in a seperate script
     self.cm_comboBox.addItem("jet")
@@ -117,16 +79,6 @@ class Widget(QWidget, WidgetDefault):
     self.max_stdev_cb.setValue(1.0000)
     self.vbox.addWidget(self.max_stdev_cb)
     self.vbox.addWidget(self.execute_primary_function_button)
-    # self.right.setLayout(vbox)
-    #
-    # splitter = QSplitter(Qt.Horizontal)
-    # splitter.setHandleWidth(3)
-    # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-    # splitter.addWidget(self.left)
-    # splitter.addWidget(self.right)
-    # hbox_global = QHBoxLayout()
-    # hbox_global.addWidget(splitter)
-    # self.setLayout(hbox_global)
 
   def setup_signals(self):
       super().setup_signals()
@@ -151,25 +103,6 @@ class Widget(QWidget, WidgetDefault):
                                                                 self.Labels.colormap_upper_limit_label))
       self.max_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.max_checkbox_label))
-
-
-  # def cm_choice(self, cm_choice):
-  #     self.cm_type = cm_choice
-
-  # def refresh_video_list_via_combo_box(self, trigger_item=None):
-  #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
-  #
-  # def selected_video_changed(self, selected, deselected):
-  #     pfs.selected_video_changed_multi(self, selected, deselected)
-
-  # def selected_video_changed(self, selection):
-  #   if not selection.indexes():
-  #     return
-  #   self.video_path = str(os.path.join(self.project.path,
-  #                                  selection.indexes()[0].data(Qt.DisplayRole))
-  #                         + '.npy')
-  #   frame = fileloader.load_reference_frame(self.video_path)
-  #   self.view.show(frame)
 
   def execute_primary_function(self, input_paths=None):
     cm_type = self.cm_comboBox.currentText()
@@ -278,7 +211,6 @@ class StdDevDialog(QDialog):
       spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
 
       # make regions where RGB values are taken from 0, black. take the top left corner value...
-
       spc_map_color = spc_map_color.swapaxes(0, 1)
       if spc_map_color.ndim == 2:
           spc_map_color = spc_map_color[:, ::-1]

@@ -73,13 +73,6 @@ class Widget(QWidget):
         self.update_plugin_params(self.Labels.no_channels_label, self.Defaults.no_channels_default)
         self.update_plugin_params(self.Labels.dtype_label, self.Defaults.dtype_default)
 
-    # "Scale Factor": 1.00,
-    # "Channel": 2,
-    # "Width": 256,
-    # "Height": 256,
-    # "Number of channels": 3,
-    # "dtype": "uint8"
-
     self.scale_factor.setValue(self.params[self.Labels.scale_factor_label])
     self.channel.setValue(self.params[self.Labels.channel_label])
     self.sb_width.setValue(self.params[self.Labels.width_label])
@@ -92,33 +85,11 @@ class Widget(QWidget):
 
     ## Related to importing Raws
     self.setWindowTitle('Import Raw File')
-
-    # vbox.addWidget(QLabel('Set the size all data are to be rescaled to'))
-
     grid = QGridLayout()
     grid.addWidget(QLabel('Set channel and scale factor used for all imported data'), 0, 0)
 
-    # grid.addWidget(QLabel('Width:'), 0, 0)
-    # self.rescale_width = QSpinBox()
-    # self.rescale_width.setMinimum(1)
-    # self.rescale_width.setMaximum(1024)
-    # self.rescale_width.setValue(256)
-    # grid.addWidget(self.rescale_width, 0, 1)
-
-    # grid.addWidget(QLabel('Height:'), 1, 0)
-    # self.rescale_height = QSpinBox()
-    # self.rescale_height.setMinimum(1)
-    # self.rescale_height.setMaximum(1024)
-    # self.rescale_height.setValue(256)
-    # grid.addWidget(self.rescale_height, 1, 1)
-
-    # def scale_factor_handler(val):
-    #     if not (val/0.25).is_integer():
-    #         self.scale_factor.setValue(1.0)
-
     grid.addWidget(QLabel('Scale Factor:'), 1, 0)
     self.scale_factor = QDoubleSpinBox()
-    # self.scale_factor.valueChanged[float].connect(scale_factor_handler)
     self.scale_factor.setSingleStep(0.25)
     self.scale_factor.setMinimum(0.25)
     self.scale_factor.setMaximum(1.00)
@@ -165,7 +136,6 @@ class Widget(QWidget):
     grid.addWidget(qtutil.separator(), 10, 0)
     grid.addWidget(qtutil.separator(), 10, 1)
     vbox.addLayout(grid)
-    #vbox.addStretch()
 
     self.setLayout(vbox)
     self.resize(400, 220)
@@ -228,9 +198,6 @@ class Widget(QWidget):
     else:
         path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
         path = os.path.join(self.project.path, path)
-    # path = os.path.splitext(os.path.basename(filename))[0] + '_channel_' + str(channel) + '.npy'
-    # path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
-    # path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting raw to npy...', 'Abort', 0, 100, self)
     progress.setAutoClose(True)
@@ -279,10 +246,6 @@ class Widget(QWidget):
     else:
         path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
         path = os.path.join(self.project.path, path)
-
-
-    # path = os.path.splitext(os.path.basename(filename))[0] + '.npy'
-    # path = os.path.join(self.project.path, path)
 
     progress = QProgressDialog('Converting tif to npy...', 'Abort', 0, 100, self)
     progress.setAutoClose(True)
@@ -347,14 +310,6 @@ class Widget(QWidget):
 
           qtutil.info('Copying .npy from ' + filename + ' to ' + new_filename +
                       '. We recommend doing this manually for large files')
-          # if os.path.isfile(new_filename):
-          #     i = 1
-          #     path_after = new_filename
-          #     while os.path.isfile(path_after):
-          #         name_after = new_filename + '(' + str(i) + ')' + '.npy'
-          #         path_after = os.path.join(self.project.path, name_after)
-          #         i = i + 1
-          #     new_filename = path_after
           copyfile_progress = QProgressDialog('Progress Copying ' + filename + 'to ' + new_filename,
                                               'Abort', 0, 100, self)
           copyfile_progress.setAutoClose(True)
@@ -395,8 +350,6 @@ class Widget(QWidget):
         imported_path = self.import_file(filename)
       except NotConvertedError:
         qtutil.warning('Skipping file \'{}\' since not converted.'.format(filename))
-      # except FileAlreadyInProjectError as e:
-      #   qtutil.warning('Skipping file \'{}\' since already in project.'.format(e.filename))
       except:
         qtutil.critical('Import of \'{}\' failed:\n'.format(filename) +\
           traceback.format_exc())
@@ -415,15 +368,15 @@ class Widget(QWidget):
         QSettings().setValue('last_load_data_path', os.path.dirname(filenames[0]))
     else:
         filenames = input_paths
-    proj_file_names = [self.project.files[i]['name'] for i in range(len(self.project.files))]
-    new_file_names = [os.path.splitext(os.path.basename(filename))[0] for filename in filenames]
-    tester = [name for name in proj_file_names if name in new_file_names]
-
-    # if tester:
-    #     qtutil.critical("These files already exist in the project: "
-    #                     + str(tester) +
-    #                     " Please change their names if you want to import them")
-    #     return [" "] #todo: end automation more elegantly
+    # proj_file_names = [self.project.files[i]['name'] for i in range(len(self.project.files))]
+    # new_file_names = [os.path.splitext(os.path.basename(filename))[0] for filename in filenames]
+    # tester = [name for name in proj_file_names if name in new_file_names]
+    #
+    # # if tester:
+    # #     qtutil.critical("These files already exist in the project: "
+    # #                     + str(tester) +
+    # #                     " Please change their names if you want to import them")
+    # #     return [" "] #todo: end automation more elegantly
     return self.import_files(filenames)
 
   def get_input_paths(self):

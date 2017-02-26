@@ -10,8 +10,6 @@ from PyQt4.QtGui import *
 from .util import fileloader
 from .util import mse_ui_elements as mue
 from .util.mygraphicsview import MyGraphicsView
-import matplotlib.pyplot as plt
-
 
 sys.path.append('..')
 import qtutil
@@ -19,10 +17,8 @@ import pickle
 import numpy as np
 from scipy import stats
 import matplotlib
-import matplotlib.pyplot as plt
 import uuid
 import csv
-from .util import project_functions as pfs
 from pyqtgraph.Qt import QtGui
 from .util.plugin import WidgetDefault
 from .util.plugin import PluginDefault
@@ -59,10 +55,6 @@ class Widget(QWidget, WidgetDefault):
         if not project or not isinstance(plugin_position, int):
             return
         self.project = project
-
-        # define ui components and global data
-        # self.left = QFrame()
-        # self.right = QFrame()
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
         self.roi_list = QListView()
@@ -70,56 +62,11 @@ class Widget(QWidget, WidgetDefault):
         self.save_pb = QPushButton("&Save spc windows")
         self.load_pb = QPushButton("&Load project spc windows")
         self.cm_pb = QPushButton('Connectivity &Matrix')
-
         self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
-
-        # self.setup_ui()
-        # self.cm_type = self.cm_comboBox.itemText(0)
         WidgetDefault.__init__(self, project, plugin_position)
-
-
-        # self.open_dialogs = []
-        # self.selected_videos = []
-        #
-        # self.video_list.setModel(QStandardItemModel())
-        # self.video_list.selectionModel().selectionChanged[QItemSelection,
-        #   QItemSelection].connect(self.selected_video_changed)
-        # self.video_list.doubleClicked.connect(self.video_triggered)
-
-        # self.roi_list.setModel(RoiModel())
-        # self.roi_list.selectionModel().selectionChanged[QItemSelection,
-        #   QItemSelection].connect(self.selected_roi_changed)
-        #
-        # for f in project.files:
-        #     if f['type'] == 'video':
-        #         self.video_list.model().appendRow(QStandardItem(f['name']))
-        #     elif f['type'] == 'roi' or f['type'] == 'auto_roi':
-        #         item = QStandardItem(f['name'])
-        #         item.setData(f['path'], Qt.UserRole)
-        #         self.roi_list.model().appendRow(item)
-
-        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-    # def video_triggered(self, index):
-    #     pfs.video_triggered(self, index)
 
     def setup_ui(self):
         super().setup_ui()
-        # vbox_view = QVBoxLayout()
-        # vbox_view.addWidget(self.view)
-        # self.view.vb.crosshair_visible = False
-        # self.left.setLayout(vbox_view)
-        #
-        # vbox = QVBoxLayout()
-        # list_of_manips = pfs.get_list_of_project_manips(self.project)
-        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        # vbox.addWidget(self.toolbutton)
-        # vbox.addWidget(QLabel('Select video:'))
-        # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        # vbox.addWidget(self.video_list)
         self.vbox.addWidget(qtutil.separator())
         self.vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder which '
                                            'modifies their order in the connectivity matrix.'))
@@ -145,26 +92,9 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
         self.vbox.addWidget(self.cm_pb)
-        # self.right.setLayout(self.vbox)
-        #
-        # splitter = QSplitter(Qt.Horizontal)
-        # splitter.setHandleWidth(3)
-        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        # splitter.addWidget(self.left)
-        # splitter.addWidget(self.right)
-        # hbox_global = QHBoxLayout()
-        # hbox_global.addWidget(splitter)
-        # self.setLayout(hbox_global)
-
-    # def refresh_video_list_via_combo_box(self, trigger_item=None):
-    #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
-    #
-    # def selected_video_changed(self, selected, deselected):
-    #     pfs.selected_video_changed_multi(self, selected, deselected)
 
     def setup_signals(self):
         super().setup_signals()
-        # self.cm_comboBox.activated[str].connect(self.cm_choice)
         self.cm_pb.clicked.connect(self.connectivity_triggered)
         self.save_pb.clicked.connect(self.save_triggered)
         self.load_pb.clicked.connect(self.load_triggered)
@@ -182,10 +112,6 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_param_signals()
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
-
-
-    # def cm_choice(self, cm_choice):
-    #     self.cm_type = cm_choice
 
     def selected_roi_changed(self, selected, deselected):
         #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
@@ -267,9 +193,6 @@ class Widget(QWidget, WidgetDefault):
             self.project.save()
 
             # Now save the actual file
-            # area = dialog.centralWidget()
-            # state = area.saveState()
-
             matrix_output_data = (pickle_path, dialog.model.roinames, dialog.model._data)
             try:
                 with open(pickle_path, 'wb') as output:
@@ -329,19 +252,8 @@ class Widget(QWidget, WidgetDefault):
             qtutil.info('No connectivity matrix windows are open. ')
             return
 
-        # progress = QProgressDialog('Generating csv files...',
-        #                            'Abort', 0, 100, self)
-        # progress.setAutoClose(True)
-        # progress.setMinimumDuration(0)
-        #
-        # def callback(x):
-        #     progress.setValue(x * 100)
-        #     QApplication.processEvents()
-
         for i, dialog in enumerate(self.open_dialogs):
-            # callback(i / len(self.open_dialogs))
             rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
-            unique_id = str(uuid.uuid4())
             file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_connectivity_matrix.csv'
             file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_connectivity_matrix.csv'
 
@@ -362,32 +274,6 @@ class Widget(QWidget, WidgetDefault):
                     row = [row[x][1] for x in range(len(row))]
                     writer.writerow(row)
                 writer.writerow(['Selected videos:'] + self.selected_videos)
-        # callback(1)
-        # qtutil.info("All matrices saved to project directory")
-                # for row_ind in range(len(dialog.model._data)):
-                #     row = dialog.model._data[row_ind]
-                #     row = [row[x][0] for x in range(len(row))]
-                #     writer.writerow(row)
-                #     print(str(row))
-
-            #     for x in range(len(rois_names)):
-            #             row = dialog.model._data[row][x][0]
-            #
-            # avg_matrix = [[rois_names[x]] + dialog.model._data[x] for x in range(len(dialog.model._data))]
-            # # empty space in top left
-            # rois_names = [''] + rois_names
-            # avg_matrix = [rois_names] + avg_matrix
-            #
-            # with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
-            #     writer = csv.writer(csvfile, delimiter=',')
-            #     for row in avg_matrix:
-            #         writer.writerow(row)
-            #         print(str(row))
-
-
-            # matrix_list = dialog.model.matrix_list
-            # unique_id_avg = str(uuid.uuid4())
-            # path = os.path.join(self.project.path, unique_id_avg)
 
     def setup_whats_this(self):
         super().setup_whats_this()

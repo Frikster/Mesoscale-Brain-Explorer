@@ -1,21 +1,15 @@
 import os
-import shutil
 import sys
-import traceback
 
-import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import constants
-from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
-from .util.qt import MyListView
 
 sys.path.append('..')
 import qtutil
 
-from .util.qt import FileTable, MyProgressDialog
+from .util.qt import MyProgressDialog
 from .util import fileloader
 import functools
 import tifffile as tiff
@@ -66,12 +60,6 @@ class Exporter(QWidget):
     except:
         qtutil.critical(filename + ' could not be written. Ensure that export dtype is properly set. '
                                    'This fixes this issue in most cases.', self)
-  
-  # def export_roi(self, fileinfo, filename):
-  #   try:
-  #     shutil.copyfile(fileinfo['path'], filename)
-  #   except:
-  #     qtutil.critical('File could not be copied.\n' + traceback.format_exc(), self)
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
@@ -89,56 +77,16 @@ class Widget(QWidget, WidgetDefault):
     if not project or not isinstance(plugin_position, int):
         return
     self.project = project
-
-    # define ui components and global data
-    # self.view = MyGraphicsView(self.project)
-    # self.video_list = MyListView()
-    # self.left = QFrame()
-    # self.right = QFrame()
-    # self.left_cut_off = QSpinBox()
-    # self.right_cut_off = QSpinBox()
-    #
-    # self.project = project
-    # self.setup_ui()
-    # self.open_dialogs = []
-    # self.selected_videos = []
-    # self.shown_video_path = None
     self.exporter = Exporter(self)
     self.export_pb = QPushButton('&Export')
     self.framerate_sb = QSpinBox()
     self.cb_dtype = QComboBox()
     self.export_filetype_cb = QComboBox()
     self.export_bulk_pb = QPushButton('Export in &Bulk')
-
-    # self.video_list.setModel(QStandardItemModel())
-    # self.video_list.selectionModel().selectionChanged.connect(self.selected_video_changed)
-    # self.video_list.doubleClicked.connect(self.video_triggered)
-    # for f in project.files:
-    #     if f['type'] != 'video':
-    #         continue
-    #     self.video_list.model().appendRow(QStandardItem(f['name']))
-    # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
     WidgetDefault.__init__(self, project, plugin_position)
-
-  # def video_triggered(self, index):
-  #     pfs.video_triggered(self, index)
 
   def setup_ui(self):
       super().setup_ui()
-      # vbox_view = QVBoxLayout()
-      # vbox_view.addWidget(self.view)
-      # self.left.setLayout(vbox_view)
-      #
-      # vbox = QVBoxLayout()
-      # list_of_manips = pfs.get_list_of_project_manips(self.project)
-      # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-      # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-      # vbox.addWidget(self.toolbutton)
-      # vbox.addWidget(QLabel('Choose video:'))
-      # # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-      # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-      # # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-      # vbox.addWidget(self.video_list)
       self.vbox.addWidget(QLabel("Export Framerate (Hz)"))
       self.vbox.addWidget(self.framerate_sb)
       self.framerate_sb.setMinimum(1)
@@ -152,29 +100,6 @@ class Widget(QWidget, WidgetDefault):
       self.vbox.addWidget(self.export_filetype_cb)
       self.export_filetype_cb.addItems(['.avi', '.tif', '.raw'])
       self.vbox.addWidget(self.export_bulk_pb)
-
-      # self.right.setLayout(self.vbox)
-      #
-      # splitter = QSplitter(Qt.Horizontal)
-      # splitter.setHandleWidth(3)
-      # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-      # splitter.addWidget(self.left)
-      # splitter.addWidget(self.right)
-      # hbox_global = QHBoxLayout()
-      # hbox_global.addWidget(splitter)
-      # self.setLayout(hbox_global)
-    # vbox = QVBoxLayout()
-    #
-    # self.table = FileTable(self.project.files)
-    # self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-    # self.table.doubleClicked.connect(self.row_doubleclicked)
-    # vbox.addWidget(self.table)
-    #
-    # pb = QPushButton('&Export')
-    # pb.clicked.connect(self.export_clicked)
-    # vbox.addWidget(pb)
-    #
-    # self.setLayout(vbox)
 
   def setup_signals(self):
       super().setup_signals()
@@ -200,11 +125,6 @@ class Widget(QWidget, WidgetDefault):
                                                                        self.Labels.export_dtype_label))
       self.export_filetype_cb.currentIndexChanged[int].connect(
           functools.partial(self.update_plugin_params, self.Labels.export_filetype_index_label))
-      # def refresh_video_list_via_combo_box(self, trigger_item=None):
-  #     pfs.refresh_video_list_via_combo_box(self, trigger_item)
-  #
-  # def selected_video_changed(self, selected, deselected):
-  #     pfs.selected_video_changed_multi(self, selected, deselected)
 
   def filedialog(self, name, filters):
     path = QSettings().value('export_path')
@@ -226,30 +146,8 @@ class Widget(QWidget, WidgetDefault):
       filename = filename + ext
     return filename
 
-  # def export_roi(self, fileinfo):
-  #   """Ask for filename and call exporter function"""
-  #   filters = {
-  #     '.roi': 'ROI file (*.roi)'
-  #   }
-  #   default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
-  #   filename = self.filedialog(default, filters)
-  #   if filename:
-  #     assert(filename.endswith('.roi'))
-  #     self.exporter.export_roi(fileinfo, filename)
-
   def export_video(self, filepath, export_filename):
     """Ask for filename and dispatch based on requested file format"""
-    # filters = {
-    #   #'.mp4': 'MP4 file (*.mp4)',
-    #   '.avi': 'AVI file (*.avi)',
-    #   '.tif': 'TIF file (*.tif)',
-    #   '.raw': 'RAW file (*.raw)'
-    # }
-    # default = os.path.basename(filepath) or 'untitled'
-    # # default = 'name' in fileinfo and fileinfo['name'] or 'untitled'
-    # filename = self.filedialog(default, filters)
-    # if not filename:
-    #   return
     export_dtype = self.cb_dtype.currentText()
     export_framerate = self.framerate_sb.value()
     if export_filename.endswith('.avi'):
@@ -275,22 +173,9 @@ class Widget(QWidget, WidgetDefault):
           self.export_video(selected_video, export_path)
       progress.close()
       qtutil.info("Export to " + export_dir + " complete")
-    # """Dispatch according to field 'type'"""
-    # if fileinfo['type'] == 'roi':
-    #   self.export_roi(fileinfo)
-    # elif fileinfo['type'] == 'video':
-    #   self.export_video(filepath)
-    # else:
-    #   qtutil.critical('Unsupported file type.')
 
   def export_clicked(self):
     """Retrieve fileinfo and call export"""
-    # rows = self.table.selectionModel().selectedRows()
-    # if not rows:
-    #   return
-    # assert(len(rows) == 1)
-    # f = self.table.model().get_entry(rows[0])
-    #    f = self.shown_video_path
     progress = MyProgressDialog('Export Progress', 'Exporting files...', self)
     progress.show()
     for i, selected_video in enumerate(self.selected_videos):
@@ -309,10 +194,6 @@ class Widget(QWidget, WidgetDefault):
         self.export_video(selected_video, filename)
     progress.close()
     qtutil.info("File export for selected files complete")
-  # def row_doubleclicked(self, index):
-  #   """Retrieve fileinfo and call export"""
-  #   f = self.table.model().get_entry(index)
-  #   self.export(f)
 
   def setup_whats_this(self):
       super().setup_whats_this()

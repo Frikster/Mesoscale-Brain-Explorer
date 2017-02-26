@@ -4,8 +4,8 @@ import functools
 import os
 
 import numpy as np
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
