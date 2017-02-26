@@ -102,6 +102,10 @@ class Widget(QWidget, WidgetDefault):
         return output_path
         # self.update_tables()
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.avg_button.setWhatsThis("Generate evoked average for selected image stacks where each frame is averaged "
+                                     "across image stacks for each frame")
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
