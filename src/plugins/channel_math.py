@@ -76,8 +76,8 @@ class Widget(QWidget, WidgetDefault):
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
         # vbox.addWidget(self.video_list)
         self.vbox.addWidget(mue.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
-                                           'denominator. Files can be dragged in the video list for convenience'
-                                           'but the order does not determine which is the numerator and which the'
+                                           'denominator. Files can be dragged in the video list for convenience '
+                                           'but the order does not determine which is the numerator and which the '
                                            'denominator.'))
         hhbox = QHBoxLayout()
         div_butt = QPushButton('Divide first by second')
