@@ -604,8 +604,23 @@ class Widget(QWidget, WidgetDefault):
     main_window.setCentralWidget(area)
     main_window.resize(2000, 900)
     main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
-                               ". Use Help -> What's This on this window for contextual tips")
-
+                               ". Click Shift+F1 for help")
+    main_window.setWhatsThis("Use View All to reset a view\n"
+                             "\n"
+                             "The blue tabs have the name of the ROI for a particular plot. These tabs can be dragged "
+                             "around to highlighted regions to the side of other tabs to split the dock or on top of "
+                             "other plots to place the tab in that dock. \n"
+                             "\n"
+                             "right click any plot to see more options. One important one is mouse mode. In Mouse "
+                             "mode 3 you can hold the left mouse button to pan and "
+                             "In mouse mode 1 you can zoom in on a particular region by creating cropping it with the "
+                             "left mouse button. In either mode the right mouse button can be used to adjust the shape "
+                             "of the plot and the mouse wheel for zoom \n"
+                             "\n"
+                             "Use Export to save a particular plot's data to csv or save as an image after you are "
+                             "satisfied with how graphical elements (see 'plot options') are arranged. "
+                             "Note that backups csv's of all plots are made automatically and can be found in your "
+                             "project directory")
     video_path_to_plots_dict = self.get_video_path_to_plots_dict()
     self.plot_to_docks(video_path_to_plots_dict, area)
     main_window.show()
@@ -656,6 +671,19 @@ class Widget(QWidget, WidgetDefault):
   def load_dock_windows(self):
       pfs.load_dock_windows(self, 'plot_window')
 
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.roi_list.setWhatsThis("Choose ROIs where the average activity per frame is plotted for each. "
+                                 "Ensure your pixel width is correct and that its units agree with the units of the "
+                                 "coordinates of these ROIs.")
+      self.save_pb.setWhatsThis("Saves the data from all open plot windows to file and the project. Each window can "
+                                "receive a custom name allowing for sets of analysis to occur on different windows "
+                                "with different data plotted.")
+      self.load_pb.setWhatsThis("Loads all plot windows associated with this plugin that have been saved. Click "
+                                "'Manage Data' to find each window associated with this project. Individual windows "
+                                "can be deleted from there. ")
+      self.plot_pb.setWhatsThis("Create plots of activity across frames for each image stack selected and each ROI "
+                                "selected")
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):

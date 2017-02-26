@@ -415,10 +415,6 @@ class Widget(QWidget, WidgetDefault):
                 spc = video_path_to_spc_dict[video_path][roi_name]
                 doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
                                           (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
-                doc_window.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
-                                        "and roll the mouse wheel to zoom in and out. Moving the map resets the "
-                                        "position of the gradient legend. Right click to see further options. "
-                                        "Use View All to reset the view. ")
                 root, ext = os.path.splitext(video_path)
                 source_name = os.path.basename(root)
                 doc_window.setWindowTitle(source_name)
@@ -439,7 +435,21 @@ class Widget(QWidget, WidgetDefault):
         main_window.setCentralWidget(area)
         main_window.resize(2000, 900)
         main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
-                                   ". Use Help -> What's This on this window for contextual tips")
+                                   ". Click Shift+F1 for help")
+        main_window.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
+                                 "and roll the mouse wheel to zoom in and out. Moving the map resets the "
+                                 "position of the gradient legend. Right click to see further options. "
+                                 "Use View All to rest a view.\n"
+                                 "\n"
+                                 "The blue tabs have the name of the seed for a particular map. These tabs can be "
+                                 "dragged "
+                                 "around to highlighted regions to the side of other tabs to split the dock or on "
+                                 "top of "
+                                 "other plots to place the tab in that dock. \n"
+                                 "\n"
+                                 "Use export to save a particular map's data to various image formats. "
+                                 "Note that .jpg and numpy arrays of maps are automatically saved and can be found in "
+                                 "your project directory")
 
         video_path_to_spc_dict = self.get_video_path_to_spc_dict()
         self.plot_to_docks(video_path_to_spc_dict, area)
@@ -663,7 +673,9 @@ class Widget(QWidget, WidgetDefault):
         self.save_pb.setWhatsThis("Saves the data from all open plot windows to file and the project. Each window can "
                                   "receive a custom name allowing for sets of analysis to occur on different windows "
                                   "with different data plotted.")
-        self.load_pb.setWhatsThis("Loads all plot windows associated with this plugin that have been saved.")
+        self.load_pb.setWhatsThis("Loads all plot windows associated with this plugin that have been saved. Click "
+                                  "'Manage Data' to find each window associated with this project. Individual windows "
+                                  "can be deleted from there. ")
         self.spc_from_rois_pb.setWhatsThis("Creates seed pixel correlation maps (SPC) from the seeds selected for each "
                                            "image stack selected. Seeds are taken from the coordinates imported "
                                            "through the import ROIs plugin. SPC maps are automatically saved to file "
