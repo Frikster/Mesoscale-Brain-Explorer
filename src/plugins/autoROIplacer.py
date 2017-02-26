@@ -138,7 +138,8 @@ class Widget(QWidget, WidgetDefault):
     # A flag to see whether selected_roi_changed is being entered for the first time
     self.selected_roi_changed_flag = 0
     WidgetDefault.__init__(self, project, plugin_position)
-    roi_names = [f['name'] for f in project.files if f['type'] == 'auto_roi']
+    roi_names = [str(f['name']) for f in project.files if f['type'] == 'auto_roi']
+    
     for roi_name in roi_names:
       if roi_name not in self.roi_list.model().rois:
           self.roi_list.model().appendRoi(roi_name)
@@ -528,7 +529,8 @@ class Widget(QWidget, WidgetDefault):
     self.update_table_pb.setWhatsThis("ROIs sometimes are misplaced by MBE. The cause of this is still unknown so "
                                       "please click here to refresh which solves this issue most of the time. Also,"
                                       "if you've made changes to the table above you can click here to revert to the "
-                                      "version you have saved on file")
+                                      "version you have saved on file (changes made to the above table to not affect "
+                                      "your csv saved to file)")
     self.roi_list.setWhatsThis("Imported ROIs will be shown here. Select ROIs in the this list to view "
                                "their location on the scene and then adjust the origin and units per pixel in the "
                                "left sidepanel to see change in real-time to adjust and shift the ROIs to your "
@@ -542,7 +544,10 @@ class Widget(QWidget, WidgetDefault):
                                "location is. "
                                "Once you are happy with its placement, copy and paste the new coordinates and "
                                "replace the coordinates in your csv and save the csv. Now reload this csv and the "
-                               "change will be made.")
+                               "change will be made. \n"
+                               "\n"
+                               "NOTE: Changing the values in the table and then navigating to another plugin and then "
+                               "back to this one makes the ROIs list blank.")
 
 
 class AutoROICoords(QTableWidget):
