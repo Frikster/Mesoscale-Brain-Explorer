@@ -192,6 +192,10 @@ class Widget(QWidget, WidgetDefault):
         else:
             max_val = str(self.max_stdev_cb.value())
             dialog = StdDevDialog(self.project, video_path, stddev, self.max_stdev_cb.value(), cm_type, self)
+            dialog.setWhatsThis("Click and drag to move the map around and roll "
+                                "the mouse wheel to zoom in and out. Moving the map resets the position of the "
+                                "gradient legend. Right click to see further options. Use View All to reset the view. ")
+
             stddev_col = dialog.colorized_spc
         dialog.show()
         self.open_dialogs.append(dialog)
@@ -207,6 +211,21 @@ class Widget(QWidget, WidgetDefault):
       np.save(path_without_ext + '.npy', stddev)
       # Save as png and jpeg
       scipy.misc.toimage(stddev_col).save(path_without_ext + '.jpg')
+
+  def setup_whats_this(self):
+      super().setup_whats_this()
+      self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your maps. Note that we strongly "
+                                    "discourage the use of jet. For a discussion on this please see "
+                                    "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
+                                    "In Proceedings of Human Vision and Electronic Imaging")
+      self.max_checkbox.setWhatsThis("If checked the highest standard deviation value found for a particular plot "
+                                     "will be used as the upper limit in the range. This will be reflected in the "
+                                     "gradient legend")
+      self.max_stdev_cb.setWhatsThis("Set the highest standard deviation that will be represented on your map and "
+                                     "therefore the upper limit of the gradient range. standard deviations above this "
+                                     "value will all have the same colour")
+      self.execute_primary_function_button.setWhatsThis("Create standard deviation map of selected image stacks with "
+                                                        "upper")
 
 class StdDevDialog(QDialog):
   def __init__(self, project, video_path, stddevmap, max_stdev, cm_type, parent=None):
