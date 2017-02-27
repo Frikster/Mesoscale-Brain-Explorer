@@ -209,8 +209,19 @@ def save_dock_windows(widget, window_type):
         qtutil.info('No plot windows are open. ')
         return
 
-    qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows open. We will now choose a path to '
-                                                             'save each one to')
+    continue_msg = "All Windows will be closed after saving, *including* ones you have not saved. \n" \
+                   "\n" \
+                   "Continue?"
+    reply = QMessageBox.question(widget, 'Save All',
+                                 continue_msg, QMessageBox.Yes, QMessageBox.No)
+    if reply == QMessageBox.No:
+        return
+
+    qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows in memory. We will now choose a path to '
+                                                               'save each one to. Simply don\'t save ones you have '
+                                                               'purposefully closed. Though, good news, you now have '
+                                                               'one last chance to save and recover '
+                                                               'any windows you accidentally closed')
     for (dialog, video_path_to_plots_dict) in widget.open_dialogs_data_dict:
         win_title = dialog.windowTitle()
         win_title = win_title[12:len(str(uuid.uuid4())) + 12]
@@ -221,14 +232,12 @@ def save_dock_windows(widget, window_type):
         pickle_path = widget.filedialog(default, filters)
         if not pickle_path:
             return
-
         widget.project.files.append({
             'path': pickle_path,
             'type': window_type,
             'name': os.path.basename(pickle_path)
         })
         widget.project.save()
-
         # Now save the actual file
         # area = dialog.centralWidget()
         # state = area.saveState()
@@ -238,8 +247,11 @@ def save_dock_windows(widget, window_type):
         except:
             qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
                                           "that another program isn't using this file.")
-
     qtutil.info("All files have been saved")
+
+    for dialog in widget.open_dialogs:
+        dialog.close()
+    widget.open_dialogs = []
 
 def load_dock_windows(widget, window_type):
     paths = [p['path'] for p in widget.project.files if p['type'] == window_type]

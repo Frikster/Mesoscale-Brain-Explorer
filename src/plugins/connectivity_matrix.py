@@ -174,9 +174,20 @@ class Widget(QWidget, WidgetDefault):
             qtutil.info('No connectivity matrix windows are open. ')
             return
 
+        continue_msg = "All Connectivity Matrices will be closed after saving, *including* ones you have not saved. \n" \
+                  "\n" \
+                  "Continue?"
+        reply = QMessageBox.question(self, 'Save All',
+                                     continue_msg, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+
         qtutil.info(
-            'There are ' + str(len(self.open_dialogs)) + ' matrix windows open. We will now choose a path to '
-                                                           'save each one to')
+            'There are ' + str(len(self.open_dialogs)) + ' connectivity matrices in memory. We will now choose a path '
+                                                         'to save each one to. Simply don\'t save ones you have '
+                                                         'purposefully closed. Though, good news, you now have '
+                                                         'one last chance to save and recover any matrices you '
+                                                         'accidentally closed')
         for dialog in self.open_dialogs:
             win_title = dialog.windowTitle()
             filters = {
