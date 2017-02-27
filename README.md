@@ -1,11 +1,11 @@
 # Mesoscale-Brain-Explorer (MBE)
 
-## Note: a "ret_files" error typically means you have run out of space on your hard drive.
+### Note: a "ret_files" error typically means you have run out of space on your hard drive.
 
 ## Installation
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
-The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.0)
+The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.3)
 
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed:
