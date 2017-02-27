@@ -1,6 +1,6 @@
 # Mesoscale-Brain-Explorer (MBE)
 
-### Note: a "ret_files" error typically means you have run out of space on your hard drive.
+### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
 
 ## Installation
 Windows users simply have to download and extract the most recent 
