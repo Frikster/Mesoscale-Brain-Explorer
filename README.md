@@ -1,9 +1,11 @@
 # Mesoscale-Brain-Explorer (MBE)
 
+### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
+
 ## Installation
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
-The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.0)
+The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
 
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed:

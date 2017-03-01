@@ -4,8 +4,8 @@ import functools
 import os
 
 import numpy as np
-from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
@@ -52,7 +52,7 @@ class Widget(QWidget, WidgetDefault):
         self.main_button.clicked.connect(self.execute_primary_function)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.start_cut_off_label, self.Defaults.start_cut_off_default)
             self.update_plugin_params(self.Labels.end_cut_off_label, self.Defaults.end_cut_off_default)

@@ -7,7 +7,6 @@ import psutil
 import qtutil
 from PyQt4.QtGui import *
 
-from .util import fileloader
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -25,37 +24,15 @@ class Widget(QWidget, WidgetDefault):
         if not project or not isinstance(plugin_position, int):
             return
         self.avg_button = QPushButton('Generate Evoked Average')
-
-        # self.plugin_position = plugin_position
-        # self.project = project
-        # self.setup_ui()
-        # self.update_tables()
         WidgetDefault.__init__(self, project, plugin_position)
 
     def setup_ui(self):
         super().setup_ui()
-        # vbox = QVBoxLayout()
-        # self.table1 = FileTable()
-        # self.table1.setSelectionMode(QAbstractItemView.MultiSelection)
-        # vbox.addWidget(self.table1)
         self.vbox.addWidget(self.avg_button)
-        # self.table2 = FileTable()
-        # self.vbox.addWidget(self.table2)
-        #self.setLayout(self.vbox)
 
     def setup_signals(self):
         super().setup_signals()
         self.avg_button.clicked.connect(self.execute_primary_function)
-
-
-    # def update_tables(self):
-    #     videos = [f for f in self.project.files if f['type'] == 'video']
-    #     self.table1.setModel(FileTableModel(videos))
-    #     videos = [
-    #         f for f in self.project.files
-    #         if 'manipulations' in f and 'trigger-avg' in f['manipulations']
-    #         ]
-    #     self.table2.setModel(FileTableModel(videos))
 
     def execute_primary_function(self, input_paths=None):
         if not input_paths:
@@ -102,6 +79,10 @@ class Widget(QWidget, WidgetDefault):
         return output_path
         # self.update_tables()
 
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.avg_button.setWhatsThis("Generate evoked average for selected image stacks where each frame is averaged "
+                                     "across image stacks for each frame")
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import sys, os, time
+import os
+import sys
+import time
 
 import numpy as np
 from PyQt4.QtCore import *
@@ -8,7 +10,6 @@ from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import project_functions as pfs
-from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 
@@ -27,30 +28,11 @@ class Widget(QWidget, WidgetDefault):
             return
         self.plugin_position = plugin_position
         self.project = project
-
-        # define ui components and global data
-        # self.left = QFrame()
-        # self.right = QFrame()
-        # self.view = MyGraphicsView(self.project)
-        # self.video_list = QListView()
         self.video_list2 = QListView()
         self.df_d0_pb = QPushButton('&Compute df over f0')
         self.temp_filter_pb = QPushButton('&Apply Filter')
         self.video_list2_vidpath = ''
         self.video_list2_index = None
-
-        # self.setup_ui()
-        # self.selected_videos = []
-        #
-        # self.video_list.setModel(QStandardItemModel())
-        # self.video_list.selectionModel().selectionChanged[QItemSelection,
-        #                                                   QItemSelection].connect(self.selected_video_changed)
-        # self.video_list.doubleClicked.connect(self.video_triggered)
-        # for f in project.files:
-        #     if f['type'] != 'video':
-        #         continue
-        #     self.video_list.model().appendRow(QStandardItem(f['name']))
-        # self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
 
         self.video_list2.setModel(QStandardItemModel())
         self.clear()
@@ -64,43 +46,15 @@ class Widget(QWidget, WidgetDefault):
 
     def clear(self):
         self.video_list2.clearSelection()
-        # listwidget.setSelected(False)
-        # for i in range(listwidget.count()):
-        #     item = listwidget.item(i)
-        #     listwidget.setItemSelected(item, False)
 
     def setup_ui(self):
         super().setup_ui()
-        # vbox_view = QVBoxLayout()
-        # vbox_view.addWidget(self.view)
-        # self.left.setLayout(vbox_view)
-        #
-        # vbox = QVBoxLayout()
-        # list_of_manips = pfs.get_list_of_project_manips(self.project)
-        # self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        # self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        # vbox.addWidget(self.toolbutton)
-        # vbox.addWidget(QLabel('Choose video:'))
-        # self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        # self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        # self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # vbox.addWidget(self.video_list)
         self.vbox.addWidget(QLabel('Only if needed: Choose f0 source'))
         self.vbox.addWidget(QLabel('Double click to deselect all'))
         self.video_list2.setStyleSheet('QListView::item { height: 26px; }')
         self.video_list2.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.vbox.addWidget(self.video_list2)
         self.vbox.addWidget(self.df_d0_pb)
-        # self.right.setLayout(vbox)
-        #
-        # splitter = QSplitter(Qt.Horizontal)
-        # splitter.setHandleWidth(3)
-        # splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        # splitter.addWidget(self.left)
-        # splitter.addWidget(self.right)
-        # hbox_global = QHBoxLayout()
-        # hbox_global.addWidget(splitter)
-        # self.setLayout(hbox_global)
 
     def setup_signals(self):
         super().setup_signals()
@@ -110,7 +64,7 @@ class Widget(QWidget, WidgetDefault):
         self.df_d0_pb.clicked.connect(self.execute_primary_function)
 
     def setup_params(self, reset=False):
-        super().setup_params()
+        super().setup_params(reset)
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.f0_source_index_label, self.Defaults.f0_source_index_default)
         self.video_list2_index = self.params[self.Labels.f0_source_index_label]
@@ -131,26 +85,6 @@ class Widget(QWidget, WidgetDefault):
         index = self.video_list2.selectedIndexes()[0]
         self.video_list2_vidpath = str(os.path.normpath(os.path.join(self.project.path, index.data(Qt.DisplayRole))
                                                         + '.npy'))
-
-    # def selected_video_changed(self, selected, deselected):
-    #     if not selected.indexes():
-    #         return
-    #
-    #     for index in deselected.indexes():
-    #         vidpath = str(os.path.join(self.project.path,
-    #                                  index.data(Qt.DisplayRole))
-    #                           + '.npy')
-    #         self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-    #     for index in selected.indexes():
-    #         vidpath = str(os.path.join(self.project.path, index.data(Qt.DisplayRole)) + '.npy')
-    #         if vidpath not in self.selected_videos and vidpath != 'None':
-    #             self.selected_videos = self.selected_videos + [vidpath]
-    #
-    #     self.shown_video_path = str(os.path.join(self.project.path,
-    #                                        selected.indexes()[0].data(Qt.DisplayRole))
-    #                           + '.npy')
-    #     frame = fileloader.load_reference_frame(self.shown_video_path)
-    #     self.view.show(frame)
 
     def progress_dialog_abort(self):
         self.global_progress.cancel()

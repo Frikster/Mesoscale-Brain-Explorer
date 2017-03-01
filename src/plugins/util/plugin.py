@@ -182,6 +182,12 @@ class WidgetDefault(object):
     def selected_video_changed(self, selected, deselected):
         pfs.selected_video_changed_multi(self, selected, deselected)
 
+    def save_dock_windows(self):
+        pfs.save_dock_windows(self, 'misc_window')
+
+    def load_dock_windows(self):
+        pfs.load_dock_windows(self, 'misc_window')
+
     def execute_primary_function(self, input_paths=None):
         raise PrimaryFunctionMissing("Your custom plugin does not have a primary function."
                                      "Override this method")

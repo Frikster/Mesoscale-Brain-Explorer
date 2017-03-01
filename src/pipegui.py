@@ -18,6 +18,7 @@ from project import ProjectManager
 
 from plugins.util import mse_ui_elements as mue
 from plugins import set_coordinate_system as scs
+import traceback
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -165,6 +166,14 @@ class Sidebar(QWidget):
                                         "Units can be anything as long as the same units are used "
                                         "across all plugins. e.g. if you use microns for units per pixel "
                                         "then microns must be used for the coordinates in the ROI Placer plugin.")
+      self.pl_list.setWhatsThis("Each of these plugins performs a particular set of processing on your data. "
+                                "This list is called a pipeline since you can order this list using the Configure "
+                                "Pipeline button and then click then select some of the plugins and click Automate "
+                                "to perform the processing steps of all selected plugins in your custom order "
+                                "for a set of inputs. \n"
+                                "\n"
+                                "NOTE: There is a known bug where if you press and hold the up button in this list "
+                                "a new window occurs. This is a harmless bug and you can just close the window. ")
       self.auto_pb.setWhatsThis("If you are still unsure how to automate, watch a video tutorial. "
                                 "A link to where to find tutorials can be find by clicking Help -> About")
 
@@ -200,7 +209,9 @@ class MainWindow(QMainWindow):
                 try:
                     self.open_project(last)
                 except:
-                    qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
+                    qtutil.critical('Previous project appears to have been corrupted.\n \n'
+                                    + traceback.format_exc(), self)
+                    #qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
             self.sidebar.setup_sidebar_values(self.project)
 
   def load_plugins(self):
@@ -253,16 +264,8 @@ class MainWindow(QMainWindow):
   def setup_ui(self):
     self.pipeconf = PipeconfDialog(self.plugins, self)
     self.datadialog = DataDialog(self)
-    # self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)
-    #
-    # self.sidebar.open_pipeconf_requested.connect(self.open_pipeconf)
-    # self.sidebar.open_datadialog_requested.connect(self.open_datadialog)
-    # self.sidebar.automate_pipeline_requested.connect(self.automate_pipeline)
 
     self.pl_frame = QFrame()
-
-    # self.sidebar.pl_list.active_plugin_changed[str, int].connect(self.set_plugin)
-    # self.sidebar.pl_list.setModel(self.pipeconf.pipeline_list.model())
 
     splitter = QSplitter(self)
     self.enable = lambda yes: splitter.setEnabled(yes)
@@ -313,19 +316,30 @@ class MainWindow(QMainWindow):
     a.setStatusTip('Close project')
     a.triggered.connect(self.close_project)
     m.addAction(a)
+    a = QAction("&Reset All Plugin Parameters", self)
+    a.setStatusTip('This is useful if you experience JSON-related issues allowing for a clean slate')
+    a.triggered.connect(self.reset_all_params)
+    m.addAction(a)
     self.project_menu = m
-
-    # settings_menu = self.menu.addMenu('&Settings')
-    # a = QAction('&Pipeline Automation', self)
-    # a.setEnabled(False)
-    # a.setStatusTip('Not Available')
-    # a.triggered.connect(self.create_project)
-    # settings_menu.addAction(a)
 
     help_menu = self.menu.addMenu('&Help')
     help_menu.addAction(about_action)
     help_menu.addAction(whats_this_action)
 
+  def reset_all_params(self):
+      for plugin_position, p in enumerate(self.project.pipeline):
+          if p['name'] in self.plugins.keys():
+            plugin = self.plugins[p['name']]
+          if hasattr(plugin, 'widget'):
+              if hasattr(plugin.widget, 'setup_params'):
+                  if not hasattr(plugin.widget, 'params'):
+                      plugin.widget.params = self.project.pipeline[plugin_position]
+                      plugin.widget.project = self.project
+                      plugin.widget.plugin_position = plugin_position
+                  try:
+                    plugin.widget.setup_params(reset=True)
+                  except:
+                    print("Failed to reset " + p['name'])
 
   def setup_signals(self):
       self.datadialog.reload_plugins.connect(self.reload_pipeline_plugins)

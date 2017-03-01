@@ -13,17 +13,20 @@ from .util.mygraphicsview import MyGraphicsView
 
 sys.path.append('..')
 import qtutil
-
+import pickle
 import numpy as np
 from scipy import stats
 import matplotlib
-import matplotlib.pyplot as plt
 import uuid
 import csv
-from .util import project_functions as pfs
 from pyqtgraph.Qt import QtGui
-
+from .util.plugin import WidgetDefault
+from .util.plugin import PluginDefault
+from .util.mse_ui_elements import RoiList
+import functools
 import itertools
+import matplotlib.pyplot as plt
+import math
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -38,61 +41,359 @@ def calc_connectivity(video_path, image, rois):
     pearson = lambda x, y: stats.pearsonr(x, y)[0]
     return [[pearson(x, y) for x in avgs] for y in avgs]
 
+class Widget(QWidget, WidgetDefault):
+    class Labels(WidgetDefault.Labels):
+        colormap_index_label = "Choose Colormap:"
+
+    class Defaults(WidgetDefault.Defaults):
+        colormap_index_default = 1
+        roi_list_types_displayed = ['auto_roi', 'roi']
+        window_type = 'connectivity_matrix'
+
+    def __init__(self, project, plugin_position, parent=None):
+        super(Widget, self).__init__(parent)
+
+        if not project or not isinstance(plugin_position, int):
+            return
+        self.project = project
+        self.view = MyGraphicsView(self.project)
+        self.video_list = QListView()
+        self.roi_list = QListView()
+        self.cm_comboBox = QtGui.QComboBox(self)
+        self.save_pb = QPushButton("&Save spc windows")
+        self.load_pb = QPushButton("&Load project spc windows")
+        self.cm_pb = QPushButton('Connectivity &Matrix')
+        self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
+        WidgetDefault.__init__(self, project, plugin_position)
+
+    def setup_ui(self):
+        super().setup_ui()
+        self.vbox.addWidget(qtutil.separator())
+        self.vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder which '
+                                           'modifies their order in the connectivity matrix.'))
+        self.vbox.addWidget(QLabel('Select ROIs:'))
+        self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.roi_list.setAcceptDrops(True)
+        self.roi_list.setDragEnabled(True)
+        self.roi_list.setDropIndicatorShown(True)
+        self.roi_list.setDragDropMode(QAbstractItemView.DragDrop)
+        self.roi_list.setDragDropOverwriteMode(False)
+        self.vbox.addWidget(self.roi_list)
+        self.vbox.addWidget(QLabel(self.Labels.colormap_index_label))
+        # todo: colormap list should be dealt with in a seperate script
+        self.cm_comboBox.addItem("jet")
+        self.cm_comboBox.addItem("viridis")
+        self.cm_comboBox.addItem("inferno")
+        self.cm_comboBox.addItem("plasma")
+        self.cm_comboBox.addItem("magma")
+        self.cm_comboBox.addItem("coolwarm")
+        self.cm_comboBox.addItem("PRGn")
+        self.cm_comboBox.addItem("seismic")
+        self.vbox.addWidget(self.cm_comboBox)
+        self.vbox.addWidget(self.save_pb)
+        self.vbox.addWidget(self.load_pb)
+        self.vbox.addWidget(self.cm_pb)
+
+    def setup_signals(self):
+        super().setup_signals()
+        self.cm_pb.clicked.connect(self.connectivity_triggered)
+        self.save_pb.clicked.connect(self.save_triggered)
+        self.load_pb.clicked.connect(self.load_triggered)
+
+    def setup_params(self, reset=False):
+        super().setup_params(reset)
+        self.roi_list.setup_params()
+        if len(self.params) == 1 or reset:
+            self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)
+        self.cm_comboBox.setCurrentIndex(self.params[self.Labels.colormap_index_label])
+
+
+    def setup_param_signals(self):
+        super().setup_param_signals()
+        self.roi_list.setup_param_signals()
+        self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.colormap_index_label))
+
+    def selected_roi_changed(self, selected, deselected):
+        #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
+        #todo: what's the point of the forloops?
+        for index in deselected.indexes():
+            roiname = str(index.data(Qt.DisplayRole))
+            self.view.vb.removeRoi(roiname)
+        for index in selected.indexes():
+            roiname = str(index.data(Qt.DisplayRole))
+            roipath = str(index.data(Qt.UserRole))
+            self.view.vb.addRoi(roipath, roiname)
+
+    def connectivity_triggered(self):
+        cm_type = self.cm_comboBox.currentText()
+        progress = QProgressDialog('Generating Connectivity Matrix...', 'Abort', 0, 100, self)
+        progress.setAutoClose(True)
+        progress.setMinimumDuration(0)
+        def callback(x):
+            progress.setValue(x * 100)
+            QApplication.processEvents()
+
+        indexes = self.roi_list.selectionModel().selectedIndexes()
+        roinames = [index.data(Qt.DisplayRole) for index in indexes]
+        rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
+        if not self.view.vb.img:
+            qtutil.critical('Select video.')
+        elif not rois:
+            qtutil.critical('Select Roi(s).')
+        else:
+            win = ConnectivityDialog(self, roinames, cm_type, progress_callback=callback)
+            win.resize(900, 900)
+            callback(1)
+            win.show()
+            self.open_dialogs.append(win)
+            self.save_open_dialogs_to_csv()
+
+    def filedialog(self, name, filters):
+        path = self.project.path
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle('Export to')
+        dialog.setDirectory(str(path))
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setOption(QFileDialog.DontUseNativeDialog)
+        dialog.selectFile(name)
+        dialog.setFilter(';;'.join(filters.values()))
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if not dialog.exec_():
+            return None
+        filename = str(dialog.selectedFiles()[0])
+        QSettings().setValue('export_path', os.path.dirname(filename))
+        filter_ = str(dialog.selectedNameFilter())
+        ext = [f for f in filters if filters[f] == filter_][0]
+        if not filename.endswith(ext):
+            filename = filename + ext
+        return filename
+
+    def save_triggered(self):
+        if not self.open_dialogs:
+            qtutil.info('No connectivity matrix windows are open. ')
+            return
+
+        continue_msg = "All Connectivity Matrices will be closed after saving, *including* ones you have not saved. \n" \
+                  "\n" \
+                  "Continue?"
+        reply = QMessageBox.question(self, 'Save All',
+                                     continue_msg, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+
+        qtutil.info(
+            'There are ' + str(len(self.open_dialogs)) + ' connectivity matrices in memory. We will now choose a path '
+                                                         'to save each one to. Simply don\'t save ones you have '
+                                                         'purposefully closed. Though, good news, you now have '
+                                                         'one last chance to save and recover any matrices you '
+                                                         'accidentally closed')
+        for dialog in self.open_dialogs:
+            win_title = dialog.windowTitle()
+            filters = {
+                '.pkl': 'Python pickle file (*.pkl)'
+            }
+            default = win_title
+            pickle_path = self.filedialog(default, filters)
+            if not pickle_path:
+                return
+
+            self.project.files.append({
+                'path': pickle_path,
+                'type': self.Defaults.window_type,
+                'name': os.path.basename(pickle_path)
+            })
+            self.project.save()
+
+            # for row in dialog.model._data:
+            #     for cell in row:
+            #         if math.isnan(cell[0]) or math.isnan(cell[0]):
+            #             qtutil.warning("File might not save properly since it has nan values. Make sure all your "
+            #                            "ROIs are inside your mask.")
+            #             break
+
+            # Now save the actual file
+            matrix_output_data = (pickle_path, dialog.model.roinames, dialog.model._data)
+            try:
+                with open(pickle_path, 'wb') as output:
+                    pickle.dump(matrix_output_data, output, -1)
+            except:
+                qtutil.critical(
+                    pickle_path + " could not be saved. Ensure MBE has write access to this location and "
+                                  "that another program isn't using this file.")
+
+        qtutil.info("All files have been saved")
+
+        csv_msg = "Save csv files of all open Connectivity Matrix windows as well?"
+        reply = QMessageBox.question(self, 'Save All',
+                                     csv_msg, QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.save_open_dialogs_to_csv()
+
+        for dialog in self.open_dialogs:
+            dialog.close()
+        self.open_dialogs = []
+
+    def load_triggered(self):
+        paths = [p['path'] for p in self.project.files if p['type'] == self.Defaults.window_type]
+        if not paths:
+            qtutil.info("Your project has no connectivity matrices. Make and save some!")
+            return
+
+        for pickle_path in paths:
+            try:
+                with open(pickle_path, 'rb') as input:
+                    (title, roinames, dat) = pickle.load(input)
+            except:
+                del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
+                                        "location and that another program isn't using this file " \
+                                        "" \
+                                        "\n \nOtherwise, would you like to detatch this file from your project? "
+                reply = QMessageBox.question(self, 'File Load Error',
+                                             del_msg, QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    norm_path = os.path.normpath(pickle_path)
+                    self.project.files[:] = [f for f in self.project.files if
+                                               os.path.normpath(f['path']) != norm_path]
+                    self.project.save()
+                    load_msg = pickle_path + " detatched from your project." \
+                                             "" \
+                                             "\n \n Would you like to continue loading the " \
+                                             "remaining project matrices?"
+                    reply = QMessageBox.question(self, 'Continue?',
+                                                 load_msg, QMessageBox.Yes, QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return
+                continue
+
+            main_window = ConnectivityDialog(self, roinames, self.cm_comboBox.currentText(), dat)
+            main_window.setWindowTitle(title)
+            main_window.resize(900, 900)
+            main_window.show()
+            self.open_dialogs.append(main_window)
+
+    def save_open_dialogs_to_csv(self):
+        if not self.open_dialogs:
+            qtutil.info('No connectivity matrix windows are open. ')
+            return
+
+        for i, dialog in enumerate(self.open_dialogs):
+            rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
+            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_connectivity_matrix.csv'
+            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_connectivity_matrix.csv'
+
+            with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(rois_names)
+                for row_ind in range(len(dialog.model._data)):
+                    row = dialog.model._data[row_ind]
+                    row = [row[x][0] for x in range(len(row))]
+                    writer.writerow(row)
+                writer.writerow(['Selected videos:']+self.selected_videos)
+            # Do the standard deviation
+            with open(os.path.join(self.project.path, file_name_stdev), 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                writer.writerow(rois_names)
+                for row_ind in range(len(dialog.model._data)):
+                    row = dialog.model._data[row_ind]
+                    row = [row[x][1] for x in range(len(row))]
+                    writer.writerow(row)
+                writer.writerow(['Selected videos:'] + self.selected_videos)
+
+    def setup_whats_this(self):
+        super().setup_whats_this()
+        self.roi_list.setWhatsThis("Choose ROIs where the average value for each frame across frames is used for each "
+                                   "selected ROI. This set of values is correlated with the average of all other ROIs "
+                                   "to create the connectivity matrix. ")
+        self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your matrices. Note that we "
+                                      "discourage the use of jet. For a discussion on this please see "
+                                      "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
+                                      "In Proceedings of Human Vision and Electronic Imaging")
+        self.save_pb.setWhatsThis("Saves the data from all open matrix windows to file and the project. This includes "
+                                  "the option to save to csv - one for standard deviation and one for correlation "
+                                  "values for each matrix in view")
+        self.load_pb.setWhatsThis("Loads all matrix windows associated with this plugin that have been saved. Click "
+                                  "'Manage Data' to find each window associated with this project. Individual windows "
+                                  "can be deleted from there. ")
+        self.cm_pb.setWhatsThis("Creates a single connectivity matrix where each connectivity matrix from selected "
+                                "image stacks are averaged to create a single connectivity matrix that has a standard "
+                                "deviation displaying how correlation deviates across selected image stacks for each "
+                                "ROI. Correlation coefficient used = Pearson")
+
+
+
 # todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
-    def __init__(self, selected_videos, image, rois, cm_type, parent=None, progress_callback=None):
-        super(ConnectivityModel, self).__init__(parent)
+    def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
+        super(ConnectivityModel, self).__init__()
         self.cm_type = cm_type
-        self.rois = rois
-        self.matrix_list = []
-        avg_data = []
-        tot_data = []
-        dict_for_stdev = {}
+        self.roinames = roinames
 
-        for key in [i for i in list(itertools.product(range(len(rois)), range(len(rois))))]:
-            dict_for_stdev[key] = []
 
-        for i, video_path in enumerate(selected_videos):
-            if progress_callback:
-                progress_callback(i / len(selected_videos))
-            self._data = calc_connectivity(video_path, image, rois)
-            self.matrix_list = self.matrix_list + [self._data]
-            if tot_data == []:
-                tot_data = self._data
-            if avg_data == []:
-                avg_data = self._data
+
+        project = widget.project
+        rois = widget.view.vb.rois[:]
+        for roi in rois:
+            widget.view.vb.removeRoi(roi.name)
+        widget.view.vb.currentROIindex = 0
+        roipaths = [os.path.join(project.path, roiname + '.roi') for roiname in roinames]
+        widget.view.vb.loadROI(roipaths)
+        self.rois = [widget.view.vb.getRoi(roiname) for roiname in roinames]
+
+        if loaded_data:
+            self._data = loaded_data
+        else:
+            selected_videos = widget.selected_videos
+            image = widget.view.vb.img
+            self.matrix_list = []
+            avg_data = []
+            tot_data = []
+            dict_for_stdev = {}
+
+            for key in [i for i in list(itertools.product(range(len(self.rois)), range(len(self.rois))))]:
+                dict_for_stdev[key] = []
+
+            for i, video_path in enumerate(selected_videos):
+                if progress_callback:
+                    progress_callback(i / len(selected_videos))
+                self._data = calc_connectivity(video_path, image, self.rois)
+                self.matrix_list = self.matrix_list + [self._data]
+                if tot_data == []:
+                    tot_data = self._data
+                if avg_data == []:
+                    avg_data = self._data
+                for i in range(len(tot_data)):
+                    for j in range(len(tot_data)):
+                        dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
+                        # ignore half of graph
+                        if i < j:
+                            dict_for_stdev[(i, j)] = [0]
+                        # Start above with self._data receiving= the first value before adding on the rest.
+                        # don't add the first value twice
+                        if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
+                            tot_data[i][j] = tot_data[i][j] + self._data[i][j]
+            # Finally compute averages
             for i in range(len(tot_data)):
                 for j in range(len(tot_data)):
-                    dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
+                    if progress_callback:
+                        progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                     # ignore half of graph
                     if i < j:
-                        dict_for_stdev[(i, j)] = [0]
-                    # Start above with self._data receiving= the first value before adding on the rest.
-                    # don't add the first value twice
-                    if os.path.normpath(video_path) != os.path.normpath(selected_videos[0]):
-                        tot_data[i][j] = tot_data[i][j] + self._data[i][j]
-        # Finally compute averages
-        for i in range(len(tot_data)):
-            for j in range(len(tot_data)):
-                if progress_callback:
-                    progress_callback((i*j) / (len(tot_data)*len(tot_data)))
-                # ignore half of graph
-                if i < j:
-                    avg_data[i][j] = 0
-                else:
-                    avg_data[i][j] = tot_data[i][j] / len(selected_videos)
-        stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
-        assert(stdev_dict[(0, 0)] == 0)
+                        avg_data[i][j] = 0
+                    else:
+                        avg_data[i][j] = tot_data[i][j] / len(selected_videos)
+            stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
+            assert(stdev_dict[(0, 0)] == 0 or math.isnan(stdev_dict[(0, 0)]))
 
-        # combine stddev and avg data
-        for i in range(len(avg_data)):
-            for j in range(len(avg_data)):
-                if progress_callback:
-                    progress_callback((i*j) / (len(avg_data) * len(avg_data)))
-                avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
+            # combine stddev and avg data
+            for i in range(len(avg_data)):
+                for j in range(len(avg_data)):
+                    if progress_callback:
+                        progress_callback((i*j) / (len(avg_data) * len(avg_data)))
+                    avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
 
-        self._data = avg_data
-        assert(avg_data != [])
+            self._data = avg_data
+            assert(avg_data != [])
 
     def rowCount(self, parent):
         return len(self._data)
@@ -109,7 +410,7 @@ class ConnectivityModel(QAbstractTableModel):
 
             gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
             cmap = matplotlib.cm.ScalarMappable(
-                gradient_range, self.cm_type)
+                gradient_range, plt.get_cmap(self.cm_type))
             color = cmap.to_rgba(value, bytes=True)
             # color = plt.cm.jet(value)
             # color = [x * 255 for x in color]
@@ -133,16 +434,17 @@ class ConnectivityTable(QTableView):
         self.setMinimumSize(400, 300)
 
 class ConnectivityDialog(QDialog):
-    def __init__(self, selected_videos, image, rois, cm_type, progress_callback=None):
+    def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__()
-        self.setWindowTitle('Connectivity Matrix')
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        self.setWindowTitle('Connectivity Matrix - ' + str(uuid.uuid4()))
+        self.table = ConnectivityTable()
         self.setup_ui()
-        self.model = ConnectivityModel(selected_videos, image, rois, cm_type, None, progress_callback)
+        self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
         self.table.setModel(self.model)
 
     def setup_ui(self):
         vbox = QVBoxLayout()
-        self.table = ConnectivityTable()
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
@@ -167,218 +469,12 @@ class RoiModel(QStandardItemModel):
   def insertRows(self, row, count, parent):
     return super(RoiModel, self).insertRows(row, count, parent)
 
-class Widget(QWidget):
-    def __init__(self, project, parent=None):
-        super(Widget, self).__init__(parent)
 
-        if not project:
-            return
-        self.project = project
-
-        # define ui components and global data
-        self.left = QFrame()
-        self.right = QFrame()
-        self.view = MyGraphicsView(self.project)
-        self.video_list = QListView()
-        self.roi_list = QListView()
-        self.cm_comboBox = QtGui.QComboBox(self)
-
-        self.setup_ui()
-        self.cm_type = self.cm_comboBox.itemText(0)
-
-        self.open_dialogs = []
-        self.selected_videos = []
-
-        self.video_list.setModel(QStandardItemModel())
-        self.video_list.selectionModel().selectionChanged[QItemSelection,
-          QItemSelection].connect(self.selected_video_changed)
-        self.video_list.doubleClicked.connect(self.video_triggered)
-
-        self.roi_list.setModel(RoiModel())
-        self.roi_list.selectionModel().selectionChanged[QItemSelection,
-          QItemSelection].connect(self.selected_roi_changed)
-
-        for f in project.files:
-            if f['type'] == 'video':
-                self.video_list.model().appendRow(QStandardItem(f['name']))
-            elif f['type'] == 'roi' or f['type'] == 'auto_roi':
-                item = QStandardItem(f['name'])
-                item.setData(f['path'], Qt.UserRole)
-                self.roi_list.model().appendRow(item)
-
-        self.video_list.setCurrentIndex(self.video_list.model().index(0, 0))
-
-    def video_triggered(self, index):
-        pfs.video_triggered(self, index)
-
-    def setup_ui(self):
-        vbox_view = QVBoxLayout()
-        vbox_view.addWidget(self.view)
-        self.view.vb.crosshair_visible = False
-        self.left.setLayout(vbox_view)
-
-        vbox = QVBoxLayout()
-        list_of_manips = pfs.get_list_of_project_manips(self.project)
-        self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
-        self.toolbutton.activated.connect(self.refresh_video_list_via_combo_box)
-        vbox.addWidget(self.toolbutton)
-        vbox.addWidget(QLabel('Select video:'))
-        self.video_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.video_list.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        vbox.addWidget(self.video_list)
-        vbox.addWidget(qtutil.separator())
-        vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder.'))
-        vbox.addWidget(QLabel('Select ROIs:'))
-        self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.roi_list.setAcceptDrops(True)
-        self.roi_list.setDragEnabled(True)
-        self.roi_list.setDropIndicatorShown(True)
-        self.roi_list.setDragDropMode(QAbstractItemView.DragDrop)
-        self.roi_list.setDragDropOverwriteMode(False)
-        vbox.addWidget(self.roi_list)
-        vbox.addWidget(QLabel('Choose colormap:'))
-        # todo: colormap list should be dealt with in a seperate script
-        self.cm_comboBox.addItem("jet")
-        self.cm_comboBox.addItem("coolwarm")
-        self.cm_comboBox.addItem("PRGn")
-        self.cm_comboBox.addItem("seismic")
-        self.cm_comboBox.addItem("viridis")
-        self.cm_comboBox.addItem("inferno")
-        self.cm_comboBox.addItem("plasma")
-        self.cm_comboBox.addItem("magma")
-        vbox.addWidget(self.cm_comboBox)
-        self.cm_comboBox.activated[str].connect(self.cm_choice)
-        pb = QPushButton('Connectivity &Matrix')
-        pb.clicked.connect(self.connectivity_triggered)
-        vbox.addWidget(pb)
-        pb = QPushButton('Save all open matrices to csv')
-        pb.clicked.connect(self.save_open_dialogs_to_csv)
-        vbox.addWidget(pb)
-        self.right.setLayout(vbox)
-
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.setHandleWidth(3)
-        splitter.setStyleSheet('QSplitter::handle {background: #cccccc;}')
-        splitter.addWidget(self.left)
-        splitter.addWidget(self.right)
-        hbox_global = QHBoxLayout()
-        hbox_global.addWidget(splitter)
-        self.setLayout(hbox_global)
-
-    def refresh_video_list_via_combo_box(self, trigger_item=None):
-        pfs.refresh_video_list_via_combo_box(self, trigger_item)
-
-    def selected_video_changed(self, selected, deselected):
-        pfs.selected_video_changed_multi(self, selected, deselected)
-
-    def cm_choice(self, cm_choice):
-        self.cm_type = cm_choice
-
-    def selected_roi_changed(self, selected, deselected):
-        #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
-        #todo: what's the point of the forloops?
-        for index in deselected.indexes():
-            roiname = str(index.data(Qt.DisplayRole))
-            self.view.vb.removeRoi(roiname)
-        for index in selected.indexes():
-            roiname = str(index.data(Qt.DisplayRole))
-            roipath = str(index.data(Qt.UserRole))
-            self.view.vb.addRoi(roipath, roiname)
-
-    def connectivity_triggered(self):
-        progress = QProgressDialog('Generating Connectivity Matrix...', 'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
-
-        indexes = self.roi_list.selectionModel().selectedIndexes()
-        roinames = [index.data(Qt.DisplayRole) for index in indexes]
-        rois = [self.view.vb.getRoi(roiname) for roiname in roinames]
-        if not self.view.vb.img:
-            qtutil.critical('Select video.')
-        elif not rois:
-            qtutil.critical('Select Roi(s).')
-        else:
-
-            win = ConnectivityDialog(self.selected_videos, self.view.vb.img,
-                                   rois, self.cm_type, callback)
-            callback(1)
-            win.show()
-            self.open_dialogs.append(win)
-
-    def save_open_dialogs_to_csv(self):
-        progress = QProgressDialog('Generating csv files...',
-                                   'Abort', 0, 100, self)
-        progress.setAutoClose(True)
-        progress.setMinimumDuration(0)
-
-        def callback(x):
-            progress.setValue(x * 100)
-            QApplication.processEvents()
-
-        for i, dialog in enumerate(self.open_dialogs):
-            callback(i / len(self.open_dialogs))
-            rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
-            unique_id = str(uuid.uuid4())
-            file_name_avg = self.project.name + '_averaged_connectivity_matrix_' + unique_id + '.csv'
-            file_name_stdev = self.project.name + '_stdev_connectivity_matrix_' + unique_id + '.csv'
-
-            with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile, delimiter=',')
-                writer.writerow(rois_names)
-                for row_ind in range(len(dialog.model._data)):
-                    row = dialog.model._data[row_ind]
-                    row = [row[x][0] for x in range(len(row))]
-                    writer.writerow(row)
-                writer.writerow(['Selected videos:']+self.selected_videos)
-            # Do the standard deviation
-            with open(os.path.join(self.project.path, file_name_stdev), 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile, delimiter=',')
-                writer.writerow(rois_names)
-                for row_ind in range(len(dialog.model._data)):
-                    row = dialog.model._data[row_ind]
-                    row = [row[x][1] for x in range(len(row))]
-                    writer.writerow(row)
-                writer.writerow(['Selected videos:'] + self.selected_videos)
-        callback(1)
-        qtutil.info("All matrices saved to project directory")
-                # for row_ind in range(len(dialog.model._data)):
-                #     row = dialog.model._data[row_ind]
-                #     row = [row[x][0] for x in range(len(row))]
-                #     writer.writerow(row)
-                #     print(str(row))
-
-            #     for x in range(len(rois_names)):
-            #             row = dialog.model._data[row][x][0]
-            #
-            # avg_matrix = [[rois_names[x]] + dialog.model._data[x] for x in range(len(dialog.model._data))]
-            # # empty space in top left
-            # rois_names = [''] + rois_names
-            # avg_matrix = [rois_names] + avg_matrix
-            #
-            # with open(os.path.join(self.project.path, 'TEST.csv'), 'w', newline='') as csvfile:
-            #     writer = csv.writer(csvfile, delimiter=',')
-            #     for row in avg_matrix:
-            #         writer.writerow(row)
-            #         print(str(row))
-
-
-            # matrix_list = dialog.model.matrix_list
-            # unique_id_avg = str(uuid.uuid4())
-            # path = os.path.join(self.project.path, unique_id_avg)
-
-
-
-
-
-
-class MyPlugin:
+class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
         self.name = 'Connectivity Matrix'
-        self.widget = Widget(project)
+        self.widget = Widget(project, plugin_position)
+        super().__init__(self.widget, self.widget.Labels, self.name)
 
     def run(self):
         pass
