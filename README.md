@@ -2,7 +2,26 @@
 
 ### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
 
+## Visual C++ Redistributable 
+The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. It has been tested and works with the 2017 version on Windows 7,8 and 10. To upgrade follow these instructions:
+
+1. Install Windows Updates:
+  * Go to Start - Control Panel - Windows Update
+  * Check for updates
+  * Install all available updates.
+  * After the updates are installed, restart your computer.
+  * After the restart repeat the steps above again until no more updates are available.
+2. Download the Visual C++ Redistributable:
+  * For Windows 64-bit
+[Visual C++ Redistributable for Visual Studio 2017 (64-bit)](http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe)
+  * For Windows 32-bit
+[Visual C++ Redistributable for Visual Studio 2017 (32-bit)](http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe)
+3. Run the vcredist_x64.exe (64-bit) or vcredist_x86.exe (32-bit) and select Uninstall
+4. Run the .exe again and select Install
+
+
 ## Installation
+
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
 The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
