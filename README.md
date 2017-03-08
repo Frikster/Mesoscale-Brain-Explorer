@@ -14,7 +14,7 @@ release and run the .exe contained within the pipegui folder.
 The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
 
 #### Visual C++ Redistributable 
-The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. It has been tested and works with the 2017 version on Windows 7,8 and 10. If you do not have Visual Studio 2017, follow these instructions to upgrade:
+The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. If you do not have Visual Studio 2017, follow these instructions to upgrade:
 
 1. Install Windows Updates:
   * Go to Start - Control Panel - Windows Update
