@@ -29,13 +29,22 @@ The most recent version can be downloaded [here](https://github.com/Frikster/Mes
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed:
 ```bash
-pip3.5 install pandas scipy matplotlib tifffile psutil imreg_dft
-pip3.5 install pyqtgraph
+sudo apt-get update
+pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
+pip3 install pyqtgraph
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen3-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev default-jdk ant libvtk5-qt4-dev
+pip3 install opencv-python
 ```
-You will need to install openCV after the above dependencies are installed: http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html
+
+The above intrsuctions assume you have pip3 set up. If you don't simply do this:
+```bash
+sudo apt-get update
+sudo apt-get -y install python3-pip
+```
+
+openCV can be tricky to install. Try [this tutorial](https://www.begueradj.com/installing-opencv-3.2.0-for-python-3.5.2-on-ubuntu-16.04.2-lts.html) if the above one-liner fails 
 
 Please download and install the latest pyqtgraph package from the 
 following link if it fails via the terminal: http://www.pyqtgraph.org/
