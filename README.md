@@ -3,7 +3,7 @@
 ### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
 
 ## Visual C++ Redistributable 
-The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. It has been tested and works with the 2017 version on Windows 7,8 and 10. To upgrade follow these instructions:
+The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. It has been tested and works with the 2017 version on Windows 7,8 and 10. If you do not have Visual Studio 2017, follow these instructions to upgrade:
 
 1. Install Windows Updates:
   * Go to Start - Control Panel - Windows Update
