@@ -46,6 +46,7 @@ The above intrsuctions assume you have pip3 set up. If you don't simply do this:
 ```bash
 sudo apt-get update
 sudo apt-get -y install python3-pip
+pip3 install --upgrade pip
 ```
 
 openCV can be tricky to install. Try [this tutorial](https://www.begueradj.com/installing-opencv-3.2.0-for-python-3.5.2-on-ubuntu-16.04.2-lts.html) if ```bash pip3 install opencv-python``` fails. Please download and install the latest pyqtgraph package from the following link if it fails via the terminal: http://www.pyqtgraph.org/
