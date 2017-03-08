@@ -59,6 +59,9 @@ following to run MBE
 ```bash
 python3.5 pipegui.py
 ```
+### Note to Ubuntu users
+* Exporting to .avi does not work on Ubuntu but it does on Windows. You can still export to .tiff or .raw on Ubuntu and all other functions seem to work
+* The connectivity matrix labels UI labels are missing in Ubuntu (but not in Windows). This does not affect functionality and exporting it to a csv still reveals which ROI each cell belongs to. You can still tell what order the Matrix is in my referring to the order you assigned them in the ROI list (they can be rearranged)
 
 ## User Manual
 ### Overview Tutorial
