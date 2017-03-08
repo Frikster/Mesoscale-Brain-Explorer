@@ -32,10 +32,10 @@ The application does not seem to work with earlier (e.g. 2008) version of Visual
 
 ### Linux
 Linux users will need Python 3.5 64-bit and the following dependencies 
-installed (This instruction set was last tested **March 2017 on Ubuntu 16.04.2**):
+installed (This instruction set was last tested **March 2017 on Ubuntu 16.04.2** by running each line by line):
 ```bash
-pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
-pip3 install pyqtgraph
+sudo pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
+sudo pip3 install pyqtgraph
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk2.0-dev libjpeg-dev libtiff5-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen3-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev default-jdk ant libvtk5-qt4-dev
