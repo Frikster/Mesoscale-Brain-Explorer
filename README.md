@@ -1,8 +1,18 @@
 # Mesoscale-Brain-Explorer (MBE)
 
-### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
+## Warnings and Notes
+* a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive. MBE uses up hard disk space fast if you are processing large files since it saves all intermediate steps to file.
+* The application will often appear to be unresponsive (i.e. you'll see the words "not responding.") This occurs often and does not mean the application is broken. It typically always means the application is busy working. Wait for the progress bar to complete.
+* MBE is written in python to make it easy to modify, but at the expense of increasing memory load. We recommend you have at least 4 times as much RAM as the largest file you wish to process. e.g. if the largest file you wish to process through the application is 2GB please ensure you have at least 8GB RAM.
 
-## Visual C++ Redistributable 
+## Installation
+
+### Windows
+Windows users simply have to download and extract the most recent 
+release and run the .exe contained within the pipegui folder.
+The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
+
+#### Visual C++ Redistributable 
 The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. It has been tested and works with the 2017 version on Windows 7,8 and 10. If you do not have Visual Studio 2017, follow these instructions to upgrade:
 
 1. Install Windows Updates:
@@ -19,13 +29,7 @@ The application does not seem to work with earlier (e.g. 2008) version of Visual
 3. Run the vcredist_x64.exe (64-bit) or vcredist_x86.exe (32-bit) and select Uninstall
 4. Run the .exe again and select Install
 
-
-## Installation
-
-Windows users simply have to download and extract the most recent 
-release and run the .exe contained within the pipegui folder.
-The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
-
+### Linux
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed (This instruction set was last tested March 2017 on Ubuntu 16.04.2):
 ```bash
