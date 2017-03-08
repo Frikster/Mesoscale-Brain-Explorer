@@ -44,10 +44,7 @@ sudo apt-get update
 sudo apt-get -y install python3-pip
 ```
 
-openCV can be tricky to install. Try [this tutorial](https://www.begueradj.com/installing-opencv-3.2.0-for-python-3.5.2-on-ubuntu-16.04.2-lts.html) if ```bash pip3 install opencv-python``` fails 
-
-Please download and install the latest pyqtgraph package from the 
-following link if it fails via the terminal: http://www.pyqtgraph.org/
+openCV can be tricky to install. Try [this tutorial](https://www.begueradj.com/installing-opencv-3.2.0-for-python-3.5.2-on-ubuntu-16.04.2-lts.html) if ```bash pip3 install opencv-python``` fails. Please download and install the latest pyqtgraph package from the following link if it fails via the terminal: http://www.pyqtgraph.org/
 
 Clone this repo or download as a zip
 Now open the terminal at *Mesoscale-Brain-Explorer/src* and execute the 
