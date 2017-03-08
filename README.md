@@ -32,7 +32,7 @@ The application does not seem to work with earlier (e.g. 2008) version of Visual
 
 ### Linux
 Linux users will need Python 3.5 64-bit and the following dependencies 
-installed (This instruction set was last tested March 2017 on Ubuntu 16.04.2):
+installed (This instruction set was last tested **March 2017 on Ubuntu 16.04.2**):
 ```bash
 pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
 pip3 install pyqtgraph
