@@ -29,7 +29,6 @@ The most recent version can be downloaded [here](https://github.com/Frikster/Mes
 Linux users will need Python 3.5 64-bit and the following dependencies 
 installed:
 ```bash
-sudo apt-get update
 pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
 pip3 install pyqtgraph
 sudo apt-get update
