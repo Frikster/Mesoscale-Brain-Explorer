@@ -27,7 +27,7 @@ release and run the .exe contained within the pipegui folder.
 The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
 
 Linux users will need Python 3.5 64-bit and the following dependencies 
-installed:
+installed (This instruction set was last tested March 2017 on Ubuntu 16.04.2):
 ```bash
 pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
 pip3 install pyqtgraph
