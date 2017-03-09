@@ -4,6 +4,7 @@
 * a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive. MBE uses up hard disk space fast if you are processing large files since it saves all intermediate steps to file.
 * The application will often appear to be unresponsive (i.e. you'll see the words "not responding.") This occurs often and does not mean the application is broken. It typically always means the application is busy working. Wait for the progress bar to complete.
 * MBE is written in python to make it easy to modify, but at the expense of increasing memory load. We recommend you have at least 4 times as much RAM as the largest file you wish to process. e.g. if the largest file you wish to process through the application is 2GB please ensure you have at least 8GB RAM.
+* Aborting a process has still not been fully implemented (it is in-progress). You will not be able to stop a processing step you have started other than force closing. 
 
 ## Installation
 The application has been tested and appears to work on Windows 7,8.1,10 and Ubuntu 16.04.2
