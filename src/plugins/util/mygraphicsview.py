@@ -10,7 +10,7 @@ class MyGraphicsView(pg.GraphicsView):
   def __init__(self, project, parent=None, image_view_on=None):
     super(MyGraphicsView, self).__init__(parent)
     self.image_view_on = image_view_on
-    self.unit_per_pixel = 'mm'
+    self.unit_per_pixel = 'units'
 
     self.project = project
     self.shape = 0, 0
