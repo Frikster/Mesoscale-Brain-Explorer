@@ -1,32 +1,68 @@
 # Mesoscale-Brain-Explorer (MBE)
 
-### Note: a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive.
+## Warnings and Notes
+* a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive. MBE uses up hard disk space fast if you are processing large files since it saves all intermediate steps to file.
+* The application will often appear to be unresponsive (i.e. you'll see the words "not responding.") This occurs often and does not mean the application is broken. It typically always means the application is busy working. Wait for the progress bar to complete.
+* MBE is written in python to make it easy to modify, but at the expense of increasing memory load. We recommend you have at least 4 times as much RAM as the largest file you wish to process. e.g. if the largest file you wish to process through the application is 2GB please ensure you have at least 8GB RAM.
+* Aborting a process has still not been fully implemented (it is in-progress). You will not be able to stop a processing step you have started other than force closing. 
 
 ## Installation
+The application has been tested and appears to work on Windows 7,8.1,10 and Ubuntu 16.04.2
+
+### Windows
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
 The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
 
+#### Visual C++ Redistributable 
+The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. If you do not have Visual Studio 2017, follow these instructions to upgrade:
+
+1. Install Windows Updates:
+  * Go to Start - Control Panel - Windows Update
+  * Check for updates
+  * Install all available updates.
+  * After the updates are installed, restart your computer.
+  * After the restart repeat the steps above again until no more updates are available.
+2. Download the Visual C++ Redistributable:
+  * For Windows 64-bit
+[Visual C++ Redistributable for Visual Studio 2017 (64-bit)](http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe)
+  * For Windows 32-bit
+[Visual C++ Redistributable for Visual Studio 2017 (32-bit)](http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe)
+3. Run the vcredist_x64.exe (64-bit) or vcredist_x86.exe (32-bit) and select Uninstall
+4. Run the .exe again and select Install
+
+### Linux
 Linux users will need Python 3.5 64-bit and the following dependencies 
-installed:
+installed (This instruction set was last tested **March 2017 on Ubuntu 16.04.2** by running each line by line):
 ```bash
-pip3.5 install pandas scipy matplotlib tifffile psutil imreg_dft
-pip3.5 install pyqtgraph
+sudo pip3 install pandas scipy matplotlib tifffile psutil imreg_dft
+sudo pip3 install pyqtgraph
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk2.0-dev libjpeg-dev libtiff4-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen3-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev default-jdk ant libvtk5-qt4-dev
+sudo apt-get install python3-pyqt4 python3-pyqt4.qtopengl build-essential libgtk2.0-dev libjpeg-dev libtiff5-dev libjasper-dev libopenexr-dev cmake python-dev python-numpy python-tk libtbb-dev libeigen3-dev yasm libfaac-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev libqt4-dev libqt4-opengl-dev sphinx-common texlive-latex-extra libv4l-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev default-jdk ant libvtk5-qt4-dev
+sudo pip3 install opencv-python
+sudo pip3 install pyopengl
 ```
-You will need to install openCV after the above dependencies are installed: http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html
 
-Please download and install the latest pyqtgraph package from the 
-following link if it fails via the terminal: http://www.pyqtgraph.org/
+The above intrsuctions assume you have pip3 set up. If you don't simply do this:
+```bash
+sudo apt-get update
+sudo apt-get -y install python3-pip
+pip3 install --upgrade pip
+```
+
+openCV can be tricky to install. Try [this tutorial](https://www.begueradj.com/installing-opencv-3.2.0-for-python-3.5.2-on-ubuntu-16.04.2-lts.html) if ```bash pip3 install opencv-python``` fails. Please download and install the latest pyqtgraph package from the following link if it fails via the terminal: http://www.pyqtgraph.org/
 
 Clone this repo or download as a zip
+
 Now open the terminal at *Mesoscale-Brain-Explorer/src* and execute the 
 following to run MBE
 ```bash
 python3.5 pipegui.py
 ```
+#### Note to Ubuntu users
+* Exporting to .avi does not work on Ubuntu but it does on Windows. You can still export to .tiff or .raw on Ubuntu and all other functions seem to work
+* The connectivity matrix labels UI labels are missing in Ubuntu (but not in Windows). This does not affect functionality and exporting it to a csv still reveals which ROI each cell belongs to. You can still tell what order the Matrix is in my referring to the order you assigned them in the ROI list (they can be rearranged)
 
 ## User Manual
 ### Overview Tutorial
