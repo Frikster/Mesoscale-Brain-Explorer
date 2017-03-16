@@ -212,7 +212,7 @@ class MainWindow(QMainWindow):
                     qtutil.critical('Previous project appears to have been corrupted.\n \n'
                                     + traceback.format_exc(), self)
                     #qtutil.critical("Previous project appears to have been corrupted. Please move or delete it.")
-            self.sidebar.setup_sidebar_values(self.project)
+                self.sidebar.setup_sidebar_values(self.project)
 
   def load_plugins(self):
     """This just gets all the plugins (no reference to pipeline)"""
