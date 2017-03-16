@@ -9,6 +9,7 @@ from itertools import cycle
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pyqtgraph as pg
 import qtutil
 import scipy.misc
 from PyQt4.QtCore import *
@@ -45,7 +46,6 @@ def calc_spc(frames, x, y, progress):
     spc_map[y, x-1] = 1
     spc_map[y+1, x-1] = 1
     spc_map[y-1, x+1] = 1
-
     return spc_map
 
 class Widget(QWidget, WidgetDefault):
@@ -373,6 +373,14 @@ class SPCMapDialog(QDialog):
 
     def __init__(self, project, video_path, spcmap, cm_type, corr_range, roi_name=None):
         super(SPCMapDialog, self).__init__()
+        if roi_name:
+            basename, ext = os.path.splitext(os.path.basename(video_path))
+            self.display_name = basename + '_' + roi_name + ext
+            # self.setWindowTitle(display_name)
+        else:
+            self.display_name = os.path.basename(video_path)
+            # self.setWindowTitle(os.path.basename(video_path))
+
         self.project = project
         self.video_path = video_path
         self.spc = spcmap
@@ -380,12 +388,9 @@ class SPCMapDialog(QDialog):
         self.corr_min = corr_range[0]
         self.corr_max = corr_range[1]
         self.setup_ui()
-        if roi_name:
-            basename, ext = os.path.splitext(os.path.basename(video_path))
-            display_name = basename + '_' + roi_name + ext
-            self.setWindowTitle(display_name)
-        else:
-            self.setWindowTitle(os.path.basename(video_path))
+        # self.title = pg.LabelItem(text=display_name, parent=self.view.vb)
+        # self.view.vb.addItem(self.title)
+        # todo: add self.display_name to viewbox title not windowTitle
         self.colorized_spc = self.colorize_spc(spcmap)
         self.view.show(self.colorized_spc)
         self.view.vb.clicked.connect(self.vbc_clicked)
@@ -399,9 +404,12 @@ class SPCMapDialog(QDialog):
         hbox = QHBoxLayout()
         self.the_label = QLabel()
         hbox.addWidget(self.the_label)
+        hbox.addWidget(QLabel(self.display_name))
 
         vbox.addLayout(hbox)
-        self.view = MyGraphicsView(self.project, image_view_on=True)
+        image_view_on = True
+        parent = None
+        self.view = MyGraphicsView(self.project, parent, image_view_on)
         vbox.addWidget(self.view)
         self.setLayout(vbox)
 

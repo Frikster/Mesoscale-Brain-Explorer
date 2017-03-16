@@ -4,13 +4,13 @@ from __future__ import print_function
 import os
 import sys
 
+import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import fileloader
 from .util import mse_ui_elements as mue
 from .util.mygraphicsview import MyGraphicsView
-
 sys.path.append('..')
 import qtutil
 import pickle
@@ -23,10 +23,12 @@ from pyqtgraph.Qt import QtGui
 from .util.plugin import WidgetDefault
 from .util.plugin import PluginDefault
 from .util.mse_ui_elements import RoiList
+from .util.mse_ui_elements import RoiItemModel
 import functools
 import itertools
 import matplotlib.pyplot as plt
 import math
+from .util.gradient import GradientLegend
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -59,28 +61,43 @@ class Widget(QWidget, WidgetDefault):
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
         self.roi_list = QListView()
+        self.roi_list.setModel(RoiModel())
+        # todo: there is a mismatch in type between RoiModel and RoiItemModel in mse_ui_elements. As such it was easier
+        # to abandon the convention of not initializing UI paramaters in init to get it funcitonal. Nonetheless, these
+        # next few lines really should be in a class somewhere for the roi_list item
+        # for f in project.files:
+        #     if f['type'] == self.Defaults.roi_list_types_displayed:
+        #         item = QStandardItem(f['name'])
+        #         item.setData(f['path'], Qt.UserRole)
+        #         self.roi_list.model().appendRow(item)
         self.cm_comboBox = QtGui.QComboBox(self)
-        self.save_pb = QPushButton("&Save spc windows")
-        self.load_pb = QPushButton("&Load project spc windows")
+        self.save_pb = QPushButton("&Save matrix windows")
+        self.load_pb = QPushButton("&Load project matrix windows")
         self.cm_pb = QPushButton('Connectivity &Matrix')
-        self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed)
+        self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed, RoiModel())
         WidgetDefault.__init__(self, project, plugin_position)
 
     def setup_ui(self):
         super().setup_ui()
         self.vbox.addWidget(qtutil.separator())
-        self.vbox.addWidget(mue.InfoWidget('Click shift to select multiple ROIs. Drag to reorder which '
-                                           'modifies their order in the connectivity matrix.'))
+        self.vbox.addWidget(mue.InfoWidget('Note that rois can be dragged and dropped in the list but that the order '
+                                           'in which they are *selected* determines how the matrix is ordered. The '
+                                           'first selected ROI is placed at the top of the matrix. '
+                                           'Dragging and dropping is for convenience so you can organize your desired '
+                                           'order and then shift select them from top to bottom to quickly have your '
+                                           'desired matrix ordering.'))
+
         self.vbox.addWidget(QLabel('Select ROIs:'))
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.roi_list.setAcceptDrops(True)
         self.roi_list.setDragEnabled(True)
         self.roi_list.setDropIndicatorShown(True)
-        self.roi_list.setDragDropMode(QAbstractItemView.DragDrop)
+        self.roi_list.setDragDropMode(QAbstractItemView.InternalMove)
+        self.roi_list.setDefaultDropAction(Qt.MoveAction)
         self.roi_list.setDragDropOverwriteMode(False)
         self.vbox.addWidget(self.roi_list)
         self.vbox.addWidget(QLabel(self.Labels.colormap_index_label))
-        # todo: colormap list should be dealt with in a seperate script
+        # todo: colormap list should be dealt with in a separate script
         self.cm_comboBox.addItem("jet")
         self.cm_comboBox.addItem("viridis")
         self.cm_comboBox.addItem("inferno")
@@ -115,8 +132,10 @@ class Widget(QWidget, WidgetDefault):
                                                                       self.Labels.colormap_index_label))
 
     def selected_roi_changed(self, selected, deselected):
-        #todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what - roiname also only ever has one value so this function must be being called multiple times for each selection/deselection
-        #todo: what's the point of the forloops?
+        # todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what -
+        # roiname also only ever has one value so this function must be being called multiple times for each
+        # selection/deselection
+        # todo: what's the point of the forloops?
         for index in deselected.indexes():
             roiname = str(index.data(Qt.DisplayRole))
             self.view.vb.removeRoi(roiname)
@@ -321,15 +340,11 @@ class Widget(QWidget, WidgetDefault):
                                 "ROI. Correlation coefficient used = Pearson")
 
 
-
-# todo: explain why all the classes
 class ConnectivityModel(QAbstractTableModel):
     def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityModel, self).__init__()
         self.cm_type = cm_type
         self.roinames = roinames
-
-
 
         project = widget.project
         rois = widget.view.vb.rois[:]
@@ -442,6 +457,14 @@ class ConnectivityDialog(QDialog):
         self.setup_ui()
         self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
         self.table.setModel(self.model)
+
+        #view.setAspectLocked(True)
+        win = pg.GraphicsWindow()
+        l = GradientLegend(-1.0, 1.0, cm_type)
+        win.setFixedSize(l.labelsize)
+        view = win.addViewBox()
+        l.setParentItem(view)
+        win.setParent(self)
 
     def setup_ui(self):
         vbox = QVBoxLayout()

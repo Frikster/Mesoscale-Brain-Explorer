@@ -52,6 +52,27 @@ class Video_Selector(QListView):
 #         frame = fileloader.load_reference_frame(self.shown_video_path)
 #         self.view.show(frame)
 
+class RoiModel(QStandardItemModel):
+  def __init__(self, parent=None):
+    super(RoiModel, self).__init__(parent)
+
+  def supportedDropActions(self):
+    return Qt.MoveAction
+
+  def dropMimeData(self, data, action, row, column, parent):
+    return super(RoiModel, self).dropMimeData(data, action, row, column, parent)
+
+  def flags(self, index):
+    if not index.isValid() or index.row() >= self.rowCount() or index.model() != self:
+       return Qt.ItemIsDropEnabled # we allow drops outside the items
+    return super(RoiModel, self).flags(index) & (~Qt.ItemIsDropEnabled)
+
+  def removeRows(self, row, count, parent):
+    return super(RoiModel, self).removeRows(row, count, parent)
+
+  def insertRows(self, row, count, parent):
+    return super(RoiModel, self).insertRows(row, count, parent)
+
 class RoiItemModel(QAbstractListModel):
     textChanged = pyqtSignal(str, str)
 
@@ -106,17 +127,26 @@ class RoiList(QListView):
     class Defaults(object):
         roi_list_indices_default = [0]
 
-    def __init__(self, widget, roi_types):
+    def __init__(self, widget, roi_types, standard_model=False):
         super(RoiList, self).__init__()
-        self.setModel(RoiItemModel())
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.widget = widget
-
-        self.selected_roi_changed_flag = 0
         roi_names = [f['name'] for f in self.widget.project.files if f['type'] in roi_types]
-        for roi_name in roi_names:
-            if roi_name not in self.model().rois:
-                self.model().appendRoi(roi_name)
+        if not standard_model:
+            self.setModel(RoiItemModel())
+            self.selected_roi_changed_flag = 0
+            for roi_name in roi_names:
+                if roi_name not in self.model().rois:
+                    self.model().appendRoi(roi_name)
+        else:
+            self.setModel(RoiModel())
+            for f in widget.project.files:
+                if f['type'] in roi_types:
+                    item = QStandardItem(f['name'])
+                    item.setData(f['path'], Qt.UserRole)
+                    self.model().appendRow(item)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+
 
         self.selectionModel().selectionChanged[QItemSelection,
                                                         QItemSelection].connect(self.selected_roi_changed)
