@@ -80,7 +80,7 @@ class Widget(QWidget, WidgetDefault):
         progress.setValue(99)
         # First one has to take the name otherwise pfs.save_projects doesn't work
         filenames = [os.path.basename(path) for path in paths]
-        manip = 'concat_'+str(len(filenames))
+        manip = 'concat-'+str(len(filenames))
         output_path = pfs.save_project(paths[0], self.project, frames, manip, 'video')
         pfs.refresh_list(self.project, self.video_list,
                          self.params[self.Labels.video_list_indices_label],
