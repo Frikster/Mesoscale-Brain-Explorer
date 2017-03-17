@@ -80,7 +80,6 @@ class Widget(QWidget, WidgetDefault):
               self.project.files.append({
                   'path': self.text_file_path,
                   'type': 'roi_table',
-                  'source_video': self.video_path,
                   'name': os.path.basename(self.text_file_path)
               })
           self.table_widget.clear()
@@ -223,7 +222,6 @@ class Widget(QWidget, WidgetDefault):
         self.project.files.append({
         'path': text_file_path_for_project,
         'type': 'roi_table',
-        'source_video': self.video_path,
         'name': os.path.basename(text_file_path)
         })
       else:
@@ -241,7 +239,6 @@ class Widget(QWidget, WidgetDefault):
                   self.project.files[i] = {
                   'path': text_file_path_for_project,
                   'type': 'roi_table',
-                  'source_video': self.video_path,
                   'name': os.path.basename(text_file_path)
               }
       self.table_widget.clear()
@@ -292,7 +289,6 @@ class Widget(QWidget, WidgetDefault):
       self.project.files.append({
         'path': path,
         'type': 'auto_roi',
-        'source_video': self.video_path,
         'name': name
       })
     else:
@@ -301,7 +297,6 @@ class Widget(QWidget, WidgetDefault):
           self.project.files[i] = {
               'path': path,
               'type': 'auto_roi',
-              'source_video': self.video_path,
               'name': name
           }
     self.project.save()
