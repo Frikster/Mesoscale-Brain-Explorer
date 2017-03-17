@@ -449,7 +449,7 @@ class SPCMapDialog(QDialog):
         spc = self.spc.swapaxes(0, 1)
         spc = spc[:, ::-1]
         try:
-          value = str(spc[int(x)+int(x_origin), int(y)+int(y_origin)])
+          value = str(round(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
         except:
           value = '-'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
