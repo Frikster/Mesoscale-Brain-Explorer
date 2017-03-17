@@ -73,8 +73,8 @@ The ROI Import plugin a specific format is *required* for your coordinates to se
 
 | 1) ROI Name   | 2) Length     | 3) X Coord (ML)  | 4) Y Coord (AP) |
 | ------------- | ------------- | ---------------- | ----------------|
-| L-A          | 1             | -2293.2          |  -2496.2        |
-| L-AC          | 1             | -97.951          |  1853.6        |
+| L-A          | 1             | -2293.2           |  -2496.2        |
+| L-AC          | 1             | -260             |  270            |
 | L-AL          | 1             | -3827.1          |  -3339.3        |
 | L-AM          | 1             | -1647.9          |   -2696        |
 | L-AU          | 1             | -4530.4          |   -2901        |
@@ -98,7 +98,7 @@ The ROI Import plugin a specific format is *required* for your coordinates to se
 | L-UN          | 1             |  -2797.9          |  -971.12        |
 | L-V1          | 1             |  -2516.8          |   -4267.8        |
 | R-A          | 1             |  2293.2          |  -2496.2        |
-| R-AC          | 1             |  97.951          |  1853.6        |
+| R-AC          | 1             |  260             |  270           |
 | R-AL          | 1             |  3827.1          |  -3339.3        |
 | R-AM          | 1             | 1647.9          |   -2696        |
 | R-AU          | 1             | 4530.4          |   -2901        |
