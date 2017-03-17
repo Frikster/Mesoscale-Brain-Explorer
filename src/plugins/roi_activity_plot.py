@@ -59,68 +59,71 @@ kelly_colors = [
   Color('dark_olive_green', (35, 44, 22))
 ]
 
-# def plot_roi_activities(video_path, rois, image, plot_title, win_title, progress_callback):
-#   frames = fileloader.load_file(video_path)
-#   #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-#   # plot_out = os.path.join(os.path.dirname(video_path), plot_title + str(uuid.uuid4()))
-#   plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
-#
-#   roi_names = []
-#   ps = []
-#   for i, roi in enumerate(rois):
-#     progress_callback(i / len(rois))
-#     mask = roi.getROIMask(frames, image, axes=(1, 2))
-#     size = np.count_nonzero(mask)
-#     roi_frames = frames * mask[np.newaxis, :, :]
-#     roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
-#     p = roi_frames / size
-#     ps = ps + [p]
-#     roi_names = roi_names + [roi.name]
-#
-#   ps = [list(p) for p in ps]
-#   ps_rows = list(zip(*ps))
-#   plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
-#   with open(plot_out, 'w', newline='') as csvfile:
-#     writer = csv.writer(csvfile, delimiter=',',
-#                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
-#     writer.writerow(roi_names)
-#     for i, row in enumerate(ps_rows):
-#         #progress_callback(i / len(rois))
-#         writer.writerow([str(p) for p in row])
-#   progress_callback(1)
-#
-#   win = pg.GraphicsWindow(title=win_title)
-#   win.resize(1000, 600)
-#   # win.setWindowTitle('Activity across frames')
-#   plot = win.addPlot(title=plot_title)
-#   plot.setLabel('bottom', "Image Frames")
-#   plot.setLabel('left', "Activity")
-#   plot.addLegend()
-#
-#   pg.setConfigOptions(antialias=True)
-#
-#   warning_issued = False
-#   for i, roi in enumerate(rois):
-#     # progress_callback(i / len(rois))
-#     mask = roi.getROIMask(frames, image, axes=(1, 2))
-#     size = np.count_nonzero(mask)
-#     roi_frames = frames * mask[np.newaxis, :, :]
-#     roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
-#     p = roi_frames / size
-#     if i < len(brewer_colors):
-#         color = brewer_colors[i].rgb
-#     else:
-#         if not warning_issued:
-#             qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
-#                            'Please be careful with how you interpret your data')
-#             warning_issued = True
-#         if i < len(brewer_colors) + len(kelly_colors):
-#             color = kelly_colors[i-len(brewer_colors)].rgb
-#         else:
-#             qtutil.critical('Colour limit reached. Please plot your data over multiple plots or output solely to csv')
-#             return win
-#     plot.plot(p, pen=color, name=roi.name)
-#   return win
+def plot_roi_activities(video_path_to_plots_dict, plot_title, win_title):
+  video_path = list(video_path_to_plots_dict.keys())[0]
+  roi_activities = video_path_to_plots_dict[video_path]
+
+  # frames = fileloader.load_file(video_path)
+  #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+  # plot_out = os.path.join(os.path.dirname(video_path), plot_title + str(uuid.uuid4()))
+  # plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
+
+  # roi_names = []
+  # ps = []
+  # for i, roi in enumerate(rois):
+  #   # progress_callback(i / len(rois))
+  #   mask = roi.getROIMask(frames, image, axes=(1, 2))
+  #   size = np.count_nonzero(mask)
+  #   roi_frames = frames * mask[np.newaxis, :, :]
+  #   roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+  #   p = roi_frames / size
+  #   ps = ps + [p]
+  #   roi_names = roi_names + [roi.name]
+
+  ps = [list(p) for p in ps]
+  ps_rows = list(zip(*ps))
+  plot_out = os.path.join(os.path.dirname(video_path), plot_title + '_plot_backup.csv')
+  with open(plot_out, 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(roi_names)
+    for i, row in enumerate(ps_rows):
+        #progress_callback(i / len(rois))
+        writer.writerow([str(p) for p in row])
+  # progress_callback(1)
+
+  win = pg.GraphicsWindow(title=win_title)
+  win.resize(1000, 600)
+  # win.setWindowTitle('Activity across frames')
+  plot = win.addPlot(title=plot_title)
+  plot.setLabel('bottom', "Image Frames")
+  plot.setLabel('left', "Activity")
+  plot.addLegend()
+
+  pg.setConfigOptions(antialias=True)
+
+  warning_issued = False
+  for i, roi in enumerate(rois):
+    # progress_callback(i / len(rois))
+    mask = roi.getROIMask(frames, image, axes=(1, 2))
+    size = np.count_nonzero(mask)
+    roi_frames = frames * mask[np.newaxis, :, :]
+    roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+    p = roi_frames / size
+    if i < len(brewer_colors):
+        color = brewer_colors[i].rgb
+    else:
+        if not warning_issued:
+            qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
+                           'Please be careful with how you interpret your data')
+            warning_issued = True
+        if i < len(brewer_colors) + len(kelly_colors):
+            color = kelly_colors[i-len(brewer_colors)].rgb
+        else:
+            qtutil.critical('Colour limit reached. Please plot your data over multiple plots or output solely to csv')
+            return win
+    plot.plot(p, pen=color, name=roi.name)
+  return win
 
 # def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
 #       if not video_paths:
@@ -486,10 +489,55 @@ class Widget(QWidget, WidgetDefault):
                              "Note that backups csv's of all plots are made automatically and can be found in your "
                              "project directory")
     video_path_to_plots_dict = self.get_video_path_to_plots_dict()
-    self.plot_to_docks(video_path_to_plots_dict, area)
-    main_window.show()
-    self.open_dialogs.append(main_window)
-    self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
+
+    if len(video_path_to_plots_dict.keys()) == 1:
+        # area = DockArea()
+        # d1 = Dock("d1", size=(500, 200), closable=True)
+        # area.addDock(d1)
+        video_path = list(video_path_to_plots_dict.keys())[0]
+        plot_title, ext = os.path.splitext(video_path)
+        # d = Dock(video_path, size=(500, 200), closable=True)
+        # area.addDock(d, 'above', area.docks['d1'])
+
+        win = pg.GraphicsWindow(title="Single Image Stack Plot")
+        plot = win.addPlot(title=plot_title)
+        plot.setLabel('bottom', "Image Frames")
+        plot.setLabel('left', "Activity")
+        plot.addLegend()
+
+        roi_names = list(video_path_to_plots_dict[video_path].keys())
+        for i, roi_name in enumerate(roi_names):
+            p = video_path_to_plots_dict[video_path][roi_name]
+            if i < len(brewer_colors):
+                color = brewer_colors[i].rgb
+            else:
+                if not warning_issued:
+                    qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
+                                   'Please be careful with how you interpret your data')
+                    warning_issued = True
+                if i < len(brewer_colors) + len(kelly_colors):
+                    color = kelly_colors[i - len(brewer_colors)].rgb
+                else:
+                    qtutil.critical(
+                        'Colour limit reached. Outputting to csv instead.')
+                    # Save plot to file (backup)
+                    ps = [list(p) for p in list(video_path_to_plots_dict[video_path].values())]
+                    ps_rows = list(zip(*ps))
+                    plot_out = os.path.join(os.path.dirname(video_path), roi_name + '_plots.csv')
+                    with open(plot_out, 'w', newline='') as csvfile:
+                        writer = csv.writer(csvfile, delimiter=',',
+                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                        writer.writerow(roi_names)
+                        for i, row in enumerate(ps_rows):
+                            writer.writerow([str(p) for p in row])
+            plot.plot(p, pen=color, name=roi_name)
+        self.open_dialogs.append(win)
+        # d.addWidget(doc_window)
+    else:
+        self.plot_to_docks(video_path_to_plots_dict, area)
+        main_window.show()
+        self.open_dialogs.append(main_window)
+        self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
 
   def filedialog(self, name, filters):
     path = self.project.path
