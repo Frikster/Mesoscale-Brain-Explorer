@@ -15,13 +15,13 @@ from .util.plugin import WidgetDefault
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
-        start_cut_off_label = 'Cut off from start'
-        end_cut_off_label = 'Cut off from end'
+        start_cut_off_label = 'Trim from start'
+        end_cut_off_label = 'Trim from end'
 
     class Defaults(WidgetDefault.Defaults):
         start_cut_off_default = 0
         end_cut_off_default = 0
-        manip = "cut-off"
+        manip = "trim"
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -29,7 +29,7 @@ class Widget(QWidget, WidgetDefault):
             return
         self.left_cut_off = QSpinBox()
         self.right_cut_off = QSpinBox()
-        self.main_button = QPushButton('Cut off frames')
+        self.main_button = QPushButton('Trim frames')
         WidgetDefault.__init__(self, project, plugin_position)
 
     def setup_ui(self):
@@ -75,7 +75,7 @@ class Widget(QWidget, WidgetDefault):
         else:
             selected_videos = input_paths
 
-        progress_global = QProgressDialog('Creating cut offs...', 'Abort', 0, 100, self)
+        progress_global = QProgressDialog('Trimming Image Stack...', 'Abort', 0, 100, self)
         progress_global.setAutoClose(True)
         progress_global.setMinimumDuration(0)
 
@@ -91,7 +91,7 @@ class Widget(QWidget, WidgetDefault):
             cut_off_start = self.left_cut_off.value()
             cut_off_end = self.right_cut_off.value()
 
-            progress = QProgressDialog('Creating cut off for ' + video_path, 'Abort', 0, 100, self)
+            progress = QProgressDialog('Trimming Image Stack ' + video_path, 'Abort', 0, 100, self)
             progress.setAutoClose(True)
             progress.setMinimumDuration(0)
 
@@ -134,7 +134,7 @@ class Widget(QWidget, WidgetDefault):
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'Cut off'
+        self.name = 'Trimming'
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
@@ -144,4 +144,4 @@ class MyPlugin(PluginDefault):
         return lc > 0 or rc > 0
 
     def automation_error_message(self):
-        return "Cut off plugin cannot have both cut off paramaters set to 0."
+        return "Trim plugin cannot have both trim paramaters set to 0."

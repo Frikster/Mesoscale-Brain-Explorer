@@ -73,7 +73,8 @@ class Widget(QWidget, WidgetDefault):
         self.cm_comboBox = QtGui.QComboBox(self)
         self.save_pb = QPushButton("&Save matrix windows")
         self.load_pb = QPushButton("&Load project matrix windows")
-        self.cm_pb = QPushButton('Connectivity &Matrix')
+        self.mask_checkbox = QCheckBox("Mask Symmetry")
+        self.cm_pb = QPushButton('Correlation &Matrix')
         self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed, RoiModel())
         WidgetDefault.__init__(self, project, plugin_position)
 
@@ -109,6 +110,8 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.cm_comboBox)
         self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
+        self.mask_checkbox.setChecked(True)
+        self.vbox.addWidget(self.mask_checkbox)
         self.vbox.addWidget(self.cm_pb)
 
     def setup_signals(self):
@@ -146,7 +149,7 @@ class Widget(QWidget, WidgetDefault):
 
     def connectivity_triggered(self):
         cm_type = self.cm_comboBox.currentText()
-        progress = QProgressDialog('Generating Connectivity Matrix...', 'Abort', 0, 100, self)
+        progress = QProgressDialog('Generating Correlation Matrix...', 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)
         def callback(x):
@@ -190,10 +193,10 @@ class Widget(QWidget, WidgetDefault):
 
     def save_triggered(self):
         if not self.open_dialogs:
-            qtutil.info('No connectivity matrix windows are open. ')
+            qtutil.info('No correlation matrix windows are open. ')
             return
 
-        continue_msg = "All Connectivity Matrices will be closed after saving, *including* ones you have not saved. \n" \
+        continue_msg = "All Correlation Matrices will be closed after saving, *including* ones you have not saved. \n" \
                   "\n" \
                   "Continue?"
         reply = QMessageBox.question(self, 'Save All',
@@ -202,7 +205,7 @@ class Widget(QWidget, WidgetDefault):
             return
 
         qtutil.info(
-            'There are ' + str(len(self.open_dialogs)) + ' connectivity matrices in memory. We will now choose a path '
+            'There are ' + str(len(self.open_dialogs)) + ' correlation matrices in memory. We will now choose a path '
                                                          'to save each one to. Simply don\'t save ones you have '
                                                          'purposefully closed. Though, good news, you now have '
                                                          'one last chance to save and recover any matrices you '
@@ -243,7 +246,7 @@ class Widget(QWidget, WidgetDefault):
 
         qtutil.info("All files have been saved")
 
-        csv_msg = "Save csv files of all open Connectivity Matrix windows as well?"
+        csv_msg = "Save csv files of all open Correlation Matrix windows as well?"
         reply = QMessageBox.question(self, 'Save All',
                                      csv_msg, QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
@@ -256,7 +259,7 @@ class Widget(QWidget, WidgetDefault):
     def load_triggered(self):
         paths = [p['path'] for p in self.project.files if p['type'] == self.Defaults.window_type]
         if not paths:
-            qtutil.info("Your project has no connectivity matrices. Make and save some!")
+            qtutil.info("Your project has no correlation matrices. Make and save some!")
             return
 
         for pickle_path in paths:
@@ -293,13 +296,13 @@ class Widget(QWidget, WidgetDefault):
 
     def save_open_dialogs_to_csv(self):
         if not self.open_dialogs:
-            qtutil.info('No connectivity matrix windows are open. ')
+            qtutil.info('No correlation matrix windows are open. ')
             return
 
         for i, dialog in enumerate(self.open_dialogs):
             rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
-            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_connectivity_matrix.csv'
-            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_connectivity_matrix.csv'
+            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_correlation_matrix.csv'
+            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_correlation_matrix.csv'
 
             with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
@@ -323,7 +326,7 @@ class Widget(QWidget, WidgetDefault):
         super().setup_whats_this()
         self.roi_list.setWhatsThis("Choose ROIs where the average value for each frame across frames is used for each "
                                    "selected ROI. This set of values is correlated with the average of all other ROIs "
-                                   "to create the connectivity matrix. ")
+                                   "to create the correlation matrix. ")
         self.cm_comboBox.setWhatsThis("Choose the colormap used to represent your matrices. Note that we "
                                       "discourage the use of jet. For a discussion on this please see "
                                       "'Why We Use Bad Color Maps and What You Can Do About It.' Kenneth Moreland. "
@@ -334,8 +337,8 @@ class Widget(QWidget, WidgetDefault):
         self.load_pb.setWhatsThis("Loads all matrix windows associated with this plugin that have been saved. Click "
                                   "'Manage Data' to find each window associated with this project. Individual windows "
                                   "can be deleted from there. ")
-        self.cm_pb.setWhatsThis("Creates a single connectivity matrix where each connectivity matrix from selected "
-                                "image stacks are averaged to create a single connectivity matrix that has a standard "
+        self.cm_pb.setWhatsThis("Creates a single correlation matrix where each correlation matrix from selected "
+                                "image stacks are averaged to create a single correlation matrix that has a standard "
                                 "deviation displaying how correlation deviates across selected image stacks for each "
                                 "ROI. Correlation coefficient used = Pearson")
 
@@ -394,7 +397,8 @@ class ConnectivityModel(QAbstractTableModel):
                         progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                     # ignore half of graph
                     if i < j:
-                        avg_data[i][j] = 0
+                        if widget.mask_checkbox.isChecked():
+                            avg_data[i][j] = 0
                     else:
                         avg_data[i][j] = tot_data[i][j] / len(selected_videos)
             stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
@@ -452,7 +456,7 @@ class ConnectivityDialog(QDialog):
     def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityDialog, self).__init__()
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
-        self.setWindowTitle('Connectivity Matrix - ' + str(uuid.uuid4()))
+        self.setWindowTitle('Correlation Matrix - ' + str(uuid.uuid4()))
         self.table = ConnectivityTable()
         self.setup_ui()
         self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
@@ -495,7 +499,7 @@ class RoiModel(QStandardItemModel):
 
 class MyPlugin(PluginDefault):
     def __init__(self, project, plugin_position):
-        self.name = 'Connectivity Matrix'
+        self.name = 'Correlation Matrix'
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
