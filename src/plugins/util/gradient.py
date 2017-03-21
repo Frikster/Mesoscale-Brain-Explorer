@@ -12,6 +12,7 @@ class GradientLegend(UIGraphicsItem):
     super(GradientLegend, self).__init__(self)
     self.labels = {max_label: 1, min_label: 0}
     self.cm_type = cm_type
+    self.labelsize = QtCore.QSize(0, 0)
 
   def maximumLabelSize(self, p):
     width, height = 0, 0
@@ -20,11 +21,12 @@ class GradientLegend(UIGraphicsItem):
                          | QtCore.Qt.AlignVCenter, str(label))
       width = max(b.width(), width)
       height = max(b.height(), height)
+    self.labelsize = QtCore.QSize(width, height)
     return QtCore.QSize(width, height)
 
   def paint(self, p, opt, widget):
     super(GradientLegend, self).paint(p, opt, widget)
-    pen = QtGui.QPen(QtGui.QColor(0,0,0))
+    pen = QtGui.QPen(QtGui.QColor(0, 0, 0))
     rect = self.boundingRect()
     unit = self.pixelSize()
 
@@ -39,7 +41,7 @@ class GradientLegend(UIGraphicsItem):
 
     # Draw background
     p.setPen(pen)
-    p.setBrush(QtGui.QBrush(QtGui.QColor(255,255,255,100)))
+    p.setBrush(QtGui.QBrush(QtGui.QColor(255, 255, 255, 100)))
     rect = QtCore.QRectF(
         QtCore.QPointF(x1 - padding * unit[0], y1 + padding * unit[1]),
         QtCore.QPointF(x2 + padding * unit[0], y2 - padding * unit[1])
@@ -66,8 +68,8 @@ class GradientLegend(UIGraphicsItem):
     p.drawRect(rect)
 
     # Draw labels
-    labelsize = self.maximumLabelSize(p)
-    lh = labelsize.height()
+    self.labelsize = self.maximumLabelSize(p)
+    lh = self.labelsize.height()
     p.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0)))
     for label in self.labels:
       y = y1 + self.labels[label] * (y2 - y1)

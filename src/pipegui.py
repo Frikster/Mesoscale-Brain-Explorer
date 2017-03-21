@@ -84,7 +84,7 @@ class Sidebar(QWidget):
     hbox.addWidget(QLabel("Y:"))
     hbox.addWidget(self.y_origin)
     vbox.addLayout(hbox)
-    vbox.addWidget(QLabel('Units per pixel:')) 
+    vbox.addWidget(QLabel('Units per pixel:'))
     vbox.addWidget(self.units_per_pixel)
     self.units_per_pixel.setDecimals(5)
     self.units_per_pixel.setMaximum(100000)
