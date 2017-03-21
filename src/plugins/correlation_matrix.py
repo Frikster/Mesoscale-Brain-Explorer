@@ -217,32 +217,31 @@ class Widget(QWidget, WidgetDefault):
             }
             default = win_title
             pickle_path = self.filedialog(default, filters)
-            if not pickle_path:
-                return
+            if pickle_path:
+                self.project.files.append({
+                    'path': pickle_path,
+                    'type': self.Defaults.window_type,
+                    'name': os.path.basename(pickle_path)
+                })
+                self.project.save()
 
-            self.project.files.append({
-                'path': pickle_path,
-                'type': self.Defaults.window_type,
-                'name': os.path.basename(pickle_path)
-            })
-            self.project.save()
+                # for row in dialog.model._data:
+                #     for cell in row:
+                #         if math.isnan(cell[0]) or math.isnan(cell[0]):
+                #             qtutil.warning("File might not save properly since it has nan values. Make sure all your "
+                #                            "ROIs are inside your mask.")
+                #             break
 
-            # for row in dialog.model._data:
-            #     for cell in row:
-            #         if math.isnan(cell[0]) or math.isnan(cell[0]):
-            #             qtutil.warning("File might not save properly since it has nan values. Make sure all your "
-            #                            "ROIs are inside your mask.")
-            #             break
-
-            # Now save the actual file
-            matrix_output_data = (pickle_path, dialog.model.roinames, dialog.model._data)
-            try:
-                with open(pickle_path, 'wb') as output:
-                    pickle.dump(matrix_output_data, output, -1)
-            except:
-                qtutil.critical(
-                    pickle_path + " could not be saved. Ensure MBE has write access to this location and "
-                                  "that another program isn't using this file.")
+                # Now save the actual file
+                title = os.path.basename(pickle_path)
+                matrix_output_data = (title, dialog.model.roinames, dialog.model._data)
+                try:
+                    with open(pickle_path, 'wb') as output:
+                        pickle.dump(matrix_output_data, output, -1)
+                except:
+                    qtutil.critical(
+                        pickle_path + " could not be saved. Ensure MBE has write access to this location and "
+                                      "that another program isn't using this file.")
 
         qtutil.info("All files have been saved")
 
@@ -267,7 +266,8 @@ class Widget(QWidget, WidgetDefault):
                 with open(pickle_path, 'rb') as input:
                     (title, roinames, dat) = pickle.load(input)
             except:
-                del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
+                del_msg = pickle_path + " could not be loaded. If this file exists, " \
+                                        "ensure MBE has read access to this " \
                                         "location and that another program isn't using this file " \
                                         "" \
                                         "\n \nOtherwise, would you like to detatch this file from your project? "
@@ -301,8 +301,10 @@ class Widget(QWidget, WidgetDefault):
 
         for i, dialog in enumerate(self.open_dialogs):
             rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
-            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_averaged_correlation_matrix.csv'
-            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + '_stdev_correlation_matrix.csv'
+            file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + \
+                            '_averaged_correlation_matrix.csv'
+            file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + \
+                              '_stdev_correlation_matrix.csv'
 
             with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
@@ -462,7 +464,7 @@ class ConnectivityDialog(QDialog):
         self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
         self.table.setModel(self.model)
 
-        #view.setAspectLocked(True)
+        # view.setAspectLocked(True)
         win = pg.GraphicsWindow()
         l = GradientLegend(-1.0, 1.0, cm_type)
         win.setFixedSize(l.labelsize)

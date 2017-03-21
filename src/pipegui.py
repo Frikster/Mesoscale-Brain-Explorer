@@ -84,7 +84,7 @@ class Sidebar(QWidget):
     hbox.addWidget(QLabel("Y:"))
     hbox.addWidget(self.y_origin)
     vbox.addLayout(hbox)
-    vbox.addWidget(QLabel('Units per pixel:'))
+    vbox.addWidget(QLabel('Units per pixel:')) 
     vbox.addWidget(self.units_per_pixel)
     self.units_per_pixel.setDecimals(5)
     self.units_per_pixel.setMaximum(100000)
@@ -93,6 +93,9 @@ class Sidebar(QWidget):
     # self.x_origin.setValue(self.project['origin'][0])
     # self.y_origin.setValue(self.project['origin'][1])
     # self.units_per_pixel.setValue(self.project['unit_per_pixel'])
+
+    vbox.addWidget(mue.InfoWidget("Whatever units you use for units per pixel is the units of length used "
+                                  "in all plugins. i.e. you'll notice the x and y axis are in 'units'."))
 
     self.pl_list = PipelineView()
     self.pl_list.setIconSize(QSize(18, 18))
