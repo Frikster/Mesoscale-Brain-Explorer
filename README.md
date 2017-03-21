@@ -12,7 +12,7 @@ The application has been tested and appears to work on Windows 7,8.1,10 and Ubun
 ### Windows
 Windows users simply have to download and extract the most recent 
 release and run the .exe contained within the pipegui folder.
-The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases/tag/0.7.4)
+The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases)
 
 #### Visual C++ Redistributable 
 The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. If you do not have Visual Studio 2017, follow these instructions to upgrade:
