@@ -386,7 +386,7 @@ class ConnectivityModel(QAbstractTableModel):
                     for j in range(len(tot_data)):
                         dict_for_stdev[(i, j)] = dict_for_stdev[(i, j)] + [self._data[i][j]]
                         # ignore half of graph
-                        if i < j:
+                        if widget.mask_checkbox.isChecked() and i < j:
                             dict_for_stdev[(i, j)] = [0]
                         # Start above with self._data receiving= the first value before adding on the rest.
                         # don't add the first value twice
@@ -398,9 +398,8 @@ class ConnectivityModel(QAbstractTableModel):
                     if progress_callback:
                         progress_callback((i*j) / (len(tot_data)*len(tot_data)))
                     # ignore half of graph
-                    if i < j:
-                        if widget.mask_checkbox.isChecked():
-                            avg_data[i][j] = 0
+                    if widget.mask_checkbox.isChecked() and i < j:
+                        avg_data[i][j] = 0
                     else:
                         avg_data[i][j] = tot_data[i][j] / len(selected_videos)
             stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
