@@ -5,11 +5,11 @@ import functools
 import os
 import uuid
 from itertools import cycle
+from math import log10, floor
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pyqtgraph as pg
 import qtutil
 import scipy.misc
 from PyQt4.QtCore import *
@@ -27,6 +27,11 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 from .util.qt import MyProgressDialog
+
+# round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
+
+def round_sig(x, sig=2):
+    return round(x, sig-int(floor(log10(abs(x))))-1)
 
 UUID_SIZE = len(str(uuid.uuid4()))
 
@@ -449,7 +454,9 @@ class SPCMapDialog(QDialog):
         spc = self.spc.swapaxes(0, 1)
         spc = spc[:, ::-1]
         try:
-          value = str(round(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
+          # value = str(round_sig(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
+          value = str(format(spc[int(x)+int(x_origin), int(y)+int(y_origin)], '.4f'))
+          # value = str(round(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
         except:
           value = '-'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))

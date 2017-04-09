@@ -2,6 +2,7 @@
 
 import functools
 import os
+from math import log10, floor
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,6 +17,10 @@ from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 from .util.qt import MyProgressDialog
+
+# round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
+def round_sig(x, sig=2):
+    return round(x, sig-int(floor(log10(abs(x))))-1)
 
 def calc_stddev(video_path, progress):
   progress.setValue(0)
@@ -164,6 +169,7 @@ class StdDevDialog(QDialog):
   def __init__(self, project, video_path, stddevmap, max_stdev, cm_type, parent=None):
     super(StdDevDialog, self).__init__(parent)
     self.project = project
+    self.display_name = os.path.basename(video_path)
     self.video_path = video_path
     self.stddev = stddevmap
     self.max_stdev = max_stdev
@@ -179,8 +185,11 @@ class StdDevDialog(QDialog):
 
   def setup_ui(self):
     vbox = QVBoxLayout()
+    hbox = QHBoxLayout()
     self.the_label = QLabel()
-    vbox.addWidget(self.the_label)
+    hbox.addWidget(self.the_label)
+    hbox.addWidget(QLabel(self.display_name))
+    vbox.addLayout(hbox)
     self.view = MyGraphicsView(self.project)
     vbox.addWidget(self.view)
     self.setLayout(vbox)
@@ -193,7 +202,9 @@ class StdDevDialog(QDialog):
     stddev = self.stddev.swapaxes(0, 1)
     stddev = stddev[:, ::-1]
     try:
-      value = str(stddev[int(x)+int(x_origin), int(y)+int(y_origin)])
+        # value = str(round_sig(stddev[int(x) + int(x_origin), int(y) + int(y_origin)], 4))
+        value = str(format(stddev[int(x)+int(x_origin), int(y)+int(y_origin)], '.8f'))
+        # value = str(stddev[int(x)+int(x_origin), int(y)+int(y_origin)])
     except:
       value = '-'
     self.the_label.setText('Standard deviation at crosshair: {}'.format(value))
