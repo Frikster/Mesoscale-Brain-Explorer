@@ -68,6 +68,9 @@ python3.5 pipegui.py
 ### Overview Tutorial
 The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
 
+### Sample Data
+Example image stacks from mouse #0285 used in the manuscript can be downloaded [here](https://drive.google.com/open?id=0B3eRv-4znU32SGQ3V2ZVa21EWUE). These can be used along with the tutorial.
+
 ### Seed/ROI Placement csv/txt format
 The ROI Import plugin a specific format is *required* for your coordinates to see proper importation into your MBE project. Here is an example from an Ai mouse's coordinates in microns.  Coordinates were adapted from the [Allen Mouse Brain Connectivity Atlas](http://connectivity.brain-map.org/). We previously [mapped functional and anatomical coordinates of transgenic mice using sensory stimulation](https://www.ncbi.nlm.nih.gov/pubmed/22435052) in combination with in vivo large-scale cortical mapping using Channelrhodopsin-2 stimulation to confirm the coordinates.
 
