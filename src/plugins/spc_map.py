@@ -460,8 +460,7 @@ class SPCMapDialog(QDialog):
           value = '-'
           coords = '(-,-)'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
-        if coords != '(-,-)':
-            self.coords_label.setText('(x,y): {}'.format(coords))
+        self.coords_label.setText('(x,y): {}'.format(coords))
 
 
 class MyPlugin(PluginDefault):

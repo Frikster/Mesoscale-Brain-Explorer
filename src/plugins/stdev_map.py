@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import functools
 import os
 from math import log10, floor
@@ -185,16 +184,19 @@ class StdDevDialog(QDialog):
 
   def setup_ui(self):
     vbox = QVBoxLayout()
-    hbox = QHBoxLayout()
+    # hbox = QHBoxLayout()
     self.the_label = QLabel()
-    hbox.addWidget(self.the_label)
-    hbox.addWidget(QLabel(self.display_name))
-    vbox.addLayout(hbox)
+    self.coords_label = QLabel()
+    vbox.addWidget(QLabel(self.display_name))
+    vbox.addWidget(self.the_label)
+    vbox.addWidget(self.coords_label)
+    # vbox.addLayout(hbox)
     self.view = MyGraphicsView(self.project)
     vbox.addWidget(self.view)
     self.setLayout(vbox)
 
   def vbc_hovering(self, x, y):
+    coords = str((format(x, '.4f'), format(y, '.4f')))
     x_origin, y_origin = self.project['origin']
     unit_per_pixel = self.project['unit_per_pixel']
     x = x / unit_per_pixel
@@ -206,8 +208,9 @@ class StdDevDialog(QDialog):
         value = str(format(stddev[int(x)+int(x_origin), int(y)+int(y_origin)], '.8f'))
         # value = str(stddev[int(x)+int(x_origin), int(y)+int(y_origin)])
     except:
-      value = '-'
+        value = '-'
     self.the_label.setText('Standard deviation at crosshair: {}'.format(value))
+    self.coords_label.setText('(x,y): {}'.format(coords))
 
   # copy-pasted from spc_map
   def colorize_spc(self, spc_map):
