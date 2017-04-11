@@ -436,7 +436,6 @@ class SPCMapDialog(QDialog):
         spc_map_color = cmap.to_rgba(spc_map, bytes=True)
         # turn areas outside mask black
         spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
-
         # make regions where RGB values are taken from 0, black. take the top left corner value...
         spc_map_color = spc_map_color.swapaxes(0, 1)
         if spc_map_color.ndim == 2:
@@ -446,7 +445,7 @@ class SPCMapDialog(QDialog):
         return spc_map_color
 
     def vbc_hovering(self, x, y):
-        coords = str((format(x, '.4f'),format(y, '.4f')))
+        coords = str((format(x, '.4f'), format(y, '.4f')))
         x_origin, y_origin = self.project['origin']
         unit_per_pixel = self.project['unit_per_pixel']
         x = x / unit_per_pixel
@@ -461,7 +460,8 @@ class SPCMapDialog(QDialog):
           value = '-'
           coords = '(-,-)'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
-        self.coords_label.setText('(x,y): '.format(coords))
+        if coords != '(-,-)':
+            self.coords_label.setText('(x,y): {}'.format(coords))
 
 
 class MyPlugin(PluginDefault):
