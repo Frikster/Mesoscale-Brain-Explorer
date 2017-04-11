@@ -375,7 +375,6 @@ class Widget(QWidget, WidgetDefault):
 
 
 class SPCMapDialog(QDialog):
-
     def __init__(self, project, video_path, spcmap, cm_type, corr_range, roi_name=None):
         super(SPCMapDialog, self).__init__()
         if roi_name:
@@ -406,12 +405,13 @@ class SPCMapDialog(QDialog):
 
     def setup_ui(self):
         vbox = QVBoxLayout()
-        hbox = QHBoxLayout()
+        # hbox = QHBoxLayout()
         self.the_label = QLabel()
-        hbox.addWidget(self.the_label)
-        hbox.addWidget(QLabel(self.display_name))
+        self.coords_label = QLabel()
+        vbox.addWidget(QLabel(self.display_name))
+        vbox.addWidget(self.the_label)
+        vbox.addWidget(self.coords_label)
 
-        vbox.addLayout(hbox)
         image_view_on = True
         parent = None
         self.view = MyGraphicsView(self.project, parent, image_view_on)
@@ -438,7 +438,6 @@ class SPCMapDialog(QDialog):
         spc_map_color[np.isnan(spc_map_with_nan)] = np.array([0, 0, 0, 1])
 
         # make regions where RGB values are taken from 0, black. take the top left corner value...
-
         spc_map_color = spc_map_color.swapaxes(0, 1)
         if spc_map_color.ndim == 2:
           spc_map_color = spc_map_color[:, ::-1]
@@ -447,6 +446,7 @@ class SPCMapDialog(QDialog):
         return spc_map_color
 
     def vbc_hovering(self, x, y):
+        coords = str((format(x, '.4f'),format(y, '.4f')))
         x_origin, y_origin = self.project['origin']
         unit_per_pixel = self.project['unit_per_pixel']
         x = x / unit_per_pixel
@@ -459,7 +459,9 @@ class SPCMapDialog(QDialog):
           # value = str(round(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
         except:
           value = '-'
+          coords = '(-,-)'
         self.the_label.setText('Correlation value at crosshair: {}'.format(value))
+        self.coords_label.setText('(x,y): '.format(coords))
 
 
 class MyPlugin(PluginDefault):
