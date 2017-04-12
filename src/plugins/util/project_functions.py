@@ -219,7 +219,7 @@ def save_dock_windows(widget, window_type):
 
     qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows in memory. We will now choose a path to '
                                                                'save each one to. Simply don\'t save ones you have '
-                                                               'purposefully closed. Though, good news, you now have '
+                                                               'purposefully closed. You now have '
                                                                'one last chance to save and recover '
                                                                'any windows you accidentally closed')
     for (dialog, video_path_to_plots_dict) in widget.open_dialogs_data_dict:
@@ -230,23 +230,22 @@ def save_dock_windows(widget, window_type):
         }
         default = win_title
         pickle_path = widget.filedialog(default, filters)
-        if not pickle_path:
-            return
-        widget.project.files.append({
-            'path': pickle_path,
-            'type': window_type,
-            'name': os.path.basename(pickle_path)
-        })
-        widget.project.save()
-        # Now save the actual file
-        # area = dialog.centralWidget()
-        # state = area.saveState()
-        try:
-            with open(pickle_path, 'wb') as output:
-                pickle.dump(video_path_to_plots_dict, output, -1)
-        except:
-            qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
-                                          "that another program isn't using this file.")
+        if pickle_path:
+            widget.project.files.append({
+                'path': pickle_path,
+                'type': window_type,
+                'name': os.path.basename(pickle_path)
+            })
+            widget.project.save()
+            # Now save the actual file
+            # area = dialog.centralWidget()
+            # state = area.saveState()
+            try:
+                with open(pickle_path, 'wb') as output:
+                    pickle.dump(video_path_to_plots_dict, output, -1)
+            except:
+                qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
+                                              "that another program isn't using this file.")
     qtutil.info("All files have been saved")
 
     for dialog in widget.open_dialogs:
