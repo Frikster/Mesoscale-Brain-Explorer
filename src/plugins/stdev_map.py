@@ -125,18 +125,17 @@ class Widget(QWidget, WidgetDefault):
         if self.max_checkbox.isChecked():
             max_val = str(np.max(stddev))
             dialog = StdDevDialog(self.project, video_path, stddev, np.max(stddev), cm_type, self)
-            stddev_col = dialog.colorized_spc
+            # stddev_col = dialog.colorized_spc
         else:
             max_val = str(self.max_stdev_cb.value())
             dialog = StdDevDialog(self.project, video_path, stddev, self.max_stdev_cb.value(), cm_type, self)
             dialog.setWhatsThis("Click and drag to move the map around and roll "
                                 "the mouse wheel to zoom in and out. Moving the map resets the position of the "
                                 "gradient legend. Right click to see further options. Use View All to reset the view. ")
-
-            stddev_col = dialog.colorized_spc
+            # stddev_col = dialog.colorized_spc
+        self.stdev_to_file(max_val, video_path, dialog.colorized_spc, stddev)
         dialog.show()
         self.open_dialogs.append(dialog)
-        self.stdev_to_file(max_val, video_path, stddev_col, stddev)
     global_callback(1)
 
   def stdev_to_file(self, max_val, vid_path, stddev_col, stddev):
@@ -178,8 +177,9 @@ class StdDevDialog(QDialog):
     l.setParentItem(self.view.vb)
     self.setWindowTitle('Standard Deviation Map')
     self.colorized_spc = self.colorize_spc(stddevmap)
+    self.view.show(self.colorize_spc(stddevmap))
 
-    self.view.show(prepare_image(stddevmap, max_stdev, cm_type))
+    # self.view.show(prepare_image(stddevmap, max_stdev, cm_type))
     self.view.vb.hovering.connect(self.vbc_hovering)
 
   def setup_ui(self):
@@ -216,7 +216,7 @@ class StdDevDialog(QDialog):
   def colorize_spc(self, spc_map):
       spc_map_with_nan = np.copy(spc_map)
       spc_map[np.isnan(spc_map)] = 0
-      gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+      gradient_range = matplotlib.colors.Normalize(0, self.max_stdev)
       spc_map = np.ma.masked_where(spc_map == 0, spc_map)
       cmap = matplotlib.cm.ScalarMappable(
           gradient_range, plt.get_cmap(self.cm_type))

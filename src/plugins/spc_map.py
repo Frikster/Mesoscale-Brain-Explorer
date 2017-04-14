@@ -395,8 +395,8 @@ class SPCMapDialog(QDialog):
         # self.title = pg.LabelItem(text=display_name, parent=self.view.vb)
         # self.view.vb.addItem(self.title)
         # todo: add self.display_name to viewbox title not windowTitle
-        self.colorized_spc = self.colorize_spc(spcmap)
-        self.view.show(self.colorized_spc)
+        # self.colorized_spc = self.colorize_spc(spcmap)
+        self.view.show(self.colorize_spc(spcmap))
         self.view.vb.clicked.connect(self.vbc_clicked)
         self.view.vb.hovering.connect(self.vbc_hovering)
 

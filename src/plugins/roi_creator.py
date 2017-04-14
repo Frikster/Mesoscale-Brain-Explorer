@@ -226,7 +226,7 @@ class Widget(QWidget, WidgetDefault):
 
 class MyPlugin(PluginDefault):
   def __init__(self, project, plugin_position):
-    self.name = 'Crop to ROIs'
+    self.name = 'Create ROIs'
     self.widget = Widget(project, plugin_position)
     super().__init__(self.widget, self.widget.Labels, self.name)
 
