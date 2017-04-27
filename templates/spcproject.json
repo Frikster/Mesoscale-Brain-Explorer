@@ -9,7 +9,7 @@
 		"name":"spatial_filter"
 	},
 	{
-		"name":"cut_off"
+		"name":"trim"
 	},
 	{
 		"name":"alignment"
@@ -36,7 +36,7 @@
 		"name":"spc_map"
 	},
 	{
-		"name":"connectivity_matrix"
+		"name":"correlation_matrix"
 	},
 	{
 		"name":"roi_activity_plot"
