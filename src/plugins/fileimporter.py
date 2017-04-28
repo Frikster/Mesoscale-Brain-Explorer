@@ -315,16 +315,16 @@ class Widget(QWidget):
           copyfile_progress.setAutoClose(True)
           copyfile_progress.setMinimumDuration(0)
 
-          def copyfile_progress(x):
+          def callback(x):
               copyfile_progress.setValue(x * 100)
               QApplication.processEvents()
-          copyfile_progress(0.0)
+          callback(0.0)
           if copyfile_progress.wasCanceled():
               return
           copyfile(filename, new_filename)
           if copyfile_progress.wasCanceled():
               return
-          copyfile_progress(1.0)
+          callback(1.0)
       filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:

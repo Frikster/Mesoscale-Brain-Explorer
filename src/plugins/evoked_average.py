@@ -61,7 +61,7 @@ class Widget(QWidget, WidgetDefault):
         breadth = stacks[0].shape[1]
         length = stacks[0].shape[2]
 
-        trig_avg = np.empty([min_lens, length, breadth])
+        trig_avg = np.empty((min_lens, length, breadth), np.load(filenames[0], mmap_mode='r').dtype)
         for frame_index in range(min_lens):
             global_callback(frame_index / min_lens)
             frames_to_avg = [stacks[stack_index][frame_index]
