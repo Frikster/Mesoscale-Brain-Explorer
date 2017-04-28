@@ -367,7 +367,7 @@ class MultiRoiViewBox(pg.ViewBox):
             self.menu.addAction(self.exportImage)
             # self.menu.addSeparator()
             # self.menu.addMenu(self.submenu)
-            # self.menu.addAction(self.loadROIAct)
+            self.menu.addAction(self.loadROIAct)
             self.crosshair_toggle.setCheckable(True)
             self.crosshair_toggle.setChecked(True)
             self.dexaMode.setCheckable(True)
