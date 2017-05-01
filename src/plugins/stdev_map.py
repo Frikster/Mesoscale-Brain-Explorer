@@ -60,6 +60,7 @@ class Widget(QWidget, WidgetDefault):
     self.view = MyGraphicsView(self.project)
     self.cm_comboBox = QtGui.QComboBox(self)
     self.max_checkbox = QCheckBox("Select maximum value of image stack as upper limit")
+    self.log_mode = QCheckBox("Use log scale")
     self.max_stdev_cb = QDoubleSpinBox(decimals=4)
     self.execute_primary_function_button = QPushButton('Generate Std. Dev. Map')
     WidgetDefault.__init__(self, project, plugin_position)
@@ -78,6 +79,7 @@ class Widget(QWidget, WidgetDefault):
     self.cm_comboBox.addItem("seismic")
     self.vbox.addWidget(self.cm_comboBox)
     self.vbox.addWidget(self.max_checkbox)
+    self.vbox.addWidget(self.log_mode)
     self.vbox.addWidget(QLabel(self.Labels.colormap_upper_limit_label))
     self.max_stdev_cb.setMinimum(0.0000)
     self.max_stdev_cb.setValue(1.0000)
@@ -122,6 +124,9 @@ class Widget(QWidget, WidgetDefault):
         global_callback(selected_vid_no / total)
         progress = MyProgressDialog('Standard Deviation Map', 'Generating map...', self)
         stddev = calc_stddev(video_path, progress)
+        if self.log_mode.isChecked():
+            stddev = stddev + 1 # log10(1.0) = 0
+            stddev = np.log10(stddev)
         if self.max_checkbox.isChecked():
             max_val = str(np.max(stddev))
             dialog = StdDevDialog(self.project, video_path, stddev, np.max(stddev), cm_type, self)
