@@ -101,7 +101,7 @@ class Widget(QWidget, WidgetDefault):
 
         b, a = signal.cheby1(order, rp, Wn, 'bandpass', analog=False)
         print("Filtering...")
-        frames = signal.filtfilt(b, a, frames, axis=0)
+        frames = np.array(signal.filtfilt(b, a, frames, axis=0), dtype=np.float32)
         # non-working parallized version
         # def filt(pixel, b, a):
         #     return signal.filtfilt(b, a, pixel)
@@ -144,7 +144,7 @@ class Widget(QWidget, WidgetDefault):
             callback(0.01)
             frames = fileloader.load_file(video_path)
             callback(0.1)
-            avg_frames = np.mean(frames, axis=0, dtype=frames.dtype)
+            avg_frames = np.mean(frames, axis=0, dtype=np.float32)
             callback(0.2)
             frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
             callback(0.9)

@@ -138,7 +138,7 @@ class Widget(QWidget, WidgetDefault):
             else:
                 frames_original = fileloader.load_file(video_path)
             frames = np.empty((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]),
-                              frames_original.dtype)
+                              dtype=np.float32)
             self.kernal_size.setMaximum(np.sqrt(frames[0].size))
             for frame_no, frame_original in enumerate(frames_original):
                 frames[frame_no] = self.filter2_test_j(frame_original, kernal_size)

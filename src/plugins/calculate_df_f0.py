@@ -127,11 +127,11 @@ class Widget(QWidget, WidgetDefault):
             callback(0.01)
             if len(self.video_list2.selectedIndexes()) == 0:
                 start = time.time()
-                baseline = np.mean(frames, axis=0)
+                baseline = np.mean(frames, axis=0, dtype=np.float32)
                 elapsed_mean = (time.time() - start)
             else:
                 start = time.time()
-                baseline = np.mean(fileloader.load_file(self.video_list2_vidpath), axis=0)
+                baseline = np.mean(fileloader.load_file(self.video_list2_vidpath), axis=0, dtype=np.float32)
                 elapsed_mean = (time.time() - start)
             callback(0.05)
             start = time.time()

@@ -130,7 +130,7 @@ class Widget(QWidget, WidgetDefault):
         # find size, assuming all files in project have the same size
         frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
         reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
-        self.reference_frame = np.mean(reference_frame_range, axis=0, dtype=frames_mmap.dtype)
+        self.reference_frame = np.mean(reference_frame_range, axis=0, dtype=np.float32)
 
         frame_no, h, w = frames_mmap.shape
         self.reference_frame = np.reshape(self.reference_frame, (1, h, w))
