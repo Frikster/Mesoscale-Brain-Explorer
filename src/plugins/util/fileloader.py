@@ -67,9 +67,9 @@ def save_file(path, data):
     if os.path.isfile(path):
         os.remove(path)
     try:
-        if data.dtype == 'float64':
-            qtutil.critical("FLOAT64")
-            raise MemoryError("FLOAT64")
+        # if data.dtype == 'float64':
+        #     qtutil.critical("FLOAT64")
+        #     raise MemoryError("FLOAT64")
         np.save(path, data)
     except:
         qtutil.critical('Could not save ' + path +
@@ -92,9 +92,9 @@ def load_file(filename, progress_callback=None):
 
   if filename.endswith('.npy'):
     frames = load_npy(filename, progress_callback)
-    if frames.dtype == 'float64':
-        qtutil.critical("FLOAT64")
-        raise MemoryError("FLOAT64")
+    # if frames.dtype == 'float64':
+    #     qtutil.critical("FLOAT64")
+    #     raise MemoryError("FLOAT64")
   else:
     raise UnknownFileFormatError()
   return frames
