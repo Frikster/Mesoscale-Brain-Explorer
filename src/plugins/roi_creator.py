@@ -182,6 +182,7 @@ class Widget(QWidget, WidgetDefault):
       callback(0.4)
       # Collect ROI's and combine
       numROIs = len(self.view.vb.rois)
+
       arrRegion_masks = []
       for i in range(numROIs):
         roi = self.view.vb.rois[i]
@@ -196,7 +197,8 @@ class Widget(QWidget, WidgetDefault):
       # In imageJ - Gap Between Images The number of bytes from the end of one image to the beginning of the next.
       # Set this value to width × height × bytes-per-pixel × n to skip n images for each image read. So use 4194304
       # Dont forget to set Endian value and set to 64 bit
-      roi_frames = (frames * combined_mask[np.newaxis, :, :])
+      # roi_frames = (frames * combined_mask[np.newaxis, :, :])
+      roi_frames = (frames * np.array(combined_mask[np.newaxis, :, :], dtype=frames.dtype))
       callback(1)
       path = pfs.save_project(video_path, self.project, roi_frames, self.Defaults.manip, 'video')
       output_paths = output_paths + [path]

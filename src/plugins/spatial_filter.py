@@ -123,6 +123,12 @@ class Widget(QWidget, WidgetDefault):
                 max_possible_size = frames_original.shape[0]*frames_original.shape[1]*frames_count*8
                 available = list(psutil.virtual_memory())[1]
                 if available > max_possible_size:
+                    # fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1])),
+                    #                                     np.load(video_path, mmap_mode='r').dtype))
+                    # frames = np.load(path, mmap_mode='r+')
+                    # for i, frame in enumerate(frames_mmap[cut_off_start:len(frames_mmap) - cut_off_end]):
+                    #     callback(i / float(len(frames_mmap)))
+                    #     frames[i] = frame[:, :]
                     frames_original = frames_original[self.left_frame_range.value():self.right_frame_range.value()]
                 else:
                     qtutil.critical('Not enough memory. Range is of maximum size ' + str(max_possible_size) +
@@ -131,7 +137,8 @@ class Widget(QWidget, WidgetDefault):
                                       ' and available memory is: ' + str(available))
             else:
                 frames_original = fileloader.load_file(video_path)
-            frames = np.zeros((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]))
+            frames = np.empty((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]),
+                              frames_original.dtype)
             self.kernal_size.setMaximum(np.sqrt(frames[0].size))
             for frame_no, frame_original in enumerate(frames_original):
                 frames[frame_no] = self.filter2_test_j(frame_original, kernal_size)

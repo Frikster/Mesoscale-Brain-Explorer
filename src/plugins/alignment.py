@@ -130,7 +130,7 @@ class Widget(QWidget, WidgetDefault):
         # find size, assuming all files in project have the same size
         frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
         reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
-        self.reference_frame = np.mean(reference_frame_range, axis=0)
+        self.reference_frame = np.mean(reference_frame_range, axis=0, dtype=frames_mmap.dtype)
 
         frame_no, h, w = frames_mmap.shape
         self.reference_frame = np.reshape(self.reference_frame, (1, h, w))
@@ -180,7 +180,7 @@ class Widget(QWidget, WidgetDefault):
         return results
 
     def apply_shifts(self, frames, shift, progress_callback):
-        shifted_frames = []
+        # shifted_frames = []
         tvec = shift["tvec"]
         angle = shift["angle"]
         if "scale" in shift.keys():
@@ -190,9 +190,10 @@ class Widget(QWidget, WidgetDefault):
         for frame_no, frame in enumerate(frames):
             progress_callback(frame_no / float(len(frames)))
             # frame = frames[frame_no]
-            shifted_frames.append(ird.transform_img(frame, tvec=tvec, angle=angle, scale=scale))
+            # shifted_frames.append(ird.transform_img(frame, tvec=tvec, angle=angle, scale=scale))
+            frames[frame_no] = ird.transform_img(frame, tvec=tvec, angle=angle, scale=scale)
         progress_callback(1)
-        return shifted_frames
+        return frames
 
     def align_videos(self, filenames, template_frame):
         """Return filenames of generated videos"""

@@ -144,7 +144,7 @@ class Widget(QWidget, WidgetDefault):
             callback(0.01)
             frames = fileloader.load_file(video_path)
             callback(0.1)
-            avg_frames = np.mean(frames, axis=0)
+            avg_frames = np.mean(frames, axis=0, dtype=frames.dtype)
             callback(0.2)
             frames = self.cheby_filter(frames, f_low, f_high, frame_rate)
             callback(0.9)
