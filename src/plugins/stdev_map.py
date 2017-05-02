@@ -24,7 +24,7 @@ def round_sig(x, sig=2):
 def calc_stddev(video_path, progress):
   progress.setValue(0)
   frames = fileloader.load_file(video_path)
-  stddev = np.std(frames, axis=0)
+  stddev = np.std(frames, axis=0, dtype=np.float32)
   progress.setValue(100)
   return stddev
 

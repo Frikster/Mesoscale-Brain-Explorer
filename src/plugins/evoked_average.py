@@ -66,8 +66,8 @@ class Widget(QWidget, WidgetDefault):
             global_callback(frame_index / min_lens)
             frames_to_avg = [stacks[stack_index][frame_index]
                              for stack_index in range(len(stacks))]
-            frames_to_avg = np.array(frames_to_avg)
-            avg = np.mean(frames_to_avg, axis=0)
+            frames_to_avg = np.array(frames_to_avg, dtype=np.float32)
+            avg = np.mean(frames_to_avg, axis=0, dtype=np.float32)
             trig_avg[frame_index] = avg
         global_callback(1)
         manip = self.Defaults.manip + '_' + str(len(filenames))

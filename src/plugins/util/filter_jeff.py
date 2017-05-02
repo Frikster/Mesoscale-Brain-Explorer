@@ -146,7 +146,7 @@ def gsr(frames, width, height, progress_callback):
     # Reshape into time and space
     frames = np.reshape(frames, (frames.shape[0], width*height))
     progress_callback(0.3)
-    mean_g = np.mean(frames, axis=1)
+    mean_g = np.mean(frames, axis=1, dtype=np.float32)
     progress_callback(0.4)
     g_plus = np.squeeze(np.linalg.pinv([mean_g]))
     progress_callback(0.5)

@@ -64,8 +64,9 @@ class Widget(QWidget, WidgetDefault):
             return
         frames = [fileloader.load_file(f) for f in paths]
         min_len = min([len(f) for f in frames])
-        frames = np.divide(frames[0][0:min_len], frames[1][0:min_len])
-        frames = np.array(frames)
+        frames = np.divide(np.array(frames[0][0:min_len], dtype=np.float32),
+                           np.array(frames[1][0:min_len], dtype=np.float32))
+        frames = np.array(frames, dtype=np.float32)
 
         # First one has to take the name otherwise pfs.save_projects doesn't work
         manip = 'channel_div'
