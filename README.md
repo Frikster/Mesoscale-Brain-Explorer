@@ -66,7 +66,9 @@ python3.5 pipegui.py
 
 ## User Manual
 ### Overview Tutorial
-The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots)
+The following [tutorial series](https://www.youtube.com/playlist?list=PLlnQ3H3mPPQROgoe-t3Hrhv4zdiJyw5Gs) steps through setting up the application in Windows as well how to easily replicate all figures in our paper (seed pixel correlation maps, connectivity matrix, activity plots).
+
+Note that all videos will soon be migrated to [this](https://www.youtube.com/channel/UC_pvoCJD7jSeZq0I4ZtmKJw) channel. All new videos will likewise be posted there.
 
 ### Sample Data
 Example image stacks from mouse #0285 used in the manuscript can be downloaded [here](https://drive.google.com/open?id=0B3eRv-4znU32SGQ3V2ZVa21EWUE). These can be used along with the tutorial.
@@ -164,4 +166,4 @@ Once done, use your favourite IDE to modify the code
 Note that you may get the following error: `ImportError: DLL load failed: The specified procedure could not be found.` If you do download https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/msvcp140.dll and place it in the same site-package folder that contains QtCore4.dll. This is usually C:\Python35\Lib\site-packages\PyQt4\ if you installed Python to C:\Python35.
 
 ### Custom Plugin Tutorial
-Coming soon... (with pictures and videos)
+Coming soon... (with pictures and videos). Will be posted on [this](https://www.youtube.com/channel/UC_pvoCJD7jSeZq0I4ZtmKJw) channel
