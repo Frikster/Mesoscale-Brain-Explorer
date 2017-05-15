@@ -512,7 +512,7 @@ class PolyLineROIcustom(selectableROI,ROI):
         # p.translate(-bounds.left(), -bounds.top())
         p.drawPath(self.shape())
         p.end()
-        mask = imageToArray(im)[:,:,0].astype(float) / 255.
+        mask = imageToArray(im)[:,:,0].astype(data.dtype) / 255.
         # Old code that doesn't seem to do what it should
         #shape = [1] * data.ndim
         #shape[axes[0]] = sliced.shape[axes[0]]

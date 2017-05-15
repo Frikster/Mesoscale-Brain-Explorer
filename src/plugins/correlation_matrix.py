@@ -74,6 +74,7 @@ class Widget(QWidget, WidgetDefault):
         self.save_pb = QPushButton("&Save matrix windows")
         self.load_pb = QPushButton("&Load project matrix windows")
         self.mask_checkbox = QCheckBox("Mask Symmetry")
+        self.sem_checkbox = QCheckBox("Use SEM instead of SD")
         self.cm_pb = QPushButton('Correlation &Matrix')
         self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed, RoiModel())
         WidgetDefault.__init__(self, project, plugin_position)
@@ -111,7 +112,9 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
         self.mask_checkbox.setChecked(True)
+        self.sem_checkbox.setChecked(False)
         self.vbox.addWidget(self.mask_checkbox)
+        self.vbox.addWidget(self.sem_checkbox)
         self.vbox.addWidget(self.cm_pb)
 
     def setup_signals(self):
@@ -402,7 +405,10 @@ class ConnectivityModel(QAbstractTableModel):
                         avg_data[i][j] = 0
                     else:
                         avg_data[i][j] = tot_data[i][j] / len(selected_videos)
-            stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
+            if widget.sem_checkbox.isChecked():
+                stdev_dict = {k: stats.sem(v) for k, v in dict_for_stdev.items()}
+            else:
+                stdev_dict = {k: np.std(v) for k, v in dict_for_stdev.items()}
             assert(stdev_dict[(0, 0)] == 0 or math.isnan(stdev_dict[(0, 0)]))
 
             # combine stddev and avg data
