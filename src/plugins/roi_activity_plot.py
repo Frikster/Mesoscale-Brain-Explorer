@@ -506,6 +506,7 @@ class Widget(QWidget, WidgetDefault):
         plot.addLegend()
 
         roi_names = list(video_path_to_plots_dict[video_path].keys())
+        warning_issued = False
         for i, roi_name in enumerate(roi_names):
             p = video_path_to_plots_dict[video_path][roi_name]
             if i < len(brewer_colors):
