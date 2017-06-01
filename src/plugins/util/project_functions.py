@@ -193,7 +193,7 @@ def selected_video_changed_multi(widget, selected, deselected):
     widget.view.show(frame)
 
 
-def video_triggered(widget, index, scaling=True):
+def video_triggered(widget, index, scaling=False):
     filename = str(os.path.join(widget.project.path, index.data(Qt.DisplayRole)) + '.npy')
     dialog = PlayerDialog(widget.project, filename, widget, scaling)
     dialog.show()

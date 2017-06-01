@@ -66,7 +66,7 @@ class WidgetDefault(object):
                              self.Defaults.list_display_type, self.toolbutton_values)
         self.setup_whats_this()
 
-    def video_triggered(self, index, scaling=True):
+    def video_triggered(self, index, scaling=False):
         pfs.video_triggered(self, index, scaling)
 
     def setup_ui(self):
@@ -106,7 +106,7 @@ class WidgetDefault(object):
 
     def prepare_context_menu_signal_for_action(self, key):
         if key == self.Labels.video_player_scaled_label:
-            self.video_triggered(self.video_list.currentIndex())
+            self.video_triggered(self.video_list.currentIndex(), True)
         if key == self.Labels.video_player_unscaled_label:
             self.video_triggered(self.video_list.currentIndex(), False)
         if key == self.Labels.delete_signal_label:
