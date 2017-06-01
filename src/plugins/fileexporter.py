@@ -197,7 +197,7 @@ class Widget(QWidget, WidgetDefault):
 
   def setup_whats_this(self):
       super().setup_whats_this()
-      self.framerate_sb.setWhatsThis("This is required only if exporting to .av")
+      self.framerate_sb.setWhatsThis("This is required only if exporting to .avi")
       self.export_pb.setWhatsThis("Pressing this option each selected image stack will be exported individually to "
                                   "individual paths and types. ")
       self.export_filetype_cb.setWhatsThis("Select what filetype to export to for bulk export. Note this is not used "
