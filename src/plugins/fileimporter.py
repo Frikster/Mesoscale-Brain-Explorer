@@ -209,24 +209,32 @@ class Widget(QWidget):
       QApplication.processEvents()
 
     try:
-      fileconverter.raw2npy(filename, path, dtype, width, height,
-        channels, channel, callback)
+        fileconverter.raw2npy(filename, path, dtype, width, height, channels, channel, callback)
     except:
-      qtutil.critical('Converting raw to npy failed.')
-      progress.close()
-    else:
-      ret_filename = path
-      if rescale_value != 1.00:
-        unscaled = np.load(path)
-        no_frames = len(unscaled)
-        try:
-          scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
-                                      rescale_width), callback, operation='mean')
-          np.save(path, scaled)
-        except:
-          qtutil.critical("Rebinning raw failed. Please check your scale factor. Use the Help -> 'Whats this' feature"
-                          " on the scale factor for more info.")
-          progress.close()
+      warn_msg = "Continue trying to convert raw to npy despite problems? Your data might be corrupt."
+      reply = QMessageBox.question(self, 'Import Issues Detected',
+                                     warn_msg, QMessageBox.Yes, QMessageBox.No)
+      if reply == QMessageBox.Yes:
+          try:
+              fileconverter.raw2npy(filename, path, dtype, width, height, channels, channel, callback,
+                                    ignore_shape_error=True)
+          except:
+              qtutil.critical('Converting raw to npy still fails.')
+              progress.close()
+              return
+
+    ret_filename = path
+    if rescale_value != 1.00:
+      unscaled = np.load(path)
+      no_frames = len(unscaled)
+      try:
+        scaled = self.bin_ndarray(unscaled, (no_frames, rescale_height,
+                                    rescale_width), callback, operation='mean')
+        np.save(path, scaled)
+      except:
+        qtutil.critical("Rebinning raw failed. Please check your scale factor. Use the Help -> 'Whats this' feature"
+                        " on the scale factor for more info.")
+        progress.close()
     return ret_filename
 
   def convert_tif(self, filename):
@@ -453,7 +461,7 @@ class MyPlugin(PluginDefault):
   def get_input_paths(self):
     return self.widget.get_input_paths()
 
-  def check_ready_for_automation(self):
+  def check_ready_for_automation(self, expected_input_number):
       return True
 
   def automation_error_message(self):

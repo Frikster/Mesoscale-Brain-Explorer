@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import numpy as np
-
+import qtutil
 import tifffile as tiff
 
-class ConvertError(Exception):
-  pass
+class RawToNpyConvertError(Exception):
+  def error_msg(self):
+      qtutil.critical("Convert Error: 'number_of_frames % (length * width * number_of_channels) != 0'\n"
+            "The number of total pixels does not divide into an integer number of frames of the expected shape.\n"
+            "This could be due to dropped frames")
 
 def tif2npy(filename_from, filename_to, progress_callback):
   progress_callback(0.01)
@@ -34,13 +37,14 @@ def tif2npy(filename_from, filename_to, progress_callback):
           progress_callback(i / float(shape[0]-1))
           fp[i] = page.asarray()
 
-def raw2npy(filename_from, filename_to, dtype, width, height,
-  num_channels, channel, progress_callback):
+def raw2npy(filename_from, filename_to, dtype, width, height, num_channels, channel, progress_callback,
+            ignore_shape_error=False):
     progress_callback(0.01)
     fp = np.memmap(filename_from, dtype, 'r')
     frame_size = width * height * num_channels
-    if len(fp) % frame_size:
-      raise ConvertError()
+    if not ignore_shape_error:
+        if len(fp) % frame_size:
+          raise RawToNpyConvertError().error_msg()
     num_frames = int(len(fp) / frame_size)
     fp = np.memmap(filename_from, dtype, 'r',
       shape=(num_frames, width, height, num_channels))
