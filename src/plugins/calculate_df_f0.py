@@ -8,7 +8,7 @@ import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -121,7 +121,7 @@ class Widget(QWidget, WidgetDefault):
                 print(self.progress.wasCanceled())
 
             start = time.time()
-            frames = fileloader.load_file(video_path)
+            frames = file_io.load_file(video_path)
             elapsed_fileloader = (time.time() - start)
             time.time()
             callback(0.01)
@@ -131,7 +131,7 @@ class Widget(QWidget, WidgetDefault):
                 elapsed_mean = (time.time() - start)
             else:
                 start = time.time()
-                baseline = np.mean(fileloader.load_file(self.video_list2_vidpath), axis=0, dtype=np.float32)
+                baseline = np.mean(file_io.load_file(self.video_list2_vidpath), axis=0, dtype=np.float32)
                 elapsed_mean = (time.time() - start)
             callback(0.05)
             start = time.time()

@@ -8,7 +8,7 @@ import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 
 sys.path.append('..')
@@ -170,7 +170,7 @@ class Widget(QWidget, WidgetDefault):
       def callback(x):
           progress.setValue(x * 100)
           QApplication.processEvents()
-      frames = fileloader.load_file(video_path)
+      frames = file_io.load_file(video_path)
       callback(0.2)
       # Return if there is no image or rois in view
       if self.view.vb.img == None or len(self.view.vb.rois) == 0:

@@ -17,7 +17,7 @@ from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 from pyqtgraph.dockarea import *
 
-from .util import fileloader
+from .util import file_io
 from .util import filter_jeff
 from .util import mse_ui_elements as mue
 from .util import project_functions as pfs
@@ -190,7 +190,7 @@ class Widget(QWidget, WidgetDefault):
         video_path_to_plots_dict = {}
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for selected_vid_no, video_path in enumerate(selected_videos):
-            frames = fileloader.load_file(video_path)
+            frames = file_io.load_file(video_path)
             roi_activity_dict = {}
             for i, roi_name in enumerate(roi_names):
                 if progress_load.wasCanceled():
@@ -333,7 +333,7 @@ class Widget(QWidget, WidgetDefault):
         progress = MyProgressDialog('SPC Map', 'Generating correlation map...', self)
         for i, selected in enumerate(self.selected_videos):
             progress_load.setValue((i / len(self.selected_videos)) * 100)
-            frames = fileloader.load_npy(selected)
+            frames = file_io.load_npy(selected)
             progress.show()
             spc = calc_spc(frames, x, y, progress)
             progress.close()
@@ -422,7 +422,7 @@ class SPCMapDialog(QDialog):
         progress = MyProgressDialog('SPC Map', 'Recalculating...', self)
         progress.show()
         progress.setValue(0)
-        frames = fileloader.load_npy(self.video_path)
+        frames = file_io.load_npy(self.video_path)
         self.spc = calc_spc(frames, x, y, progress)
         self.view.show(self.colorize_spc(self.spc))
 

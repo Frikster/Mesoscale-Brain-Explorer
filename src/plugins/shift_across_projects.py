@@ -19,7 +19,7 @@ import imreg_dft as ird
 
 from .util.mygraphicsview import MyGraphicsView
 from .util import project_functions as pfs
-from .util import fileloader
+from .util import file_io
 
 class NotConvertedError(Exception):
   pass
@@ -177,7 +177,7 @@ class Widget(QWidget):
               progress.setValue(x * 100)
               QApplication.processEvents()
           project_from = Project(os.path.dirname(self.selected_videos[i]))
-          frames = fileloader.load_file(video_path)
+          frames = file_io.load_file(video_path)
           [x_shift_from, y_shift_from] = project_from['origin']
           x_shift = self.x - x_shift_from
           y_shift = y_shift_from - self.y
@@ -188,7 +188,7 @@ class Widget(QWidget):
           manip = '_shift_from_' + project_from.name
           manips = manips + [manip]
           path_after = str(os.path.join(self.project.path, pre_shifted_basename+manip) + '.npy')
-          fileloader.save_file(path_after, shifted_frames)
+          file_io.save_file(path_after, shifted_frames)
           name_after = os.path.splitext(os.path.basename(path_after))[0]
           if path_after in [f['path'] for f in self.project.files]:
               raise FileAlreadyInProjectError(path_after)

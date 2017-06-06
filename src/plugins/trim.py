@@ -7,7 +7,7 @@ import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -101,10 +101,10 @@ class Widget(QWidget, WidgetDefault):
 
             num_frames = len(frames_mmap)-cut_off_end-cut_off_start
             name_before, ext = os.path.splitext(os.path.basename(video_path))
-            name_after = fileloader.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
+            name_after = file_io.get_name_after_no_overwrite(name_before, self.Defaults.manip, self.project)
             path = str(os.path.join(self.project.path, name_after) + '.npy')
-            fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1])),
-                                                np.load(video_path, mmap_mode='r').dtype))
+            file_io.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1])),
+                                             np.load(video_path, mmap_mode='r').dtype))
             frames = np.load(path, mmap_mode='r+')
             for i, frame in enumerate(frames_mmap[cut_off_start:len(frames_mmap)-cut_off_end]):
                 callback(i / float(len(frames_mmap)))

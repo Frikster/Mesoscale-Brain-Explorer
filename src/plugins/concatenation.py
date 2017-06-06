@@ -72,7 +72,7 @@ class Widget(QWidget, WidgetDefault):
         if len(paths) < 2:
             qtutil.warning('Select multiple files to concatenate.')
             return
-        frames = [fileloader.load_file(f) for f in paths]
+        frames = [file_io.load_file(f) for f in paths]
         progress = MyProgressDialog('Concatenation', 'Concatenating files...', self)
         progress.show()
         progress.setValue(1)

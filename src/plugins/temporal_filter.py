@@ -10,7 +10,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from scipy import signal
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -142,7 +142,7 @@ class Widget(QWidget, WidgetDefault):
                 progress.setValue(x * 100)
                 QApplication.processEvents()
             callback(0.01)
-            frames = fileloader.load_file(video_path)
+            frames = file_io.load_file(video_path)
             callback(0.1)
             avg_frames = np.mean(frames, axis=0, dtype=np.float32)
             callback(0.2)

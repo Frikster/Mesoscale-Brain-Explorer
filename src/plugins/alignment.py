@@ -8,7 +8,7 @@ import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -223,7 +223,7 @@ class Widget(QWidget, WidgetDefault):
             def callback_load(x):
                 progress_load.setValue(x * 100)
                 QApplication.processEvents()
-            frames = fileloader.load_file(filename, callback_load)
+            frames = file_io.load_file(filename, callback_load)
             callback_load(1)
 
             reference_frame = frames[self.ref_no.value()]

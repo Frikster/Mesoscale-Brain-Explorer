@@ -10,7 +10,7 @@ sys.path.append('..')
 import qtutil
 
 from .util.qt import MyProgressDialog
-from .util import fileloader
+from .util import file_io
 import functools
 import tifffile as tiff
 import cv2
@@ -27,7 +27,7 @@ class Exporter(QWidget):
   def export_avi(self, filepath, filename, export_dtype, export_framerate):
     progress = MyProgressDialog('File Exporter', 'Writing to avi...', self)
     try:
-      frames = fileloader.load_file(filepath)
+      frames = file_io.load_file(filepath)
       frames = frames.astype(export_dtype)
       video = cv2.VideoWriter(
         filename, cv2.VideoWriter_fourcc(*'DIVX'), export_framerate,
@@ -44,7 +44,7 @@ class Exporter(QWidget):
                                  'This fixes this issue in most cases.', self)
   
   def export_tif(self, filepath, filename, export_dtype):
-    frames = fileloader.load_file(filepath)
+    frames = file_io.load_file(filepath)
     frames = frames.astype(export_dtype)
     try:
         tiff.imsave(filename, frames)
@@ -53,7 +53,7 @@ class Exporter(QWidget):
                                    'This fixes this issue in most cases.', self)
   
   def export_raw(self, filepath, filename, export_dtype):
-    frames = fileloader.load_file(filepath)
+    frames = file_io.load_file(filepath)
     frames = frames.astype(export_dtype)
     try:
         frames.tofile(filename)

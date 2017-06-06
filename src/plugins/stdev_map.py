@@ -10,7 +10,7 @@ import scipy
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 
-from .util import fileloader
+from .util import file_io
 from .util.gradient import GradientLegend
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
@@ -23,7 +23,7 @@ def round_sig(x, sig=2):
 
 def calc_stddev(video_path, progress):
   progress.setValue(0)
-  frames = fileloader.load_file(video_path)
+  frames = file_io.load_file(video_path)
   stddev = np.std(frames, axis=0, dtype=np.float32)
   progress.setValue(100)
   return stddev

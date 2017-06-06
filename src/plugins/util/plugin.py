@@ -24,7 +24,6 @@ class WidgetDefault(object):
         delete_signal_label = 'delete_signal'
         detatch_signal_label = 'detatch_signal'
 
-
     class Defaults(object):
         video_list_indices_default = [0]
         last_manips_to_display_default = ['All']

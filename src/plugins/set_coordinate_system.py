@@ -6,7 +6,7 @@ import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -59,7 +59,7 @@ class Widget(QWidget, WidgetDefault):
           else:
             (x, y) = ast.literal_eval(project_file['origin'])
             self.origin_label.setText('Origin: ({} | {})'.format(round(x, 2), round(y, 2)))
-      frame = fileloader.load_reference_frame(self.shown_video_path)
+      frame = file_io.load_reference_frame(self.shown_video_path)
       self.view.show(frame)
 
   def avg_origin(self):
@@ -103,7 +103,7 @@ class Widget(QWidget, WidgetDefault):
     if not videos:
       self.setEnabled(False)
       return
-    frame = fileloader.load_reference_frame(videos[0]['path'])
+    frame = file_io.load_reference_frame(videos[0]['path'])
     self.view.show(frame)
     self.setEnabled(True)
 

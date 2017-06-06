@@ -12,7 +12,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from scipy import ndimage
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -136,7 +136,7 @@ class Widget(QWidget, WidgetDefault):
                     raise MemoryError('Not enough memory. Range is of maximum size ' + str(max_possible_size) +
                                       ' and available memory is: ' + str(available))
             else:
-                frames_original = fileloader.load_file(video_path)
+                frames_original = file_io.load_file(video_path)
             frames = np.empty((frames_original.shape[0], frames_original.shape[1], frames_original.shape[2]),
                               dtype=np.float32)
             self.kernal_size.setMaximum(np.sqrt(frames[0].size))

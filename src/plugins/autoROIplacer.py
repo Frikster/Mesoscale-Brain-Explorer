@@ -11,7 +11,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util.mse_ui_elements import RoiItemModel
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
@@ -135,7 +135,7 @@ class Widget(QWidget, WidgetDefault):
     self.video_path = str(os.path.join(self.project.path,
                                    selection.indexes()[0].data(Qt.DisplayRole))
                           + '.npy')
-    frame = fileloader.load_reference_frame(self.video_path)
+    frame = file_io.load_reference_frame(self.video_path)
     self.view.show(frame)
 
   def selected_roi_changed(self, selection):

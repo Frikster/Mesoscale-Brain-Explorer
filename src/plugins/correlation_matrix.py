@@ -8,7 +8,7 @@ import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import fileloader
+from .util import file_io
 from .util import mse_ui_elements as mue
 from .util.mygraphicsview import MyGraphicsView
 sys.path.append('..')
@@ -38,7 +38,7 @@ def calc_avg(roi, frames, image):
     return roiframes / masksize
 
 def calc_connectivity(video_path, image, rois):
-    frames = fileloader.load_file(video_path)
+    frames = file_io.load_file(video_path)
     avgs = [calc_avg(roi, frames, image) for roi in rois]
     pearson = lambda x, y: stats.pearsonr(x, y)[0]
     return [[pearson(x, y) for x in avgs] for y in avgs]

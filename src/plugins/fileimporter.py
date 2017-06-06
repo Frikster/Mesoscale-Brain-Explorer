@@ -16,7 +16,7 @@ import qtutil
 import tifffile as tiff
 from .util.plugin import PluginDefault
 
-from .util import fileloader, fileconverter
+from .util import file_io, fileconverter
 from .util import mse_ui_elements as mue
 
 class NotConvertedError(Exception):
@@ -285,7 +285,7 @@ class Widget(QWidget):
     elif filename.endswith('.tif'):
       filename = self.convert_tif(filename)
     else:
-      raise fileloader.UnknownFileFormatError()
+      raise file_io.UnknownFileFormatError()
     return filename
 
   def import_file(self, filename):

@@ -12,7 +12,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from pyqtgraph.dockarea import *
 
-from .util import fileloader
+from .util import file_io
 from .util import project_functions as pfs
 from .util.mse_ui_elements import RoiList
 from .util.plugin import PluginDefault
@@ -358,7 +358,7 @@ class Widget(QWidget, WidgetDefault):
           callback_load(i / len(video_paths))
           if progress_load.wasCanceled():
               return
-          frames = fileloader.load_file(video_path)
+          frames = file_io.load_file(video_path)
           roi_activity_dict = {}
           for j, roi in enumerate(rois):
               mask = roi.getROIMask(frames, image, axes=(1, 2))

@@ -62,7 +62,7 @@ class Widget(QWidget, WidgetDefault):
         if len(paths) != 2:
             qtutil.warning('Select 2 files to divide.')
             return
-        frames = [fileloader.load_file(f) for f in paths]
+        frames = [file_io.load_file(f) for f in paths]
         min_len = min([len(f) for f in frames])
         frames = np.divide(np.array(frames[0][0:min_len], dtype=np.float32),
                            np.array(frames[1][0:min_len], dtype=np.float32))
