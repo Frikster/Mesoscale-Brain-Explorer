@@ -37,11 +37,11 @@ class Widget(QWidget, WidgetDefault):
     # example: here the button is placed before the spinbox and the spinbox
     # is given a input max value of 1000
     # initially, before the spinbox a label is inserted which gets its text from Label class
-    self.vbox.addWidget(self.main_button)
     self.example_sb.setMaximum(1000)
     self.vbox.addWidget(QLabel(self.Labels.example_sb_label))
     self.vbox.addWidget(self.example_sb)
     self.vbox.addStretch()
+    self.vbox.addWidget(self.main_button)
 
   def setup_signals(self):
     super().setup_signals()
@@ -66,6 +66,7 @@ class Widget(QWidget, WidgetDefault):
       # e.g. saving the value after a user changes the spinbox value, keeping it from resetting
       self.example_sb.valueChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                     self.Labels.example_sb_label))
+
 
   def execute_primary_function(self, input_paths=None):
       '''Primary function of plugin'''

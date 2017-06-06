@@ -7,7 +7,6 @@ hiddenimports = [
     "plugins.concatenation",
     "plugins.connectivity_matrix",
 	"plugins.cut_off",
-    "plugins.empty_plugin",
 	"plugins.evoked_average",
     "plugins.fileexporter",
     "plugins.fileimporter",
@@ -20,5 +19,6 @@ hiddenimports = [
     "plugins.spatial_filter",
     "plugins.spc_map",
     "plugins.stdev_map",
+    "plugins.template_plugin"
     "plugins.temporal_filter",
 ]
