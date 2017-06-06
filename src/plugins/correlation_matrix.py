@@ -43,6 +43,15 @@ def calc_connectivity(video_path, image, rois):
     pearson = lambda x, y: stats.pearsonr(x, y)[0]
     return [[pearson(x, y) for x in avgs] for y in avgs]
 
+class RoiListModified(RoiList):
+    def selected_roi_changed(self, selection):
+        super().selected_roi_changed(selection)
+        rois_selected = [str(self.selectionModel().selectedIndexes()[x].data(Qt.DisplayRole))
+                         for x in range(len(self.selectionModel().selectedIndexes()))]
+        self.widget.selected_rois_list.clear()
+        self.widget.selected_rois_list.addItems([r for r in rois_selected])
+
+
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
         colormap_index_label = "Choose Colormap:"
@@ -61,6 +70,7 @@ class Widget(QWidget, WidgetDefault):
         self.view = MyGraphicsView(self.project)
         self.video_list = QListView()
         self.roi_list = QListView()
+        self.selected_rois_list = QListWidget()
         self.roi_list.setModel(RoiModel())
         # todo: there is a mismatch in type between RoiModel and RoiItemModel in mse_ui_elements. As such it was easier
         # to abandon the convention of not initializing UI paramaters in init to get it funcitonal. Nonetheless, these
@@ -76,7 +86,7 @@ class Widget(QWidget, WidgetDefault):
         self.mask_checkbox = QCheckBox("Mask Symmetry")
         self.sem_checkbox = QCheckBox("Use SEM instead of SD")
         self.cm_pb = QPushButton('Correlation &Matrix')
-        self.roi_list = RoiList(self, self.Defaults.roi_list_types_displayed, RoiModel())
+        self.roi_list = RoiListModified(self, self.Defaults.roi_list_types_displayed, RoiModel())
         WidgetDefault.__init__(self, project, plugin_position)
 
     def setup_ui(self):
@@ -88,8 +98,10 @@ class Widget(QWidget, WidgetDefault):
                                            'Dragging and dropping is for convenience so you can organize your desired '
                                            'order and then shift select them from top to bottom to quickly have your '
                                            'desired matrix ordering.'))
-
-        self.vbox.addWidget(QLabel('Select ROIs:'))
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel('Select ROIs:'))
+        hbox.addWidget(QLabel('Selected ROIs:'))
+        self.vbox.addLayout(hbox)
         self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.roi_list.setAcceptDrops(True)
         self.roi_list.setDragEnabled(True)
@@ -97,7 +109,10 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setDragDropMode(QAbstractItemView.InternalMove)
         self.roi_list.setDefaultDropAction(Qt.MoveAction)
         self.roi_list.setDragDropOverwriteMode(False)
-        self.vbox.addWidget(self.roi_list)
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.roi_list)
+        hbox.addWidget(self.selected_rois_list)
+        self.vbox.addLayout(hbox)
         self.vbox.addWidget(QLabel(self.Labels.colormap_index_label))
         # todo: colormap list should be dealt with in a separate script
         self.cm_comboBox.addItem("jet")
@@ -136,19 +151,6 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_param_signals()
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
-
-    def selected_roi_changed(self, selected, deselected):
-        # todo: how in the world did you know to do this? deselected.indexes only returns one object no matter what -
-        # roiname also only ever has one value so this function must be being called multiple times for each
-        # selection/deselection
-        # todo: what's the point of the forloops?
-        for index in deselected.indexes():
-            roiname = str(index.data(Qt.DisplayRole))
-            self.view.vb.removeRoi(roiname)
-        for index in selected.indexes():
-            roiname = str(index.data(Qt.DisplayRole))
-            roipath = str(index.data(Qt.UserRole))
-            self.view.vb.addRoi(roipath, roiname)
 
     def connectivity_triggered(self):
         cm_type = self.cm_comboBox.currentText()
