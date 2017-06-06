@@ -283,7 +283,7 @@ class MyPlugin(PluginDefault):
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
-    def check_ready_for_automation(self):
+    def check_ready_for_automation(self, expected_input_number):
         filenames = self.get_input_paths()
         reference_frame_file = [path for path in filenames if self.widget.Defaults.secondary_manip in path]
         if len(reference_frame_file) == 1:

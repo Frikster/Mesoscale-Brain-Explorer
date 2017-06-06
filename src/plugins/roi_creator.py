@@ -232,7 +232,7 @@ class MyPlugin(PluginDefault):
     self.widget = Widget(project, plugin_position)
     super().__init__(self.widget, self.widget.Labels, self.name)
 
-  def check_ready_for_automation(self):
+  def check_ready_for_automation(self, expected_input_number):
       if len(self.widget.view.vb.rois) <= 0:
         return False
       else:

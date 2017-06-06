@@ -90,7 +90,7 @@ class MyPlugin(PluginDefault):
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
-    def check_ready_for_automation(self):
+    def check_ready_for_automation(self, expected_input_number):
         self.summed_filesize = 0
         for path in self.widget.selected_videos:
             self.summed_filesize = self.summed_filesize + os.path.getsize(path)

@@ -219,12 +219,13 @@ class PluginDefault:
     def get_input_paths(self):
         return self.widget.selected_videos
 
-        # fs = self.widget.project.files
-        # indices = self.widget.params[self.widget_labels.video_list_indices_label]
-        # fs_sub_types = [f for f in fs if f['type'] in self.widget.Defaults.list_display_type]
-        # return [fs_sub_types[i]['path'] for i in range(len(fs_sub_types)) if i in indices]
+    def output_number_expected(self, expected_input_number=None):
+        if expected_input_number:
+            return expected_input_number
+        else:
+            return self.get_input_paths()
 
-    def check_ready_for_automation(self):
+    def check_ready_for_automation(self, expected_input_number):
         return False
 
     def automation_error_message(self):

@@ -497,11 +497,14 @@ class MainWindow(QMainWindow):
           qtutil.info("Select all the plugins you want to process through. Use shift or ctrl to select multiple")
 
       # ensure all selected plugins are ready for automation
-      for q_model_index in ordered_q_model_indexes:
+      p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+      number_of_outputs = p.output_number_expected()  # find the number of files outputted by the first plugin
+      for q_model_index in ordered_q_model_indexes[1:]:
           p = self.plugins[q_model_index.data(Qt.UserRole)]
-          if not p.check_ready_for_automation():
+          if not p.check_ready_for_automation(number_of_outputs):
             qtutil.critical(p.automation_error_message())
             return
+          number_of_outputs = p.output_number_expected(number_of_outputs)  # find the number of outputs
 
       p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
       input_paths = p.get_input_paths()

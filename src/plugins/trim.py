@@ -139,7 +139,7 @@ class MyPlugin(PluginDefault):
         self.widget = Widget(project, plugin_position)
         super().__init__(self.widget, self.widget.Labels, self.name)
 
-    def check_ready_for_automation(self):
+    def check_ready_for_automation(self, expected_input_number):
         lc = self.widget.left_cut_off.value()
         rc = self.widget.right_cut_off.value()
         return lc > 0 or rc > 0
