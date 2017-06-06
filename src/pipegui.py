@@ -559,7 +559,7 @@ if __name__ == '__main__':
   app.setOrganizationDomain('https://github.com/Frikster/Mesoscale-Brain-Explorer')
 
   w = MainWindow()
-  w.resize(1800, 800)
+  w.resize(1700, 800)
   w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
