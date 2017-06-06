@@ -224,7 +224,7 @@ class Widget(QWidget):
               return
       if reply == QMessageBox.No:
           return
-        
+
     ret_filename = path
     if rescale_value != 1.00:
       unscaled = np.load(path)
