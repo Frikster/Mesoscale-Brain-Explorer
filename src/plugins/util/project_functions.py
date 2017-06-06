@@ -7,9 +7,9 @@ import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .fileloader import load_reference_frame
+from .file_io import load_reference_frame
 from .mse_ui_elements import CheckableComboBox, PlayerDialog
-from . import fileloader
+from . import file_io
 from . import constants
 import qtutil
 import uuid
@@ -21,7 +21,7 @@ def save_project(video_path, project, frames, manip, file_type):
     assert(len(file_before) == 1)
     file_before = file_before[0]
     # check if one with same name already exists and don't overwrite if it does
-    name_after = fileloader.get_name_after_no_overwrite(name_before, manip, project)
+    name_after = file_io.get_name_after_no_overwrite(name_before, manip, project)
 
     path = str(os.path.normpath(os.path.join(project.path, name_after) + '.npy'))
     if frames is not None:
@@ -42,7 +42,7 @@ def save_project(video_path, project, frames, manip, file_type):
             progress.setValue(x * 100)
             QApplication.processEvents()
         callback_save(0)
-        fileloader.save_file(path, frames)
+        file_io.save_file(path, frames)
         callback_save(1)
     if not file_before['manipulations'] == []:
         project.files.append({
@@ -102,19 +102,20 @@ def change_origin(project, video_path, origin):
 #         video_list.setCurrentIndex(video_list.model().index(indices[0], 0))
 
 
-def refresh_list(project, ui_list, indices, types, last_manips_to_display):
-    ui_list.model().clear()
-    for type in types:
-        for f in project.files:
-            item = QStandardItem(f['name'])
-            item.setDropEnabled(False)
-            if f['type'] != type:
-                continue
-            if 'All' in last_manips_to_display:
-                ui_list.model().appendRow(QStandardItem(item))
-            elif f['manipulations'] != []:
-                if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
-                    ui_list.model().appendRow(item)
+def refresh_list(project, ui_list, indices, types=None, last_manips_to_display=None):
+    if types:
+        ui_list.model().clear()
+        for typ in types:
+            for f in project.files:
+                item = QStandardItem(f['name'])
+                item.setDropEnabled(False)
+                if f['type'] != typ:
+                    continue
+                if 'All' in last_manips_to_display:
+                    ui_list.model().appendRow(QStandardItem(item))
+                elif f['manipulations'] != []:
+                    if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:
+                        ui_list.model().appendRow(item)
 
     if len(indices) == 0:
         return
