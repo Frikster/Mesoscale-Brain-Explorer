@@ -54,7 +54,7 @@ class Widget(QWidget, WidgetDefault):
         hbox = QHBoxLayout()
         self.vbox.addWidget(QLabel('Set range averaged over to compute reference frame'))
         self.ref_no_min.setMinimum(0)
-        self.ref_no_min.setMaximum(405)
+        self.ref_no_min.setMaximum(1400)
         self.ref_no_min.setValue(0)
         hbox.addWidget(self.ref_no_min)
         to = QLabel('to')
