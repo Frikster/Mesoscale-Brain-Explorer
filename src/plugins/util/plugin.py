@@ -223,7 +223,7 @@ class PluginDefault:
         if expected_input_number:
             return expected_input_number
         else:
-            return self.get_input_paths()
+            return len(self.get_input_paths())
 
     def check_ready_for_automation(self, expected_input_number):
         return False
