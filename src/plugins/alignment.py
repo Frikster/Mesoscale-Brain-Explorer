@@ -12,12 +12,16 @@ from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-
+from .util.mse_ui_elements import MyTableWidget
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
         apply_scaling_label = 'Apply Scaling'
         apply_rotation_label = 'Apply Rotation'
+        x_shift_label = 'X'
+        y_shift_label = 'Y'
+        rotation_shift_label = 'Rotation'
+        scale_shift_label = 'Scale'
 
     class Defaults(WidgetDefault.Defaults):
         list_display_type = ['ref_frame', 'video']
@@ -25,6 +29,10 @@ class Widget(QWidget, WidgetDefault):
         secondary_manip = 'ref_frame'
         apply_scaling_default = True
         apply_rotation_default = False
+        x_shift_default = 0.0
+        y_shift_default = 0.0
+        rotation_shift_default = 0.0
+        scale_shift_default = 1.0
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -36,8 +44,17 @@ class Widget(QWidget, WidgetDefault):
         self.ref_no = QSpinBox()
         self.ref_no_min = QSpinBox()
         self.ref_no_max = QSpinBox()
+        self.ref_button = QPushButton('Compute &Reference Frame')
+        self.rotation_checkbox = QCheckBox("Apply Rotation")
+        self.scaling_checkbox = QCheckBox("Apply Scaling")
+        self.shift_btn = QPushButton('Compute &Shift')
+        self.shift_table = MyTableWidget()
+        self.tvec_x_sb = QDoubleSpinBox()
+        self.tvec_y_sb = QDoubleSpinBox()
+        self.rotation_sb = QDoubleSpinBox()
+        self.scale_sb = QDoubleSpinBox()
+        self.use_shift_checkbox = QCheckBox("Use This Shift for Alignment")
         self.main_button = QPushButton('&Align')
-        self.ref_button = QPushButton('&Compute Reference Frame')
         self.reference_frame = None
         WidgetDefault.__init__(self, project, plugin_position)
 
@@ -61,13 +78,12 @@ class Widget(QWidget, WidgetDefault):
         to.setAlignment(Qt.AlignCenter)
         hbox.addWidget(to)
         self.ref_no_max.setMaximum(1000000)
-        self.ref_no_max.setValue(5)
+        self.ref_no_max.setValue(1000)
         hbox.addWidget(self.ref_no_max)
         self.vbox.addLayout(hbox)
 
         self.vbox.addWidget(self.ref_button)
         self.vbox.addWidget(qtutil.separator())
-
         max_cut_off = 100000
         self.vbox.addWidget(QLabel('Choose single frame in stack that is matched with reference frame'))
         self.ref_no.setMinimum(0)
@@ -76,16 +92,32 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.ref_no)
 
         hbox = QHBoxLayout()
-        self.scaling_checkbox = QCheckBox("Apply Scaling")
         self.scaling_checkbox.setChecked(False)
         hbox.addWidget(self.scaling_checkbox)
 
-        self.rotation_checkbox = QCheckBox("Apply Rotation")
         self.rotation_checkbox.setChecked(True)
         hbox.addWidget(self.rotation_checkbox)
         self.vbox.addLayout(hbox)
+        self.vbox.addWidget(qtutil.separator())
 
-
+        self.vbox.addWidget(self.shift_btn)
+        self.vbox.addWidget(QLabel('translation vector, rotation angle (in degrees) and isotropic scale factor'))
+        self.vbox.addWidget(self.shift_table)
+        # hbox = QHBoxLayout()
+        # hbox.addWidget(QLabel(self.Labels.x_shift_label))
+        # hbox.addWidget(QLabel(self.Labels.y_shift_label))
+        # hbox.addWidget(QLabel(self.Labels.rotation_shift_label))
+        # hbox.addWidget(QLabel(self.Labels.scale_shift_label))
+        # self.vbox.addLayout(hbox)
+        # hbox = QHBoxLayout()
+        # hbox.addWidget(self.tvec_x_sb)
+        # hbox.addWidget(self.tvec_y_sb)
+        # hbox.addWidget(self.rotation_sb)
+        # hbox.addWidget(self.scale_sb)
+        # self.vbox.addLayout(hbox)
+        self.vbox.addWidget(self.use_shift_checkbox)
+        self.use_shift_checkbox.setChecked(False)
+        self.vbox.addWidget(qtutil.separator())
 
         self.vbox.addWidget(self.main_button)
 
@@ -166,6 +198,18 @@ class Widget(QWidget, WidgetDefault):
         not_reference_frames = [path for path in filenames if self.Defaults.secondary_manip not in path]
         return self.align_videos(not_reference_frames, reference_frame)
 
+    # def compute_shifts(self, template_frame, frames, progress_shifts):
+    #     def callback_shifts(x):
+    #         progress_shifts.setValue(x * 100)
+    #         QApplication.processEvents()
+    #     results = []
+    #     for i, frame in enumerate(frames):
+    #         if progress_shifts.wasCanceled():
+    #             return
+    #         callback_shifts(i / float(len(frames)))
+    #         results = results + [ird.translation(template_frame, frame)]
+    #     callback_shifts(1)
+    #     return results
     def compute_shifts(self, template_frame, frames, progress_shifts):
         def callback_shifts(x):
             progress_shifts.setValue(x * 100)

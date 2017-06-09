@@ -263,6 +263,29 @@ class CheckableComboBox(QtGui.QComboBox):
         else:
             item.setCheckState(QtCore.Qt.Checked)
 
+class MyTableWidget(QTableWidget):
+  def __init__(self, data=None, *args):
+    QTableWidget.__init__(self, *args)
+    self.data = data
+    self.update(self.data)
+
+  def setmydata(self):
+    horHeaders = self.data.keys()
+    for n, key in enumerate(sorted(horHeaders)):
+      for m, item in enumerate(self.data[key]):
+        newitem = QTableWidgetItem(str(item))
+        self.setItem(m, n, newitem)
+    self.setHorizontalHeaderLabels(sorted(horHeaders))
+
+  def update(self, data):
+      self.data = data
+      self.resizeColumnsToContents()
+      self.resizeRowsToContents()
+      self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+      self.verticalHeader().setResizeMode(QHeaderView.Stretch)
+      if self.data is not None:
+        self.setmydata()
+
 class PlayerDialog(QDialog):
   def __init__(self, project, filename, parent=None, scaling=True):
     super(PlayerDialog, self).__init__(parent)
