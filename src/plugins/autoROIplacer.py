@@ -12,7 +12,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import file_io
-from .util.mse_ui_elements import RoiItemModel
+from .util.custom_qt_items import RoiItemModel, MyTableWidget
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 
@@ -38,7 +38,7 @@ class Widget(QWidget, WidgetDefault):
     self.load_table_pb = QPushButton('Load CSV of ROI coordinates relative to origin')
     self.update_table_pb = QPushButton('Update Table')
     self.special_warning_pb = QPushButton('Warning - Please click here if unfamiliar')
-    self.table_widget = AutoROICoords(self.data, 0, 4)
+    self.table_widget = MyTableWidget(self.data, 0, 4)
     self.roi_list = QListView()
     self.roi_list.setModel(RoiItemModel())
     self.roi_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -98,12 +98,11 @@ class Widget(QWidget, WidgetDefault):
 
   def special_warning(self):
       qtutil.warning("Please note that you can move the ROIs in this view and even right click and save them which"
-                     " does alter this ROI for this project. After savng the moved version can be used for "
-                     "connectivity matrices and plotting activity over time. However, note that the coordinates "
+                     " does alter this ROI for this project. However, note that the coordinates "
                      "associated with the ROI are not automatically shifted. Therefore, plugins that explicitly "
                      "use the coordinates such as seed pixel correlation will not use your moved ROI \n"
                      "\n"
-                     "To play things safe play around here to see where you want things and then make changes "
+                     "Make changes here to see where you want your ROI to be and then make changes "
                      "in your csv and reload")
 
   def setup_signals(self):

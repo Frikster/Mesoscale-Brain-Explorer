@@ -6,7 +6,7 @@ import pyqtgraph.graphicsItems.ROI as pgROI
 from pyqtgraph.Point import Point
 from pyqtgraph.Qt import QtCore, QtGui, USE_PYSIDE
 
-from .custom_items import QMenuCustom
+from .custom_pyqtgraph_items import QMenuCustom
 
 __all__ = ['ROI', 'Handle','PolylineSegment','RectROIcustom','PolyLineROIcustom']
 

@@ -9,7 +9,7 @@ from .util import constants
 sys.path.append('..')
 import qtutil
 
-from .util.qt import MyProgressDialog
+from .util.custom_qt_items import MyProgressDialog
 from .util import file_io
 import functools
 import tifffile as tiff

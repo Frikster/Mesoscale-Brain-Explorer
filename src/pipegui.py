@@ -16,7 +16,7 @@ from datadialog import DataDialog
 from pipeconf import PipeconfDialog, PipelineModel
 from project import ProjectManager
 
-from plugins.util import mse_ui_elements as mue
+from plugins.util import custom_qt_items as cqt
 from plugins import set_coordinate_system as scs
 import traceback
 
@@ -94,7 +94,7 @@ class Sidebar(QWidget):
     # self.y_origin.setValue(self.project['origin'][1])
     # self.units_per_pixel.setValue(self.project['unit_per_pixel'])
 
-    vbox.addWidget(mue.InfoWidget("Whatever units you use for units per pixel is the units of length used "
+    vbox.addWidget(cqt.InfoWidget("Whatever units you use for units per pixel is the units of length used "
                                   "in all plugins. i.e. you'll notice the x and y axis are in 'units'."))
 
     self.pl_list = PipelineView()
@@ -108,7 +108,7 @@ class Sidebar(QWidget):
     self.auto_pb.clicked.connect(self.automate_pipeline_requested)
     vbox.addWidget(self.auto_pb)
 
-    vbox.addWidget(mue.InfoWidget('Automation allows you to use the output from a preceding plugin in the pipeline as '
+    vbox.addWidget(cqt.InfoWidget('Automation allows you to use the output from a preceding plugin in the pipeline as '
                                   'input to the next. You can configure your pipeline to set up a custom order, '
                                   'add additional plugins or remove plugins. '
                                   'To use: \n'

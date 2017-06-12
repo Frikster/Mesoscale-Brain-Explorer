@@ -28,12 +28,12 @@ class QActionCustom(QtGui.QAction):
         
 class ImageExporterCustom(ImageExporter):
     """
-    Subclass to change preferred image output to bmp. Currently there are some issues 
-    with png, as it creates some lines around the image 
+    Subclass to change preferred image output to bmp. Currently there are some issues
+    with png, as it creates some lines around the image
     """
     def __init__(self, item):
         ImageExporter.__init__(self, item)
-    
+
     def export(self, fileName=None, toBytes=False, copy=False):
         if fileName is None and not toBytes and not copy:
             filter = ["*."+str(f) for f in QtGui.QImageWriter.supportedImageFormats()]
@@ -44,10 +44,10 @@ class ImageExporterCustom(ImageExporter):
                     filter.insert(0, p)
             self.fileSaveDialog(filter=filter)
             return
-            
+
         targetRect = QtCore.QRect(0, 0, self.params['width'], self.params['height'])
         sourceRect = self.getSourceRect()
-        
+
         bg = np.empty((self.params['width'], self.params['height'], 4), dtype=np.ubyte)
         color = self.params['background']
         bg[:,:,0] = color.blue()
@@ -55,10 +55,10 @@ class ImageExporterCustom(ImageExporter):
         bg[:,:,2] = color.red()
         bg[:,:,3] = color.alpha()
         self.png = pg.makeQImage(bg, alpha=True)
-        
+
         origTargetRect = self.getTargetRect()
         resolutionScale = targetRect.width() / origTargetRect.width()
-        
+
         painter = QtGui.QPainter(self.png)
         try:
             self.setExportMode(True, {'antialias': self.params['antialias'], 'background': self.params['background'], 'painter': painter, 'resolutionScale': resolutionScale})
@@ -67,10 +67,10 @@ class ImageExporterCustom(ImageExporter):
         finally:
             self.setExportMode(False)
         painter.end()
-        
+
         if copy:
             QtGui.QApplication.clipboard().setImage(self.png)
         elif toBytes:
             return self.png
         else:
-            self.png.save(fileName)        
+            self.png.save(fileName)

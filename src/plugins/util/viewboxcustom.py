@@ -10,7 +10,7 @@ import pyqtgraph as pg
 import pyqtgraph.functions as fn
 from pyqtgraph.Qt import QtCore, QtGui
 
-from .custom_items import QMenuCustom, ImageExporterCustom
+from .custom_pyqtgraph_items import QMenuCustom, ImageExporterCustom
 from .roi import RectROIcustom, PolyLineROIcustom
 from pyqtgraph.exporters.ImageExporter import ImageExporter
 

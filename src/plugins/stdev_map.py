@@ -15,7 +15,7 @@ from .util.gradient import GradientLegend
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.qt import MyProgressDialog
+from .util.custom_qt_items import MyProgressDialog
 
 # round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
 def round_sig(x, sig=2):

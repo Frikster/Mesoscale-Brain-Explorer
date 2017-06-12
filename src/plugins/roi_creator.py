@@ -15,7 +15,7 @@ sys.path.append('..')
 import qtutil
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.mse_ui_elements import RoiList
+from .util.custom_qt_items import RoiList
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):

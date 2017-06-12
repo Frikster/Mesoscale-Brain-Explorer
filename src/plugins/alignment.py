@@ -12,7 +12,7 @@ from .util import file_io
 from .util import project_functions as pfs
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.mse_ui_elements import MyTableWidget
+from .util.custom_qt_items import MyTableWidget
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
@@ -100,9 +100,10 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addLayout(hbox)
         self.vbox.addWidget(qtutil.separator())
 
-        self.vbox.addWidget(self.shift_btn)
-        self.vbox.addWidget(QLabel('translation vector, rotation angle (in degrees) and isotropic scale factor'))
-        self.vbox.addWidget(self.shift_table)
+        # self.vbox.addWidget(self.shift_btn)
+        # self.vbox.addWidget(QLabel('translation vector, rotation angle (in degrees) and isotropic scale factor'))
+        # self.vbox.addWidget(self.shift_table)
+
         # hbox = QHBoxLayout()
         # hbox.addWidget(QLabel(self.Labels.x_shift_label))
         # hbox.addWidget(QLabel(self.Labels.y_shift_label))
@@ -115,9 +116,9 @@ class Widget(QWidget, WidgetDefault):
         # hbox.addWidget(self.rotation_sb)
         # hbox.addWidget(self.scale_sb)
         # self.vbox.addLayout(hbox)
-        self.vbox.addWidget(self.use_shift_checkbox)
-        self.use_shift_checkbox.setChecked(False)
-        self.vbox.addWidget(qtutil.separator())
+        # self.vbox.addWidget(self.use_shift_checkbox)
+        # self.use_shift_checkbox.setChecked(False)
+        # self.vbox.addWidget(qtutil.separator())
 
         self.vbox.addWidget(self.main_button)
 

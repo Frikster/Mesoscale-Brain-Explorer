@@ -9,7 +9,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .util import file_io
-from .util import mse_ui_elements as mue
+from .util import custom_qt_items as cqt
 from .util.mygraphicsview import MyGraphicsView
 sys.path.append('..')
 import qtutil
@@ -22,8 +22,8 @@ import csv
 from pyqtgraph.Qt import QtGui
 from .util.plugin import WidgetDefault
 from .util.plugin import PluginDefault
-from .util.mse_ui_elements import RoiList
-from .util.mse_ui_elements import RoiItemModel
+from .util.custom_qt_items import RoiList
+from .util.custom_qt_items import RoiItemModel
 import functools
 import itertools
 import matplotlib.pyplot as plt
@@ -72,7 +72,7 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list = QListView()
         self.selected_rois_list = QListWidget()
         self.roi_list.setModel(RoiModel())
-        # todo: there is a mismatch in type between RoiModel and RoiItemModel in mse_ui_elements. As such it was easier
+        # todo: there is a mismatch in type between RoiModel and RoiItemModel in custom_qt_items. As such it was easier
         # to abandon the convention of not initializing UI paramaters in init to get it funcitonal. Nonetheless, these
         # next few lines really should be in a class somewhere for the roi_list item
         # for f in project.files:
@@ -92,7 +92,7 @@ class Widget(QWidget, WidgetDefault):
     def setup_ui(self):
         super().setup_ui()
         self.vbox.addWidget(qtutil.separator())
-        self.vbox.addWidget(mue.InfoWidget('Note that rois can be dragged and dropped in the list but that the order '
+        self.vbox.addWidget(cqt.InfoWidget('Note that rois can be dragged and dropped in the list but that the order '
                                            'in which they are *selected* determines how the matrix is ordered. The '
                                            'first selected ROI is placed at the top of the matrix. '
                                            'Dragging and dropping is for convenience so you can organize your desired '

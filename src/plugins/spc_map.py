@@ -19,14 +19,14 @@ from pyqtgraph.dockarea import *
 
 from .util import file_io
 from .util import filter_jeff
-from .util import mse_ui_elements as mue
+from .util import custom_qt_items as cqt
 from .util import project_functions as pfs
 from .util.gradient import GradientLegend
-from .util.mse_ui_elements import RoiList
+from .util.custom_qt_items import RoiList
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.qt import MyProgressDialog
+from .util.custom_qt_items import MyProgressDialog
 
 # round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
 
@@ -123,7 +123,7 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.load_pb)
         self.vbox.addWidget(self.spc_from_rois_pb)
         self.vbox.addStretch()
-        self.vbox.addWidget(mue.InfoWidget('You can also click on the image to right to generate custom SPC maps of '
+        self.vbox.addWidget(cqt.InfoWidget('You can also click on the image to right to generate custom SPC maps of '
                                            'all image stacks selected in the list above.'))
 
     def setup_signals(self):

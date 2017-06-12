@@ -8,7 +8,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from .file_io import load_reference_frame
-from .mse_ui_elements import CheckableComboBox, PlayerDialog
+from .custom_qt_items import CheckableComboBox, PlayerDialog
 from . import file_io
 from . import constants
 import qtutil

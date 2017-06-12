@@ -7,7 +7,7 @@ from PyQt4.QtGui import *
 
 from . import project_functions as pfs
 from .mygraphicsview import MyGraphicsView
-from .qt import MyListView
+from .custom_qt_items import MyListView
 
 
 class PrimaryFunctionMissing(Exception):

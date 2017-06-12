@@ -17,7 +17,7 @@ import tifffile as tiff
 from .util.plugin import PluginDefault
 
 from .util import file_io, fileconverter
-from .util import mse_ui_elements as mue
+from .util import custom_qt_items as cqt
 
 class NotConvertedError(Exception):
   pass
@@ -140,7 +140,7 @@ class Widget(QWidget):
     self.setLayout(vbox)
     self.resize(400, 220)
 
-    vbox.addWidget(mue.WarningWidget('Warning. This application has not been memory optimized for conversion.'
+    vbox.addWidget(cqt.WarningWidget('Warning. This application has not been memory optimized for conversion.'
                                      ' We advise you only import raw or tiff files no larger than 1/4 of your memory. '
                                      'e.g. If you have 8GB RAM then we recommend not importing a raw or tiff larger '
                                      'than 2GB. It may or may not freeze your system otherwise.'

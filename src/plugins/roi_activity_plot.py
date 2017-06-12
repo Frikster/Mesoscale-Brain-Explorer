@@ -14,7 +14,7 @@ from pyqtgraph.dockarea import *
 
 from .util import file_io
 from .util import project_functions as pfs
-from .util.mse_ui_elements import RoiList
+from .util.custom_qt_items import RoiList
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 

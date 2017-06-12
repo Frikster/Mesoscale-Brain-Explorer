@@ -4,10 +4,10 @@ import psutil
 import qtutil
 
 from .temporal_filter import *
-from .util import mse_ui_elements as mue
+from .util import custom_qt_items as cqt
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.qt import MyProgressDialog
+from .util.custom_qt_items import MyProgressDialog
 
 
 class Widget(QWidget, WidgetDefault):
@@ -33,7 +33,7 @@ class Widget(QWidget, WidgetDefault):
         self.video_list.setDragDropMode(QAbstractItemView.InternalMove)
         self.video_list.setDefaultDropAction(Qt.MoveAction)
         self.video_list.setDragDropOverwriteMode(False)
-        self.vbox.addWidget(mue.InfoWidget('Note that there is no explicit progress bar. '
+        self.vbox.addWidget(cqt.InfoWidget('Note that there is no explicit progress bar. '
                                            'Note that videos can be dragged and dropped in the list but that the order '
                                            'in which they are *selected* determines concatenation order. The '
                                            'dragging and dropping is for convenience so you can organize your desired '

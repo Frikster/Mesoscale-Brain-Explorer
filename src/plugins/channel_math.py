@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from .temporal_filter import *
-from .util import mse_ui_elements as mue
+from .util import custom_qt_items as cqt
 import qtutil
 import psutil
 from .util.plugin import PluginDefault
@@ -31,7 +31,7 @@ class Widget(QWidget, WidgetDefault):
         self.video_list.setDefaultDropAction(Qt.MoveAction)
         self.video_list.setDragDropOverwriteMode(False)
         self.video_list.setStyleSheet('QListView::item { height: 26px; }')
-        self.vbox.addWidget(mue.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
+        self.vbox.addWidget(cqt.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
                                            'denominator. Files can be dragged in the video list for convenience '
                                            'but the order does not determine which is the numerator and which the '
                                            'denominator. \n'
