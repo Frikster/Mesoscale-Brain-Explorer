@@ -32,7 +32,6 @@ class QActionCustom(QtGui.QAction):
     def clicked(self):
         self.clickEvent.emit(self.event)       
 
-
 class GradientLegend(UIGraphicsItem):
   def __init__(self, min_label, max_label, cm_type):
     super(GradientLegend, self).__init__(self)
