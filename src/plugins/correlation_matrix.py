@@ -28,7 +28,7 @@ import functools
 import itertools
 import matplotlib.pyplot as plt
 import math
-from .util.gradient import GradientLegend
+from .util.custom_pyqtgraph_items import GradientLegend
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))

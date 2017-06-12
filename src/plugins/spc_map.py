@@ -21,7 +21,7 @@ from .util import file_io
 from .util import filter_jeff
 from .util import custom_qt_items as cqt
 from .util import project_functions as pfs
-from .util.gradient import GradientLegend
+from .util.custom_pyqtgraph_items import GradientLegend
 from .util.custom_qt_items import RoiList
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault

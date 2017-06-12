@@ -11,7 +11,7 @@ from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 
 from .util import file_io
-from .util.gradient import GradientLegend
+from .util.custom_pyqtgraph_items import GradientLegend
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
