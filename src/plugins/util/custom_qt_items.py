@@ -74,14 +74,14 @@ class FileTable(QTableView):
     filenames = [self.model().get_path(index) for index in selection]
     return filenames
 
-class MyListView(QListView):
+class ImageStackListView(QListView):
     video_player_scaled_signal = pyqtSignal()
     video_player_unscaled_signal = pyqtSignal()
     delete_signal = pyqtSignal()
     detatch_signal = pyqtSignal()
 
     def __init__(self, parent=None):
-        super(MyListView, self).__init__(parent)
+        super(ImageStackListView, self).__init__(parent)
         self.setStyleSheet('QListView::item { height: 26px; }')
 
     def contextMenuEvent(self, event):
@@ -136,49 +136,24 @@ class InfoWidget(QFrame):
     self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
     
 
-# Added from mse_ui_elements merge (commit
+# Added from mse_ui_elements merge (commit 8f0d28d2a22430a7e3f3494c249dc22fac510ff1)
 
-class Video_Selector(QListView):
-  active_vid_changed = pyqtSignal(str, int)
+# List with more useful currentChangedTo signal (current and previous in currentSelect are rarely used)
+# Plan was to make this the superclass for ImageStackListView
+class MyListView(QListView):
+  currentChangedTo = pyqtSignal(str, int)
 
   def __init__(self, parent=None):
-    super(Video_Selector, self).__init__(parent)
+    super(MyListView, self).__init__(parent)
     self.setStyleSheet('QListView::item { border: 0px; padding-left: 4px;'
       'height: 26px; }'
       'QListView::item::selected { background-color: #ccf; }')
 
   def currentChanged(self, current, previous):
-    super(Video_Selector, self).currentChanged(current, previous)
-    vid_name = str(current.data(Qt.UserRole))
-    vid_position = current.row()
-    self.active_vid_changed.emit(vid_name, vid_position)
-
-# class Video_Selector:
-#     def __init__(self, project, view):
-#         self.project = project
-#         self.view = view
-#
-#     def selected_video_changed(self, selected, deselected):
-#         if not selected.indexes():
-#             return
-#
-#         for index in deselected.indexes():
-#             vidpath = str(os.path.join(self.project.path,
-#                                      index.data(Qt.DisplayRole))
-#                               + '.npy')
-#             self.selected_videos = [x for x in self.selected_videos if x != vidpath]
-#         for index in selected.indexes():
-#             vidpath = str(os.path.join(self.project.path,
-#                                      index.data(Qt.DisplayRole))
-#                               + '.npy')
-#         if vidpath not in self.selected_videos and vidpath != 'None':
-#             self.selected_videos = self.selected_videos + [vidpath]
-#
-#         self.shown_video_path = str(os.path.join(self.project.path,
-#                                            selected.indexes()[0].data(Qt.DisplayRole))
-#                               + '.npy')
-#         frame = fileloader.load_reference_frame(self.shown_video_path)
-#         self.view.show(frame)
+    super(MyListView, self).currentChanged(current, previous)
+    name = str(current.data(Qt.UserRole))
+    position = current.row()
+    self.currentChangedTo.emit(name, position)
 
 class RoiModel(QStandardItemModel):
   def __init__(self, parent=None):
@@ -335,27 +310,6 @@ class RoiList(QListView):
     def prepare_roi_list_for_update(self, selected, deselected):
         val = [v.row() for v in self.selectedIndexes()]
         self.widget.update_plugin_params(self.Labels.roi_list_indices_label, val)
-
-class InfoWidget(QFrame):
-    def __init__(self, text, parent=None):
-        super(InfoWidget, self).__init__(parent)
-        self.setup_ui(text)
-
-    def setup_ui(self, text):
-        hbox = QHBoxLayout()
-        icon = QLabel()
-        image = QImage('pics/info.png')
-        icon.setPixmap(QPixmap.fromImage(image.scaled(40, 40)))
-        hbox.addWidget(icon)
-        self.label = QLabel(text)
-        self.label.setWordWrap(True)
-        hbox.addWidget(self.label)
-        hbox.addStretch()
-        self.setLayout(hbox)
-
-        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
-        self.setLineWidth(2)
-        self.setStyleSheet('QFrame{background-color: #999; border-radius: 10px;}')
 
 class WarningWidget(QFrame):
     def __init__(self, text, parent=None):

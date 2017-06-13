@@ -7,7 +7,7 @@ from PyQt4.QtGui import *
 
 from . import project_functions as pfs
 from .mygraphicsview import MyGraphicsView
-from .custom_qt_items import MyListView
+from .custom_qt_items import ImageStackListView
 
 
 class PrimaryFunctionMissing(Exception):
@@ -37,7 +37,7 @@ class WidgetDefault(object):
 
         # define ui components and global data
         self.view = MyGraphicsView(self.project)
-        self.video_list = MyListView()
+        self.video_list = ImageStackListView()
         self.video_list.setModel(QStandardItemModel())
         list_of_manips = pfs.get_list_of_project_manips(self.project)
         self.toolbutton = pfs.add_combo_dropdown(self, list_of_manips)
