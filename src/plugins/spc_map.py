@@ -58,6 +58,7 @@ class Widget(QWidget, WidgetDefault):
         colormap_index_label = "Choose Colormap:"
         sb_min_label = "Min correlation value to display"
         sb_max_label = "Max correlation value to display"
+        avg_maps_label = "Average maps of selected stacks"
 
     class Defaults(WidgetDefault.Defaults):
         colormap_index_default = 1
@@ -65,6 +66,7 @@ class Widget(QWidget, WidgetDefault):
         manip = "spc"
         sb_min_default = -1.00
         sb_max_default = 1.00
+        avg_maps_default = False
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -83,6 +85,7 @@ class Widget(QWidget, WidgetDefault):
         self.open_dialogs_data_dict = []
         self.min_sb = QDoubleSpinBox()
         self.max_sb = QDoubleSpinBox()
+        self.avg_maps_cb = QCheckBox(self.Labels.avg_maps_label)
         self.cm_type = self.cm_comboBox.itemText(0)
         WidgetDefault.__init__(self, project, plugin_position)
 
@@ -121,6 +124,7 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(self.roi_list)
         self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
+        self.vbox.addWidget(self.avg_maps_cb)
         self.vbox.addWidget(self.spc_from_rois_pb)
         self.vbox.addStretch()
         self.vbox.addWidget(cqt.InfoWidget('You can also click on the image to right to generate custom SPC maps of '
@@ -226,13 +230,14 @@ class Widget(QWidget, WidgetDefault):
     def plot_to_docks(self, video_path_to_spc_dict, area):
         if not video_path_to_spc_dict:
             return
-        roi_names = list(list(video_path_to_spc_dict.values())[0].keys())
+        # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
         video_paths = list(video_path_to_spc_dict.keys())
 
         spc_docks = [0, 1, 2, 3, 4, 5]
         spc_docs_cycle = cycle(spc_docks)
-        for roi_name in roi_names:
-            for video_path in video_paths:
+        for video_path in video_paths:
+            roi_names = video_path_to_spc_dict[video_path]
+            for roi_name in roi_names:
                 # put all plots from one ROI on a single plot and place on one of the 4 docs
                 next_dock = next(spc_docs_cycle)
                 d = Dock(roi_name, size=(500, 200), closable=True)
@@ -278,10 +283,30 @@ class Widget(QWidget, WidgetDefault):
                                  "your project directory")
 
         video_path_to_spc_dict = self.get_video_path_to_spc_dict()
-        self.plot_to_docks(video_path_to_spc_dict, area)
+        if self.avg_maps_cb.isChecked():
+            roi_name_to_spcs_dict = {}
+            for path in video_path_to_spc_dict.keys():
+               for roi_name in video_path_to_spc_dict[path].keys():
+                   try:
+                       roi_name_to_spcs_dict[roi_name]
+                   except:
+                       roi_name_to_spcs_dict[roi_name] = [video_path_to_spc_dict[path][roi_name]]
+                   else:
+                       roi_name_to_spcs_dict[roi_name] = roi_name_to_spcs_dict[roi_name] + \
+                                                         video_path_to_spc_dict[path][roi_name]
+            roi_name_roi_name_to_spcs_dict = {}
+            for roi_name in roi_name_to_spcs_dict.keys():
+                roi_name_to_spcs_dict[roi_name] = roi_name_to_spcs_dict[roi_name] / len(roi_name_to_spcs_dict.keys())
+                roi_name_roi_name_to_spcs_dict[roi_name] = {roi_name: roi_name_to_spcs_dict[roi_name][0]}
+            self.plot_to_docks(roi_name_roi_name_to_spcs_dict, area)
+        else:
+            self.plot_to_docks(video_path_to_spc_dict, area)
         main_window.show()
         self.open_dialogs.append(main_window)
         self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
+
+
+
 
     def save_dock_windows(self):
         pfs.save_dock_windows(self, 'spc_window')
