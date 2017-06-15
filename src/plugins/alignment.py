@@ -115,6 +115,14 @@ class Widget(QWidget, WidgetDefault):
         hbox.addWidget(self.tvec_y_sb)
         hbox.addWidget(self.rotation_sb)
         hbox.addWidget(self.scale_sb)
+        self.tvec_x_sb.setDecimals(16)
+        self.tvec_x_sb.setRange(-1000000, 1000000)
+        self.tvec_y_sb.setDecimals(16)
+        self.tvec_y_sb.setRange(-1000000, 1000000)
+        self.rotation_sb.setDecimals(16)
+        self.rotation_sb.setRange(-1000000, 1000000)
+        self.scale_sb.setDecimals(16)
+        self.scale_sb.setRange(-1000000, 1000000)
         self.vbox.addLayout(hbox)
         self.vbox.addWidget(self.use_shift_checkbox)
         self.use_shift_checkbox.setChecked(False)
@@ -126,6 +134,7 @@ class Widget(QWidget, WidgetDefault):
         super().setup_signals()
         self.main_button.clicked.connect(self.execute_primary_function)
         self.ref_button.clicked.connect(self.compute_ref_frame)
+        self.shift_btn.clicked.connect(self.set_shifts)
 
     def setup_params(self, reset=False):
         super().setup_params(reset)
@@ -142,6 +151,32 @@ class Widget(QWidget, WidgetDefault):
                                                                       self.Labels.apply_rotation_label))
         self.scaling_checkbox.stateChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.apply_scaling_label))
+
+    def get_alignment_inputs(self, input_files=None):
+        if not input_files:
+            filenames = self.selected_videos
+            reference_frame_file = [path for path in filenames if self.Defaults.secondary_manip in path]
+        else:
+            filenames = input_files
+            reference_frame_file = self.selected_videos
+            if len(reference_frame_file) != 1:
+                qtutil.critical("Please only select a single reference frame for each alignment plugin used."
+                          " Automation will now close.")
+                raise ValueError("Please only select a single reference frame for each alignment plugin used")
+
+        if len(reference_frame_file) == 0:
+            qtutil.critical("No reference frame selected")
+            raise ValueError("No reference frame selected")
+        if len(reference_frame_file) > 1:
+            qtutil.critical("Multiple reference frames selected. Please only pick one")
+            raise ValueError("Multiple reference frames selected. Please only pick one")
+        assert(len(reference_frame_file) == 1)
+        reference_frame_file = reference_frame_file[0]
+
+        assert ('ref_frame' in reference_frame_file)
+        reference_frame = np.load(reference_frame_file)[0]
+        not_reference_frames = [path for path in filenames if self.Defaults.secondary_manip not in path]
+        return [reference_frame, not_reference_frames]
 
 
     def compute_ref_frame(self):
@@ -173,30 +208,34 @@ class Widget(QWidget, WidgetDefault):
                          self.Defaults.list_display_type,
                          self.params[self.Labels.last_manips_to_display_label])
 
-    def execute_primary_function(self, input_files=None):
-        if not input_files:
-            filenames = self.selected_videos
-            reference_frame_file = [path for path in filenames if self.Defaults.secondary_manip in path]
+    def set_shifts(self):
+        [reference_frame, not_reference_frames] = self.get_alignment_inputs()
+        if len(not_reference_frames) != 1:
+            qtutil.critical("Please select only one file to align to the reference frame to set the shift. Only one "
+                            "file for setting shifts is supported for now")
+            return
+        frame_to_shift = file_io.load_file(not_reference_frames[0],
+                                           segment=[self.ref_no.value(), self.ref_no.value()+1])
+        shift = self.compute_shift(reference_frame, frame_to_shift[0])
+        self.tvec_x_sb.setValue(shift['tvec'][1])  # [Y,X] not [X,Y]
+        self.tvec_y_sb.setValue(shift['tvec'][0])
+        self.rotation_sb.setValue(shift['angle'])
+        self.scale_sb.setValue(shift['scale'])
+
+    def compute_shift(self, ref_frame, frame):
+        if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
+            shift = ird.similarity(ref_frame, frame)
+            if not self.rotation_checkbox.isChecked():
+                shift['angle'] = 0.0
+            if not self.scaling_checkbox.isChecked():
+                shift['scale'] = 1.0
         else:
-            filenames = input_files
-            reference_frame_file = self.selected_videos
-            if len(reference_frame_file) != 1:
-                qtutil.critical("Please only select a single reference frame for each alignment plugin used."
-                          " Automation will now close.")
-                raise ValueError("Please only select a single reference frame for each alignment plugin used")
+            shift = ird.translation(ref_frame, frame)
+            shift['scale'] = 1.0
+        return shift
 
-        if len(reference_frame_file) == 0:
-            qtutil.critical("No reference frame selected")
-            raise ValueError("No reference frame selected")
-        if len(reference_frame_file) > 1:
-            qtutil.critical("Multiple reference frames selected. Please only pick one")
-            raise ValueError("Multiple reference frames selected. Please only pick one")
-        assert(len(reference_frame_file) == 1)
-        reference_frame_file = reference_frame_file[0]
-
-        assert ('ref_frame' in reference_frame_file)
-        reference_frame = np.load(reference_frame_file)[0]
-        not_reference_frames = [path for path in filenames if self.Defaults.secondary_manip not in path]
+    def execute_primary_function(self, input_files=None):
+        [reference_frame, not_reference_frames] = self.get_alignment_inputs(input_files)
         return self.align_videos(not_reference_frames, reference_frame)
 
     # def compute_shifts(self, template_frame, frames, progress_shifts):
@@ -271,18 +310,23 @@ class Widget(QWidget, WidgetDefault):
             frames = file_io.load_file(filename, callback_load)
             callback_load(1)
 
-            reference_frame = frames[self.ref_no.value()]
-            if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
-                shift = ird.similarity(template_frame, reference_frame)
-                if not self.rotation_checkbox.isChecked():
-                    shift['angle'] = 0.0
-                if not self.scaling_checkbox.isChecked():
-                    shift['scale'] = 1.0
-            else:
-                shift = ird.translation(template_frame, reference_frame)
+            reference_frame = frames[self.ref_no.value()]  # todo: this needs to be renamed... reference frame is already established as something else
 
-            if progress_shifts.wasCanceled():
-                return
+            if not self.use_shift_checkbox.isChecked():
+                if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
+                    shift = ird.similarity(template_frame, reference_frame)
+                    if not self.rotation_checkbox.isChecked():
+                        shift['angle'] = 0.0
+                    if not self.scaling_checkbox.isChecked():
+                        shift['scale'] = 1.0
+                else:
+                    shift = ird.translation(template_frame, reference_frame)
+                if progress_shifts.wasCanceled():
+                    return
+            else:
+                shift = {'tvec': [self.tvec_y_sb.value(), self.tvec_x_sb.value()], 'angle': self.rotation_sb.value(),
+                         'scale': self.scale_sb.value()}
+
             shifted_frames = self.apply_shifts(frames, shift, callback_apply)
             path = pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
             pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
