@@ -84,7 +84,6 @@ class Widget(QWidget, WidgetDefault):
               selected_videos = self.selected_videos
       else:
           selected_videos = input_paths
-      # todo: insert functionality here
       def crop_center(img, cropx, cropy):
           """Function to crop center of an image file. Output is of size (cropx, cropy)"""
           y, x = img.shape
@@ -116,7 +115,6 @@ class Widget(QWidget, WidgetDefault):
   def setup_whats_this(self):
       '''Setup custom help messages'''
       # todo: setup custom help messages to aid the user, each tied to one of your UI components.
-      # See overridden method for an example
       super().setup_whats_this()
 
 class MyPlugin(PluginDefault):
