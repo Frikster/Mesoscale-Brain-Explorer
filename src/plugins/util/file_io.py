@@ -12,18 +12,28 @@ from PyQt4.QtGui import QMessageBox
 class UnknownFileFormatError(Exception):
   pass
 
-def load_npy(filename, progress_callback=None):
-  if not progress_callback:
-      frames = np.load(filename)
-      return frames
-  else:
+def load_npy(filename, progress_callback=None, segment=None):
+  if segment:
       frames_mmap = np.load(filename, mmap_mode='r')
-      frames = np.zeros(frames_mmap.shape, dtype=frames_mmap.dtype)
-      for i, mmap_frame in enumerate(frames_mmap):
-          frames[i] = mmap_frame
-          progress_callback(i/(len(frames_mmap)))
-      # frames[np.isnan(frames)] = 0
-      return frames
+      frames_mmap = frames_mmap[segment[0]:segment[1]]
+      frames = np.empty((frames_mmap.shape[0], frames_mmap.shape[1], frames_mmap.shape[2]),
+                        dtype=frames_mmap.dtype)
+      for frame_no, frame_mmap in enumerate(frames_mmap):
+          frames[frame_no] = frame_mmap
+          if progress_callback:
+              progress_callback(frame_no / (len(frames_mmap)))
+  else:
+      if not progress_callback:
+          frames = np.load(filename)
+          return frames
+      else:
+          frames_mmap = np.load(filename, mmap_mode='r')
+          frames = np.zeros(frames_mmap.shape, dtype=frames_mmap.dtype)
+          for i, mmap_frame in enumerate(frames_mmap):
+              frames[i] = mmap_frame
+              progress_callback(i/(len(frames_mmap)))
+          # frames[np.isnan(frames)] = 0
+  return frames
 
 def get_name_after_no_overwrite(name_before, manip, project):
     """check if a file with same name already exists and *don't* overwrite if it does"""
@@ -75,7 +85,7 @@ def save_file(path, data):
         qtutil.critical('Could not save ' + path +
                             '. This is likely due to running out of space on the drive')
 
-def load_file(filename, progress_callback=None):
+def load_file(filename, progress_callback=None, segment=None):
   file_size = os.path.getsize(filename)
   available = list(psutil.virtual_memory())[1]
   percent = list(psutil.virtual_memory())[2]
@@ -91,7 +101,7 @@ def load_file(filename, progress_callback=None):
       qtutil.warning('Your memory appears to be getting low.')
 
   if filename.endswith('.npy'):
-    frames = load_npy(filename, progress_callback)
+    frames = load_npy(filename, progress_callback, segment)
     # if frames.dtype == 'float64':
     #     qtutil.critical("FLOAT64")
     #     raise MemoryError("FLOAT64")
