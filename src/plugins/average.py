@@ -50,7 +50,7 @@ class Widget(QWidget, WidgetDefault):
           frame = np.mean(frames_mmap, axis=0, dtype=np.float32)
           frame_no, h, w = frames_mmap.shape
           frame = np.reshape(frame, (1, h, w))
-          pfs.save_project(self.selected_videos[0], self.project, frame, 'avg', 'video')
+          pfs.save_project(video_path, self.project, frame, 'avg', 'video')
           pfs.refresh_list(self.project, self.video_list,
                            self.params[self.Labels.video_list_indices_label],
                            self.Defaults.list_display_type,
