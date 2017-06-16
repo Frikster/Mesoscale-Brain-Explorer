@@ -299,6 +299,7 @@ class Widget(QWidget, WidgetDefault):
                 roi_name_to_spcs_dict[roi_name] = roi_name_to_spcs_dict[roi_name] / len(video_path_to_spc_dict.keys())
                 roi_name_roi_name_to_spcs_dict[roi_name] = {roi_name: roi_name_to_spcs_dict[roi_name][0]}
             self.plot_to_docks(roi_name_roi_name_to_spcs_dict, area)
+            video_path_to_spc_dict = roi_name_roi_name_to_spcs_dict
         else:
             self.plot_to_docks(video_path_to_spc_dict, area)
         main_window.show()
