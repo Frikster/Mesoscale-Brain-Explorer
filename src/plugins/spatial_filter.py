@@ -119,8 +119,8 @@ class Widget(QWidget, WidgetDefault):
             frames_original = np.load(video_path,  mmap_mode='r')
             frames_count = self.right_frame_range.value() - self.left_frame_range.value()
             if len(frames_original) > frames_count:
-                # 8 is for 64bit so it cant get any bigger
-                max_possible_size = frames_original.shape[0]*frames_original.shape[1]*frames_count*8
+                # 4 is for 32bit so it cant get any bigger
+                max_possible_size = (frames_original.nbytes/len(frames_original))*frames_count*4
                 available = list(psutil.virtual_memory())[1]
                 if available > max_possible_size:
                     # fileloader.save_file(path, np.empty((num_frames, len(frames_mmap[0]), len(frames_mmap[1])),

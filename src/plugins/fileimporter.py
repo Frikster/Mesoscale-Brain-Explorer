@@ -309,18 +309,9 @@ class Widget(QWidget):
       new_filename = os.path.basename(filename)
       new_filename = os.path.join(self.project.path, new_filename)
       if os.path.normpath(filename) != os.path.normpath(new_filename):
-          file_size = os.path.getsize(filename)
-          available = list(psutil.virtual_memory())[1]
-          if file_size > available:
-              qtutil.critical('Not enough memory. File is of size ' + str(file_size) +
-                              ' and available memory is: ' + str(available))
-              raise MemoryError('Not enough memory. File is of size ' + str(file_size) +
-                                ' and available memory is: ' + str(available))
-
-
           qtutil.info('Copying .npy from ' + filename + ' to ' + new_filename +
                       '. We recommend doing this manually for large files')
-          copyfile_progress = QProgressDialog('Progress Copying ' + filename + 'to ' + new_filename,
+          copyfile_progress = QProgressDialog('Progress Copying ' + filename + ' to ' + new_filename,
                                               'Abort', 0, 100, self)
           copyfile_progress.setAutoClose(True)
           copyfile_progress.setMinimumDuration(0)
