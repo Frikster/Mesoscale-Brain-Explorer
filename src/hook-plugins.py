@@ -4,6 +4,7 @@ hiddenimports = [
     "plugins.autoROIplacer",
     "plugins.calculate_df_f0",
     "plugins.channel_math",
+    "plugins.channel_subtraction",
     "plugins.concatenation",
     "plugins.correlation_matrix",
     "plugins.crop_border",
