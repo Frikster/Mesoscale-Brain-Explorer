@@ -34,11 +34,7 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addWidget(cqt.InfoWidget('Press Ctrl or shift and then select your numerator first followed by '
                                            'denominator. Files can be dragged in the video list for convenience '
                                            'but the order does not determine which is the numerator and which the '
-                                           'denominator. \n'
-                                           '\n'
-                                           'Note also that for now the output from this plugin will appear blank. '
-                                           'This is because the output is typically to small to display (ratios don\'t '
-                                           'display well)'))
+                                           'denominator.'))
         hhbox = QHBoxLayout()
         div_butt = QPushButton('Divide first by second')
         hhbox.addWidget(div_butt)
@@ -66,6 +62,10 @@ class Widget(QWidget, WidgetDefault):
         min_len = min([len(f) for f in frames])
         frames = np.divide(np.array(frames[0][0:min_len], dtype=np.float32),
                            np.array(frames[1][0:min_len], dtype=np.float32))
+        if np.isinf(frames).any():
+            qtutil.critical("Infinite values detected. Are you sure you are dividing appropriate image stacks?")
+            qtutil.critical('Output will appear blank. Output is too small when scaled against infinite')
+        frames[np.isnan(frames)] = 0  # todo: is this okay?
         frames = np.array(frames, dtype=np.float32)
 
         # First one has to take the name otherwise pfs.save_projects doesn't work
