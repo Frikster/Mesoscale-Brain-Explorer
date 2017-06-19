@@ -108,7 +108,7 @@ class ProjectManager:
     self.new_project_dialog.exec_()
     path = self.new_project_dialog.path
     if path:
-      shutil.copy('../templates/spcproject.json', path)
+      shutil.copy('../templates/mbeproject.json', path)
       project = Project(path)
       project.name = self.new_project_dialog.name
       project.save()
@@ -124,13 +124,13 @@ class ProjectManager:
       if dialog.exec_():
         path = str(dialog.selectedFiles()[0])
         if path:
-          if not os.path.isfile(os.path.join(path, 'spcproject.json')):
+          if not os.path.isfile(os.path.join(path, 'mbeproject.json')):
             qtutil.critical('Directory is not a project.')
             return None
           parent = os.path.abspath(os.path.join(path, os.pardir))
           QSettings().setValue('projects_path', parent)
 
-    if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'spcproject.json')):
+    if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'mbeproject.json')):
       return self.redefine_paths(Project(path))
     else:
       return None
@@ -144,7 +144,7 @@ class ProjectManager:
 class Project:
   def __init__(self, path):
     self.path = path
-    self.attrs = json.load(open(os.path.join(path, 'spcproject.json')))
+    self.attrs = json.load(open(os.path.join(path, 'mbeproject.json')))
     self.name = self.attrs['name']
     self.files = self.attrs['files']
     self.pipeline = self.attrs['pipeline']
@@ -162,7 +162,7 @@ class Project:
     self.attrs['name'] = self.name
     self.attrs['pipeline'] = self.pipeline
     self.attrs['files'] = self.files
-    json.dump(self.attrs, open(os.path.join(self.path, 'spcproject.json'), 'w'),
+    json.dump(self.attrs, open(os.path.join(self.path, 'mbeproject.json'), 'w'),
       indent=2)
 
   def set_pipeline(self, data):

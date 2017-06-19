@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
       try:
           plugin_name = plugin_dict['name']
       except:
-          attrs = json.load(open('../templates/spcproject.json'))
+          attrs = json.load(open('../templates/mbeproject.json'))
           pipeline_template = attrs['pipeline']
           # pipeline_names = [p['name'] for p in pipeline_template]
           # plugins = self.load_plugins()
@@ -413,7 +413,7 @@ class MainWindow(QMainWindow):
                             <p></p>
                              <td>%s</td>
                              <p>which can be copied from
-                             <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/spcproject.json">here</a></p>
+                             <a href="https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/mbeproject.json">here</a></p>
                             <p>Only the pipeline section needs to be replaced</p>
                             """ % pipeline_template)
 
@@ -421,7 +421,7 @@ class MainWindow(QMainWindow):
           #                 "Please replace your current pipeline in the JSON file with \n"
           #                 " " + str(pipeline_template) + "which can be copied from \n" +
           #                 < a href = "https://github.com/Frikster/Mesoscale-Brain-Explorer/issues" > here < / a > < / p >
-          #                 "https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/spcproject.json")
+          #                 "https://github.com/Frikster/Mesoscale-Brain-Explorer/blob/master/templates/mbeproject.json")
           return
       for plugin in self.plugins:
         if plugin == plugin_name:
