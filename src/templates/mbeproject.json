@@ -5,8 +5,14 @@
     {
 		"name":"fileimporter"
 	},
-	{
+    {
+		"name":"trim"
+	},
+    {
 		"name":"spatial_filter"
+	},
+	{
+		"name":"crop_border"
 	},
 	{
 		"name":"alignment"
@@ -17,9 +23,24 @@
 	{
 		"name":"roi_creator"
 	},
-	{
-		"name":"fileexporter"
-	}   
+    {
+		"name":"temporal_filter"
+	},
+    {
+		"name":"calculate_df_f0"
+	},
+    {
+		"name":"autoROIplacer"
+	},
+    {
+        "name":"roi_activity_plot"
+    },
+    {
+		"name":"spc_map"
+	},
+    {
+		"name":"correlation_map"
+	}
   ],
   "name": "",
   "origin": [
