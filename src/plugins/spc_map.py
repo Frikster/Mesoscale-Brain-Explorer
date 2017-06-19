@@ -5,7 +5,7 @@ import functools
 import os
 import uuid
 from itertools import cycle
-from math import log10, floor
+from multiprocessing import Pool
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,31 +16,50 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
 from pyqtgraph.dockarea import *
+from scipy.stats.stats import pearsonr
 
-from .util import file_io
-from .util import filter_jeff
 from .util import custom_qt_items as cqt
+from .util import file_io
 from .util import project_functions as pfs
 from .util.custom_pyqtgraph_items import GradientLegend
+from .util.custom_qt_items import MyProgressDialog
 from .util.custom_qt_items import RoiList
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.custom_qt_items import MyProgressDialog
 
-# round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
 
-def round_sig(x, sig=2):
-    return round(x, sig-int(floor(log10(abs(x))))-1)
+def correlation_map(seed_x, seed_y, frames, progress):
+    seed_pixel = np.asarray(frames[:, seed_x, seed_y])
+    width = frames.shape[1]
+    height = frames.shape[2]
+    # Reshape into time and space
+    # frames[frames==0]=np.nan
+    frames = np.reshape(frames, (frames.shape[0], width*height))
 
-UUID_SIZE = len(str(uuid.uuid4()))
+    total = float(width * height - 1)
+    cmap = []
 
+    def corr(pixel, seed_pixel):
+        return pearsonr(pixel, seed_pixel)[0]
+    with Pool() as pool:
+        #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
+        for i, value in enumerate(pool.starmap(corr,
+                                               zip(frames.T,
+                                                   [seed_pixel for i in range(frames.T.shape[0])]
+                                                   ))):
+            progress.setValue(100 * i / total)
+            QApplication.processEvents()
+            cmap.append(value)
+
+    cmap = np.reshape(cmap, (width, height))
+    return cmap
 
 def calc_spc(frames, x, y, progress):
     width, height = frames[0].shape
     x = int(x)
     y = int(height - y)
-    spc_map = filter_jeff.correlation_map(y, x, frames, progress)
+    spc_map = correlation_map(y, x, frames, progress)
 
     # Make the location of the roi - self.image[y,x] - blatantly obvious
     spc_map[y+1, x+1] = 1
@@ -479,6 +498,9 @@ class SPCMapDialog(QDialog):
         spc = self.spc.swapaxes(0, 1)
         spc = spc[:, ::-1]
         try:
+          # round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
+          # def round_sig(x, sig=2):
+          #     return round(x, sig - int(floor(log10(abs(x)))) - 1)
           # value = str(round_sig(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
           value = str(format(spc[int(x)+int(x_origin), int(y)+int(y_origin)], '.4f'))
           # value = str(round(spc[int(x)+int(x_origin), int(y)+int(y_origin)], 4))
