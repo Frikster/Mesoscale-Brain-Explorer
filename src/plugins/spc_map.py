@@ -29,6 +29,9 @@ from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
 
 
+def corr(pixel, seed_pixel):
+    return pearsonr(pixel, seed_pixel)[0]
+
 def correlation_map(seed_x, seed_y, frames, progress):
     seed_pixel = np.asarray(frames[:, seed_x, seed_y])
     width = frames.shape[1]
@@ -40,8 +43,6 @@ def correlation_map(seed_x, seed_y, frames, progress):
     total = float(width * height - 1)
     cmap = []
 
-    def corr(pixel, seed_pixel):
-        return pearsonr(pixel, seed_pixel)[0]
     with Pool() as pool:
         #     for i, value in enumerate(parmap.imap(corr, frames.T, seed_pixel)):
         for i, value in enumerate(pool.starmap(corr,
