@@ -1,4 +1,5 @@
 # Mesoscale-Brain-Explorer (MBE)
+Please cite [this](http://dx.doi.org/10.1117/1.NPh.4.3.031210) article if you find this application or its code useful.
 
 ## Warnings and Notes
 * a "ret_files" or "OSError: <-number-> requested and 0 written" typically means you have run out of space on your hard drive. MBE uses up hard disk space fast if you are processing large files since it saves all intermediate steps to file.
