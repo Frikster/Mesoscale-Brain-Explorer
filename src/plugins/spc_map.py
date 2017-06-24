@@ -120,8 +120,8 @@ class DockWindowSPC(DockWindow):
             try:
                 with open(filename, 'rb') as input:
                     [video_path_to_plots_dict, state] = pickle.load(input)
-                    new_dw = DockWindowSPC(video_path_to_plots_dict, state=state, title=os.path.basename(filename),
-                                           parent=self.parent)
+                    new_dw = DockWindowSPC(video_path_to_plots_dict, parent=self.parent,
+                                           state=state, title=os.path.basename(filename))
                     self.parent.open_dialogs.append(new_dw)
                     new_dw.show()
                     new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self.parent,
@@ -394,8 +394,9 @@ class Widget(QWidget, WidgetDefault):
 
             # self.plot_to_docks(roi_name_roi_name_to_spcs_dict, area)
             video_path_to_spc_dict = roi_name_roi_name_to_spcs_dict
-        dock_window = DockWindowSPC(video_path_to_spc_dict, self)
+        dock_window = DockWindowSPC(video_path_to_spc_dict, parent=self)
         dock_window.show()
+        self.open_dialogs.append(dock_window)
 
         # else:
             # self.plot_to_docks(video_path_to_spc_dict, area)
