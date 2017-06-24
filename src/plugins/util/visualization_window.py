@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.console
-from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import QSettings, pyqtSignal
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *
@@ -18,43 +18,22 @@ from itertools import cycle
 3) can save stuff in docks dragged and dropped from other plugins (incl. correlation matrix)
 4) an "add notes" option"""
 
-class DockWindowKeeper:
-    __shared_state = {}
-    def __init__(self):
-        self.__dict__ = self.__shared_state
-        self.vis_windows = []
-
-    def add_vis_window(self, vis_window):
-        self.vis_windows = self.vis_windows + [vis_window]
-
 class DockWindow(QMainWindow):
-    def __init__(self, dock_data=None, title=None, parent=None):
+    saving_state = pyqtSignal(str)
+
+    def __init__(self, state=None, area=None, title=None, parent=None):
         super(DockWindow, self).__init__(parent)
-        self.keeper = DockWindowKeeper()
-        self.setAcceptDrops(True)
         if not title:
             title = str(uuid.uuid4())
         self.setWindowTitle(title)
-        self.dock_list = []
-        self.area = self.setup_docks()
+        if area:
+            self.area = area
+        else:
+            self.area = self.setup_docks()
         self.setCentralWidget(self.area)
-        self.setup_ui()
-        if dock_data:
-            docks, state = dock_data
-            self.load_docks(docks)
+        if state:
             self.area.restoreState(state)
-
-    def load_docks(self, docks):
-        starter_docks = [0, 1, 2, 3, 4, 5]
-        starter_docs_cycle = cycle(starter_docks)
-        self.area.clear()
-        for dock in docks:
-            next_dock = next(starter_docs_cycle)
-            self.area.addDock(dock)
-            self.area.addDock(dock, 'above', self.area.docks['d' + str(next_dock + 1)])
-        # close placeholder docks
-        for spc_dock in starter_docks:
-            self.area.docks['d'+str(spc_dock+1)].close()
+        self.setup_ui()
 
     def setup_ui(self):
         menu = self.menuBar()
@@ -104,21 +83,19 @@ class DockWindow(QMainWindow):
         area.moveDock(d6, 'left', d5)
         return area
 
-    def dropEvent(self, *args, **kwargs):
-        super().dropEvent()
-        pass
-
     def save_state(self):
         save_loc = QtGui.QFileDialog.getSaveFileName(self, 'Save ' + self.windowTitle() + ' Visualizations Window',
                                                      QSettings().value('last_vis_path'),
                                                      'visualization window pickle (*.pkl)')
         if not save_loc:
             return
+        self.saving_state.emit(save_loc)
         QSettings().setValue('last_vis_path', os.path.dirname(save_loc))
+        self.setWindowTitle(os.path.basename(save_loc))
         state = self.area.saveState()
-        docks = self.area.docks
         with open(save_loc, 'wb') as output:
-            pickle.dump([docks, state], output, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(state, output, pickle.HIGHEST_PROTOCOL)
+        return save_loc
 
     def load_state(self):
         filenames = QFileDialog.getOpenFileNames(
@@ -127,17 +104,16 @@ class DockWindow(QMainWindow):
         if not filenames:
             return
         QSettings().setValue('last_vis_path', os.path.dirname(filenames[0]))
-
         for filename in filenames:
             try:
                 with open(filename, 'rb') as input:
-                    dock_data = pickle.load(input)
-                    new_dw = DockWindow(dock_data, os.path.basename(filename))
+                    state = pickle.load(input)
+                    new_dw = DockWindow(state, os.path.basename(filename))
                     new_dw.show()
-                    self.keeper.add_vis_window(new_dw)
             except:
                 qtutil.critical(filename + " failed to open. Aborting.")
                 return
+        return filenames
 
     def add_notes(self):
         pass

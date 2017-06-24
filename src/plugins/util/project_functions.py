@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 
 import ast
+import functools
 import os
+import pickle
+import uuid
 
-import numpy as np
+import qtutil
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .file_io import load_reference_frame
-from .custom_qt_items import CheckableComboBox, PlayerDialog
-from . import file_io
 from . import constants
-import qtutil
-import uuid
-import pickle
+from . import file_io
+from .custom_qt_items import CheckableComboBox, PlayerDialog
+from .file_io import load_reference_frame
+
 
 def save_project(video_path, project, frames, manip, file_type):
     name_before, ext = os.path.splitext(os.path.basename(video_path))
@@ -205,92 +206,119 @@ def update_plugin_params(widget, key, val):
     widget.project.pipeline[widget.plugin_position] = widget.params
     widget.project.save()
 
+def save_dock_window_to_project(widget, window_type, pickle_path):
+    widget.project.files.append({
+        'path': pickle_path,
+        'type': window_type,
+        'name': os.path.basename(pickle_path)
+    })
+    widget.project.save()
+
+class WrongNumberOfArguments(TypeError):
+    print()
+    pass
+
+# def setup_and_get_dock_window(widget, video_path_to_plots_dict, DockWindow, state=None):
+#     # """One of state or area MUST not be None"""
+#     # if not state and not area:
+#     #     raise WrongNumberOfArguments()
+#     # if not state and area:
+#     #     state = area.saveState()
+#     main_window = DockWindow(video_path_to_plots_dict, state=state, parent=widget)
+#     main_window.resize(2000, 900)
+#     main_window.show()
+#     widget.open_dialogs.append(main_window)
+#     main_window.saving_state[str].connect(functools.partial(save_dock_window_to_project, widget,
+#                                                             widget.Labels.window_type))
+#     return DockWindow
+
 def save_dock_windows(widget, window_type):
-    if not widget.open_dialogs:
-        qtutil.info('No plot windows are open. ')
-        return
+    pass
 
-    continue_msg = "All Windows will be closed after saving, *including* ones you have not saved. \n" \
-                   "\n" \
-                   "Continue?"
-    reply = QMessageBox.question(widget, 'Save All',
-                                 continue_msg, QMessageBox.Yes, QMessageBox.No)
-    if reply == QMessageBox.No:
-        return
+    # if not widget.open_dialogs:
+    #     qtutil.info('No plot windows are open. ')
+    #     return
+    #
+    # continue_msg = "All Windows will be closed after saving, *including* ones you have not saved. \n" \
+    #                "\n" \
+    #                "Continue?"
+    # reply = QMessageBox.question(widget, 'Save All',
+    #                              continue_msg, QMessageBox.Yes, QMessageBox.No)
+    # if reply == QMessageBox.No:
+    #     return
+    #
+    # qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows in memory. We will now choose a path to '
+    #                                                            'save each one to. Simply don\'t save ones you have '
+    #                                                            'purposefully closed. You now have '
+    #                                                            'one last chance to save and recover '
+    #                                                            'any windows you accidentally closed')
+    # for (dialog, video_path_to_plots_dict) in widget.open_dialogs_data_dict:
+    #     win_title = dialog.windowTitle()
+    #     win_title = win_title[12:len(str(uuid.uuid4())) + 12]
+    #     filters = {
+    #         '.pkl': 'Python pickle file (*.pkl)'
+    #     }
+    #     default = win_title
+    #     pickle_path = widget.filedialog(default, filters)
+    #     if pickle_path:
+    #         widget.project.files.append({
+    #             'path': pickle_path,
+    #             'type': window_type,
+    #             'name': os.path.basename(pickle_path)
+    #         })
+    #         widget.project.save()
+    #         # Now save the actual file
+    #         # area = dialog.centralWidget()
+    #         # state = area.saveState()
+    #         try:
+    #             with open(pickle_path, 'wb') as output:
+    #                 pickle.dump(video_path_to_plots_dict, output, -1)
+    #         except:
+    #             qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
+    #                                           "that another program isn't using this file.")
+    # qtutil.info("All files have been saved")
+    #
+    # for dialog in widget.open_dialogs:
+    #     dialog.close()
+    # widget.open_dialogs = []
 
-    qtutil.info('There are ' + str(len(widget.open_dialogs)) + ' plot windows in memory. We will now choose a path to '
-                                                               'save each one to. Simply don\'t save ones you have '
-                                                               'purposefully closed. You now have '
-                                                               'one last chance to save and recover '
-                                                               'any windows you accidentally closed')
-    for (dialog, video_path_to_plots_dict) in widget.open_dialogs_data_dict:
-        win_title = dialog.windowTitle()
-        win_title = win_title[12:len(str(uuid.uuid4())) + 12]
-        filters = {
-            '.pkl': 'Python pickle file (*.pkl)'
-        }
-        default = win_title
-        pickle_path = widget.filedialog(default, filters)
-        if pickle_path:
-            widget.project.files.append({
-                'path': pickle_path,
-                'type': window_type,
-                'name': os.path.basename(pickle_path)
-            })
-            widget.project.save()
-            # Now save the actual file
-            # area = dialog.centralWidget()
-            # state = area.saveState()
-            try:
-                with open(pickle_path, 'wb') as output:
-                    pickle.dump(video_path_to_plots_dict, output, -1)
-            except:
-                qtutil.critical(pickle_path + " could not be saved. Ensure MBE has write access to this location and "
-                                              "that another program isn't using this file.")
-    qtutil.info("All files have been saved")
+def load_dock_windows(widget, window_type, DockWindow):
+    pass
 
-    for dialog in widget.open_dialogs:
-        dialog.close()
-    widget.open_dialogs = []
-
-def load_dock_windows(widget, window_type):
-    paths = [p['path'] for p in widget.project.files if p['type'] == window_type]
-
-    if not paths:
-        qtutil.info("Your project has no windows. Make and save some!")
-        return
-
-    for pickle_path in paths:
-        try:
-            with open(pickle_path, 'rb') as input:
-                video_path_to_plots_dict = pickle.load(input)
-        except:
-            del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
-                                    "location and that another program isn't using this file " \
-                                    "" \
-                                    "\n \nOtherwise, would you like to detatch this file from your project? "
-            reply = QMessageBox.question(widget, 'File Load Error',
-                                         del_msg, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                norm_path = os.path.normpath(pickle_path)
-                widget.project.files[:] = [f for f in widget.project.files if os.path.normpath(f['path']) != norm_path]
-                widget.project.save()
-                load_msg = pickle_path + " detatched from your project." \
-                                         "" \
-                                         "\n \n Would you like to continue loading the " \
-                                         "remaining project windows?"
-                reply = QMessageBox.question(widget, 'Continue?',
-                                             load_msg, QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.No:
-                return
-            continue
-        main_window = QMainWindow()
-        area = widget.setup_docks()
-        main_window.setCentralWidget(area)
-        main_window.resize(2000, 900)
-        main_window.setWindowTitle("Window ID - " + os.path.basename(os.path.splitext(pickle_path)[0]) +
-                                   ". Use Help -> What's This on this window for contextual tips")
-        widget.plot_to_docks(video_path_to_plots_dict, area)
-        main_window.show()
-        widget.open_dialogs.append(main_window)
-        widget.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
+    # paths = [p['path'] for p in widget.project.files if p['type'] == window_type]
+    #
+    # if not paths:
+    #     qtutil.info("Your project has no windows. Make and save some!")
+    #     return
+    #
+    # for pickle_path in paths:
+    #     try:
+    #         with open(pickle_path, 'rb') as input:
+    #             [video_path_to_plots_dict, state] = pickle.load(input)
+    #     except:
+    #         del_msg = pickle_path + " could not be loaded. If this file exists, ensure MBE has read access to this " \
+    #                                 "location and that another program isn't using this file " \
+    #                                 "" \
+    #                                 "\n \nOtherwise, would you like to detatch this file from your project? "
+    #         reply = QMessageBox.question(widget, 'File Load Error',
+    #                                      del_msg, QMessageBox.Yes, QMessageBox.No)
+    #         if reply == QMessageBox.Yes:
+    #             norm_path = os.path.normpath(pickle_path)
+    #             widget.project.files[:] = [f for f in widget.project.files if os.path.normpath(f['path']) != norm_path]
+    #             widget.project.save()
+    #             load_msg = pickle_path + " detatched from your project." \
+    #                                      "" \
+    #                                      "\n \n Would you like to continue loading the " \
+    #                                      "remaining project windows?"
+    #             reply = QMessageBox.question(widget, 'Continue?',
+    #                                          load_msg, QMessageBox.Yes, QMessageBox.No)
+    #         if reply == QMessageBox.No:
+    #             return
+    #         continue
+    #     DockWindow = setup_and_get_dock_window(widget, video_path_to_plots_dict, DockWindow, state=state)
+    #     DockWindow.setWindowTitle(os.path.basename(pickle_path))
+        # main_window.resize(2000, 900)
+        # widget.plot_to_docks(video_path_to_plots_dict, main_window.area)
+        # main_window.show()
+        # widget.open_dialogs.append(main_window)
+        # widget.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))

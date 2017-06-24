@@ -566,10 +566,6 @@ if __name__ == '__main__':
   w.setWindowIcon(QIcon('pics/cbhlogo.png'))
   w.show()
 
-  from plugins.util import visualization_window
-  d = visualization_window.DockWindow()
-  d.show()
-
   app.exec_()
   app.deleteLater()
   del w
