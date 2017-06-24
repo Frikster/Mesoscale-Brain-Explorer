@@ -23,6 +23,7 @@ class DockWindow(QMainWindow):
 
     def __init__(self, state=None, area=None, title=None, parent=None):
         super(DockWindow, self).__init__(parent)
+        self.parent = parent
         if not title:
             title = str(uuid.uuid4())
         self.setWindowTitle(title)
@@ -131,9 +132,7 @@ class DockWindow(QMainWindow):
 
         if reply == QtGui.QMessageBox.Yes:
             self.save_state()
-            event.accept()
-        else:
-            event.accept()
+        event.accept()
 
     # ## first dock gets save/restore buttons
     # w1 = pg.LayoutWidget()

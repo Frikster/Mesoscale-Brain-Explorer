@@ -136,7 +136,7 @@ class DockWindowSPC(DockWindow):
         # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
         video_paths = list(video_path_to_spc_dict.keys())
 
-        spc_docks = [0, 1, 2, 3, 4, 5]
+        spc_docks = range(len([i for i in self.area.docks.keys()]))
         spc_docs_cycle = cycle(spc_docks)
         for video_path in video_paths:
             roi_names = video_path_to_spc_dict[video_path]
@@ -158,11 +158,16 @@ class DockWindowSPC(DockWindow):
                 # save to file
                 spc_col = doc_window.colorized_spc
                 path_without_ext = os.path.join(self.parent.project.path, video_path + "_" + roi_name)
-                scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.parent.cm_comboBox.currentText() + '.jpg')
+                scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.parent.cm_comboBox.currentText() +
+                                                 '.jpg')
                 np.save(path_without_ext + '.npy', spc)
         # close placeholder docks
         for spc_dock in spc_docks:
             area.docks['d'+str(spc_dock+1)].close()
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent.open_dialogs.remove(self)
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
