@@ -440,7 +440,7 @@ class Widget(QWidget, WidgetDefault):
   def setup_ui(self):
     super().setup_ui()
     self.vbox.addWidget(self.roi_list)
-    self.vbox.addWidget(self.save_pb)
+    # self.vbox.addWidget(self.save_pb)
     self.vbox.addWidget(self.load_pb)
     self.vbox.addWidget(self.plot_pb)
 
@@ -679,10 +679,13 @@ class Widget(QWidget, WidgetDefault):
     return filename
 
   def save_dock_windows(self):
-      pfs.save_dock_windows(self, 'plot_window')
+      pass
+      # pfs.save_dock_windows(self, 'plot_window')
 
   def load_dock_windows(self):
-      pfs.load_dock_windows(self, 'plot_window')
+      dialog = DockWindowPlot(None, parent=self)
+      dialog.load_state()
+      # pfs.load_dock_windows(self, 'plot_window')
 
   def setup_whats_this(self):
       super().setup_whats_this()

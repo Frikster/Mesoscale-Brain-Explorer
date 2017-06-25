@@ -240,7 +240,7 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addLayout(hbox)
         self.vbox.addWidget(QLabel('Seeds'))
         self.vbox.addWidget(self.roi_list)
-        self.vbox.addWidget(self.save_pb)
+        # self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
         self.vbox.addWidget(self.avg_maps_cb)
         self.vbox.addWidget(self.spc_from_rois_pb)
@@ -443,10 +443,13 @@ class Widget(QWidget, WidgetDefault):
     #                                                             self.Labels.window_type))
 
     def save_dock_windows(self):
-        pfs.save_dock_windows(self, 'spc_window')
+        pass
+        # pfs.save_dock_windows(self, 'spc_window')
 
     def load_dock_windows(self):
-        pfs.load_dock_windows(self, 'spc_window', DockWindowSPC)
+        dialog = DockWindowSPC(None, parent=self)
+        dialog.load_state()
+        # pfs.load_dock_windows(self, 'spc_window', DockWindowSPC)
 
     def filedialog(self, name, filters):
         path = self.project.path
