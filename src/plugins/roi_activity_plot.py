@@ -2,9 +2,11 @@
 
 import csv
 import os
+import pickle
 import uuid
 from itertools import cycle
 
+import functools
 import numpy as np
 import pyqtgraph as pg
 import qtutil
@@ -17,6 +19,7 @@ from .util import project_functions as pfs
 from .util.custom_qt_items import RoiList
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+from .util.visualization_window import DockWindow
 
 UUID_SIZE = len(str(uuid.uuid4()))
 
@@ -59,71 +62,71 @@ kelly_colors = [
   Color('dark_olive_green', (35, 44, 22))
 ]
 
-def plot_roi_activities(video_path_to_plots_dict, plot_title, win_title):
-  video_path = list(video_path_to_plots_dict.keys())[0]
-  roi_activities = video_path_to_plots_dict[video_path]
-
-  # frames = fileloader.load_file(video_path)
-  #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
-  # plot_out = os.path.join(os.path.dirname(video_path), plot_title + str(uuid.uuid4()))
-  # plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
-
-  # roi_names = []
-  # ps = []
-  # for i, roi in enumerate(rois):
-  #   # progress_callback(i / len(rois))
-  #   mask = roi.getROIMask(frames, image, axes=(1, 2))
-  #   size = np.count_nonzero(mask)
-  #   roi_frames = frames * mask[np.newaxis, :, :]
-  #   roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
-  #   p = roi_frames / size
-  #   ps = ps + [p]
-  #   roi_names = roi_names + [roi.name]
-
-  ps = [list(p) for p in ps]
-  ps_rows = list(zip(*ps))
-  plot_out = os.path.join(os.path.dirname(video_path), plot_title + '_plot_backup.csv')
-  with open(plot_out, 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile, delimiter=',',
-                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(roi_names)
-    for i, row in enumerate(ps_rows):
-        #progress_callback(i / len(rois))
-        writer.writerow([str(p) for p in row])
-  # progress_callback(1)
-
-  win = pg.GraphicsWindow(title=win_title)
-  win.resize(1000, 600)
-  # win.setWindowTitle('Activity across frames')
-  plot = win.addPlot(title=plot_title)
-  plot.setLabel('bottom', "Image Frames")
-  plot.setLabel('left', "Activity")
-  plot.addLegend()
-
-  pg.setConfigOptions(antialias=True)
-
-  warning_issued = False
-  for i, roi in enumerate(rois):
-    # progress_callback(i / len(rois))
-    mask = roi.getROIMask(frames, image, axes=(1, 2))
-    size = np.count_nonzero(mask)
-    roi_frames = frames * mask[np.newaxis, :, :]
-    roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
-    p = roi_frames / size
-    if i < len(brewer_colors):
-        color = brewer_colors[i].rgb
-    else:
-        if not warning_issued:
-            qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
-                           'Please be careful with how you interpret your data')
-            warning_issued = True
-        if i < len(brewer_colors) + len(kelly_colors):
-            color = kelly_colors[i-len(brewer_colors)].rgb
-        else:
-            qtutil.critical('Colour limit reached. Please plot your data over multiple plots or output solely to csv')
-            return win
-    plot.plot(p, pen=color, name=roi.name)
-  return win
+# def plot_roi_activities(video_path_to_plots_dict, plot_title, win_title):
+#   video_path = list(video_path_to_plots_dict.keys())[0]
+#   roi_activities = video_path_to_plots_dict[video_path]
+#
+#   # frames = fileloader.load_file(video_path)
+#   #frames = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+#   # plot_out = os.path.join(os.path.dirname(video_path), plot_title + str(uuid.uuid4()))
+#   # plot_out = os.path.join(os.path.dirname(video_path), plot_title + '.csv')
+#
+#   # roi_names = []
+#   # ps = []
+#   # for i, roi in enumerate(rois):
+#   #   # progress_callback(i / len(rois))
+#   #   mask = roi.getROIMask(frames, image, axes=(1, 2))
+#   #   size = np.count_nonzero(mask)
+#   #   roi_frames = frames * mask[np.newaxis, :, :]
+#   #   roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+#   #   p = roi_frames / size
+#   #   ps = ps + [p]
+#   #   roi_names = roi_names + [roi.name]
+#
+#   ps = [list(p) for p in ps]
+#   ps_rows = list(zip(*ps))
+#   plot_out = os.path.join(os.path.dirname(video_path), plot_title + '_plot_backup.csv')
+#   with open(plot_out, 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile, delimiter=',',
+#                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+#     writer.writerow(roi_names)
+#     for i, row in enumerate(ps_rows):
+#         #progress_callback(i / len(rois))
+#         writer.writerow([str(p) for p in row])
+#   # progress_callback(1)
+#
+#   win = pg.GraphicsWindow(title=win_title)
+#   win.resize(1000, 600)
+#   # win.setWindowTitle('Activity across frames')
+#   plot = win.addPlot(title=plot_title)
+#   plot.setLabel('bottom', "Image Frames")
+#   plot.setLabel('left', "Activity")
+#   plot.addLegend()
+#
+#   pg.setConfigOptions(antialias=True)
+#
+#   warning_issued = False
+#   for i, roi in enumerate(rois):
+#     # progress_callback(i / len(rois))
+#     mask = roi.getROIMask(frames, image, axes=(1, 2))
+#     size = np.count_nonzero(mask)
+#     roi_frames = frames * mask[np.newaxis, :, :]
+#     roi_frames = np.ndarray.sum(np.ndarray.sum(roi_frames, axis=1), axis=1)
+#     p = roi_frames / size
+#     if i < len(brewer_colors):
+#         color = brewer_colors[i].rgb
+#     else:
+#         if not warning_issued:
+#             qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
+#                            'Please be careful with how you interpret your data')
+#             warning_issued = True
+#         if i < len(brewer_colors) + len(kelly_colors):
+#             color = kelly_colors[i-len(brewer_colors)].rgb
+#         else:
+#             qtutil.critical('Colour limit reached. Please plot your data over multiple plots or output solely to csv')
+#             return win
+#     plot.plot(p, pen=color, name=roi.name)
+#   return win
 
 # def plot_rois_same_axis(video_paths, rois, image, progress_callback=None):
 #       if not video_paths:
@@ -287,9 +290,133 @@ def plot_roi_activities(video_path_to_plots_dict, plot_title, win_title):
 #       return main_window
 
 
+class DockWindowPlot(DockWindow):
+    def __init__(self, video_path_to_plots_dict, parent, state=None, area=None, title=None):
+        super(DockWindowPlot, self).__init__(None, area, title, parent)
+        self.state = state
+        self.video_path_to_plots_dict = video_path_to_plots_dict
+        self.setWhatsThis("Use View All to reset a view\n"
+                             "\n"
+                             "The blue tabs have the name of the ROI for a particular plot. These tabs can be dragged "
+                             "around to highlighted regions to the side of other tabs to split the dock or on top of "
+                             "other plots to place the tab in that dock. \n"
+                             "\n"
+                             "right click any plot to see more options. One important one is mouse mode. In Mouse "
+                             "mode 3 you can hold the left mouse button to pan and "
+                             "In mouse mode 1 you can zoom in on a particular region by creating cropping it with the "
+                             "left mouse button. In either mode the right mouse button can be used to adjust the shape "
+                             "of the plot and the mouse wheel for zoom \n"
+                             "\n"
+                             "Use Export to save a particular plot's data to csv or save as an image after you are "
+                             "satisfied with how graphical elements (see 'plot options') are arranged. "
+                             "Note that backups csv's of all plots are made automatically and can be found in your "
+                             "project directory")
+        self.parent = parent
+        self.plot_to_docks(self.video_path_to_plots_dict, self.area)
+        if state:
+            self.area.restoreState(self.state)
+
+    def save_state(self):
+        save_loc = super().save_state()
+        with open(save_loc, 'rb') as input:
+            state = pickle.load(input)
+        try:
+            with open(save_loc, 'wb') as output:
+                pickle.dump([self.video_path_to_plots_dict, state], output, -1)
+        except:
+            qtutil.critical(save_loc + " failed to save.")
+            return
+
+    def load_state(self):
+        filenames = QFileDialog.getOpenFileNames(
+            self, 'Load images', QSettings().value('last_vis_path'),
+            'visualization window pickle (*.pkl)')
+        if not filenames:
+            return
+        QSettings().setValue('last_vis_path', os.path.dirname(filenames[0]))
+        for filename in filenames:
+            try:
+                with open(filename, 'rb') as input:
+                    [video_path_to_plots_dict, state] = pickle.load(input)
+                    new_dw = DockWindowPlot(video_path_to_plots_dict, parent=self.parent,
+                                           state=state, title=os.path.basename(filename))
+                    self.parent.open_dialogs.append(new_dw)
+                    new_dw.show()
+                    new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self.parent,
+                                                                       self.parent.Labels.window_type))
+            except:
+                qtutil.critical(filename + " failed to open. Aborting.")
+                return
+
+    def plot_to_docks(self, video_path_to_plots_dict, area):
+        if not video_path_to_plots_dict:
+            return
+        roi_names = list(list(video_path_to_plots_dict.values())[0].keys())
+        video_paths = list(video_path_to_plots_dict.keys())
+
+        # regroup ROIs of same type together and add to Docks dynamically
+        plot_docks = range(len([i for i in self.area.docks.keys()]))
+        plot_docs_cycle = cycle(plot_docks)
+        for roi_name in roi_names:
+            warning_issued = False
+            plots_for_roi = []
+            source_names = []
+            for video_path in video_path_to_plots_dict.keys():
+                root, ext = os.path.splitext(video_path)
+                source_name = os.path.basename(root)
+                source_names = source_names + [source_name]
+                plots_for_roi = plots_for_roi + [video_path_to_plots_dict[video_path][roi_name]]
+
+            # put all plots from one ROI on a single plot and place on one of the 4 docs
+            next_dock = next(plot_docs_cycle)
+            d = Dock(roi_name, size=(500, 200), closable=True)
+            area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
+            doc_window = pg.GraphicsWindow(title="Dock plot")
+            plot = doc_window.addPlot(title=roi_name)
+            plot.setLabel('bottom', "Image Frames")
+            plot.setLabel('left', "Activity")
+            plot.addLegend()
+            assert (len(plots_for_roi) == len(source_names))
+            for i, (p, source_name) in enumerate(zip(plots_for_roi, source_names)):
+                if i < len(brewer_colors):
+                    color = brewer_colors[i].rgb
+                else:
+                    if not warning_issued:
+                        qtutil.warning('Perceptual distinctiveness limit (12) reached. Resorting to Kelly colours. '
+                                       'Please be careful with how you interpret your data')
+                        warning_issued = True
+                    if i < len(brewer_colors) + len(kelly_colors):
+                        color = kelly_colors[i - len(brewer_colors)].rgb
+                    else:
+                        qtutil.critical(
+                            'Colour limit reached. Please plot your data over multiple plots or output solely to csv')
+                        return doc_window
+                plot.plot(p, pen=color, name=source_name)
+            d.addWidget(doc_window)
+
+            # Save plot to file (backup)
+            ps = [list(p) for p in plots_for_roi]
+            ps_rows = list(zip(*ps))
+            plot_out = os.path.join(os.path.dirname(video_paths[0]), roi_name + '_plots_backup.csv')
+            with open(plot_out, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(source_names)
+                for i, row in enumerate(ps_rows):
+                    writer.writerow([str(p) for p in row])
+
+        # close placeholder docks
+        for plot_dock in plot_docks:
+            area.docks['d' + str(plot_dock + 1)].close()
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent.open_dialogs.remove(self)
+
+
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):
-    pass
+    window_type = 'activity_plot_window'
 
   class Defaults(WidgetDefault.Defaults):
     roi_list_types_displayed = ['auto_roi', 'roi']
@@ -313,7 +440,7 @@ class Widget(QWidget, WidgetDefault):
   def setup_ui(self):
     super().setup_ui()
     self.vbox.addWidget(self.roi_list)
-    self.vbox.addWidget(self.save_pb)
+    # self.vbox.addWidget(self.save_pb)
     self.vbox.addWidget(self.load_pb)
     self.vbox.addWidget(self.plot_pb)
 
@@ -386,7 +513,7 @@ class Widget(QWidget, WidgetDefault):
       video_paths = list(video_path_to_plots_dict.keys())
 
       # regroup ROIs of same type together and add to Docks dynamically
-      plot_docks = [0, 1, 2, 3]
+      plot_docks = range(len([i for i in self.area.docks.keys()]))
       plot_docs_cycle = cycle(plot_docks)
       for roi_name in roi_names:
           warning_issued = False
@@ -401,15 +528,7 @@ class Widget(QWidget, WidgetDefault):
           # put all plots from one ROI on a single plot and place on one of the 4 docs
           next_dock = next(plot_docs_cycle)
           d = Dock(roi_name, size=(500, 200), closable=True)
-          if next_dock == 0:
-              area.addDock(d, 'above', area.docks['d1'])
-          if next_dock == 1:
-              area.addDock(d, 'above', area.docks['d2'])
-          if next_dock == 2:
-              area.addDock(d, 'above', area.docks['d3'])
-          if next_dock == 3:
-              area.addDock(d, 'above', area.docks['d4'])
-
+          area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
           doc_window = pg.GraphicsWindow(title="Dock plot")
           plot = doc_window.addPlot(title=roi_name)
           plot.setLabel('bottom', "Image Frames")
@@ -445,10 +564,8 @@ class Widget(QWidget, WidgetDefault):
                   writer.writerow([str(p) for p in row])
 
       # close placeholder docks
-      area.docks['d1'].close()
-      area.docks['d2'].close()
-      area.docks['d3'].close()
-      area.docks['d4'].close()
+      for plot_dock in plot_docks:
+          area.docks['d' + str(plot_dock + 1)].close()
 
 
 
@@ -466,28 +583,28 @@ class Widget(QWidget, WidgetDefault):
       return area
 
   def plot_triggered(self):
-    main_window = QMainWindow()
-    area = self.setup_docks()
-    main_window.setCentralWidget(area)
-    main_window.resize(2000, 900)
-    main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
-                               ". Click Shift+F1 for help")
-    main_window.setWhatsThis("Use View All to reset a view\n"
-                             "\n"
-                             "The blue tabs have the name of the ROI for a particular plot. These tabs can be dragged "
-                             "around to highlighted regions to the side of other tabs to split the dock or on top of "
-                             "other plots to place the tab in that dock. \n"
-                             "\n"
-                             "right click any plot to see more options. One important one is mouse mode. In Mouse "
-                             "mode 3 you can hold the left mouse button to pan and "
-                             "In mouse mode 1 you can zoom in on a particular region by creating cropping it with the "
-                             "left mouse button. In either mode the right mouse button can be used to adjust the shape "
-                             "of the plot and the mouse wheel for zoom \n"
-                             "\n"
-                             "Use Export to save a particular plot's data to csv or save as an image after you are "
-                             "satisfied with how graphical elements (see 'plot options') are arranged. "
-                             "Note that backups csv's of all plots are made automatically and can be found in your "
-                             "project directory")
+    # main_window = QMainWindow()
+    # area = self.setup_docks()
+    # main_window.setCentralWidget(area)
+    # main_window.resize(2000, 900)
+    # main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
+    #                            ". Click Shift+F1 for help")
+    # main_window.setWhatsThis("Use View All to reset a view\n"
+    #                          "\n"
+    #                          "The blue tabs have the name of the ROI for a particular plot. These tabs can be dragged "
+    #                          "around to highlighted regions to the side of other tabs to split the dock or on top of "
+    #                          "other plots to place the tab in that dock. \n"
+    #                          "\n"
+    #                          "right click any plot to see more options. One important one is mouse mode. In Mouse "
+    #                          "mode 3 you can hold the left mouse button to pan and "
+    #                          "In mouse mode 1 you can zoom in on a particular region by creating cropping it with the "
+    #                          "left mouse button. In either mode the right mouse button can be used to adjust the shape "
+    #                          "of the plot and the mouse wheel for zoom \n"
+    #                          "\n"
+    #                          "Use Export to save a particular plot's data to csv or save as an image after you are "
+    #                          "satisfied with how graphical elements (see 'plot options') are arranged. "
+    #                          "Note that backups csv's of all plots are made automatically and can be found in your "
+    #                          "project directory")
     video_path_to_plots_dict = self.get_video_path_to_plots_dict()
 
     if len(video_path_to_plots_dict.keys()) == 1:
@@ -535,10 +652,11 @@ class Widget(QWidget, WidgetDefault):
         self.open_dialogs.append(win)
         # d.addWidget(doc_window)
     else:
-        self.plot_to_docks(video_path_to_plots_dict, area)
-        main_window.show()
-        self.open_dialogs.append(main_window)
-        self.open_dialogs_data_dict.append((main_window, video_path_to_plots_dict))
+        # self.plot_to_docks(video_path_to_plots_dict, area)
+        dock_window = DockWindowPlot(video_path_to_plots_dict, parent=self)
+        dock_window.show()
+        self.open_dialogs.append(dock_window)
+        # self.open_dialogs_data_dict.append((dock_window, video_path_to_plots_dict))
 
   def filedialog(self, name, filters):
     path = self.project.path
@@ -561,10 +679,13 @@ class Widget(QWidget, WidgetDefault):
     return filename
 
   def save_dock_windows(self):
-      pfs.save_dock_windows(self, 'plot_window')
+      pass
+      # pfs.save_dock_windows(self, 'plot_window')
 
   def load_dock_windows(self):
-      pfs.load_dock_windows(self, 'plot_window')
+      dialog = DockWindowPlot(None, parent=self)
+      dialog.load_state()
+      # pfs.load_dock_windows(self, 'plot_window')
 
   def setup_whats_this(self):
       super().setup_whats_this()

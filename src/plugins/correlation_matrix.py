@@ -29,6 +29,7 @@ import itertools
 import matplotlib.pyplot as plt
 import math
 from .util.custom_pyqtgraph_items import GradientLegend
+from .util.visualization_window import DockWindow
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -174,6 +175,8 @@ class Widget(QWidget, WidgetDefault):
             callback(1)
             win.show()
             self.open_dialogs.append(win)
+            # todo: add matrices to docks
+            dock_window = DockWindow()
             self.save_open_dialogs_to_csv()
 
     def filedialog(self, name, filters):

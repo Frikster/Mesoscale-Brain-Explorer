@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 import functools
 import os
+import pickle
+from itertools import cycle
 from math import log10, floor
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import qtutil
 import scipy
+from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from pyqtgraph.Qt import QtGui
+from pyqtgraph.dockarea import *
 
 from .util import file_io
+from .util import project_functions as pfs
 from .util.custom_pyqtgraph_items import GradientLegend
+from .util.custom_qt_items import MyProgressDialog
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
-from .util.custom_qt_items import MyProgressDialog
+from .util.visualization_window import DockWindow
+
 
 # round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
 def round_sig(x, sig=2):
@@ -39,6 +47,101 @@ def prepare_image(stddev, max_stdev, cm_type):
   elif image.ndim == 3:
     image = image[:, ::-1, :]
   return image
+
+class DockWindowSTD(DockWindow):
+    def __init__(self, video_path_to_plots_dict, parent, state=None, area=None, title=None):
+        super(DockWindowSTD, self).__init__(None, area, title, parent)
+        self.state = state
+        self.video_path_to_plots_dict = video_path_to_plots_dict
+        self.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
+                                 "and roll the mouse wheel to zoom in and out. Moving the map resets the "
+                                 "position of the gradient legend. Right click to see further options. "
+                                 "Use View All to rest a view.\n"
+                                 "\n"
+                                 "The blue tabs have the name of the seed for a particular map. These tabs can be "
+                                 "dragged "
+                                 "around to highlighted regions to the side of other tabs to split the dock or on "
+                                 "top of "
+                                 "other plots to place the tab in that dock. \n"
+                                 "\n"
+                                 "Use export to save a particular map's data to various image formats. "
+                                 "Note that .jpg and numpy arrays of maps are automatically saved and can be found in "
+                                 "your project directory")
+        self.parent = parent
+        self.plot_to_docks(self.video_path_to_plots_dict, self.area)
+        if state:
+            self.area.restoreState(self.state)
+
+    def save_state(self):
+        save_loc = super().save_state()
+        with open(save_loc, 'rb') as input:
+            state = pickle.load(input)
+        try:
+            with open(save_loc, 'wb') as output:
+                pickle.dump([self.video_path_to_plots_dict, state], output, -1)
+        except:
+            qtutil.critical(save_loc + " failed to save.")
+            return
+
+    def load_state(self):
+        filenames = QFileDialog.getOpenFileNames(
+          self, 'Load images', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+        if not filenames:
+            return
+        QSettings().setValue('last_vis_path', os.path.dirname(filenames[0]))
+        for filename in filenames:
+            try:
+                with open(filename, 'rb') as input:
+                    [video_path_to_plots_dict, state] = pickle.load(input)
+                    new_dw = DockWindowSTD(video_path_to_plots_dict, parent=self.parent,
+                                           state=state, title=os.path.basename(filename))
+                    self.parent.open_dialogs.append(new_dw)
+                    new_dw.show()
+                    new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self.parent,
+                                                                       self.parent.Labels.window_type))
+            except:
+                qtutil.critical(filename + " failed to open. Aborting.")
+                return
+
+    def plot_to_docks(self, video_path_to_spc_dict, area):
+        if not video_path_to_spc_dict:
+            return
+        # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
+        video_paths = list(video_path_to_spc_dict.keys())
+
+        spc_docks = range(len([i for i in self.area.docks.keys()]))
+        spc_docs_cycle = cycle(spc_docks)
+        for video_path in video_paths:
+            roi_names = video_path_to_spc_dict[video_path]
+            for roi_name in roi_names:
+                # put all plots from one ROI on a single plot and place on one of the 4 docs
+                next_dock = next(spc_docs_cycle)
+                d = Dock(roi_name, size=(500, 200), closable=True)
+                area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
+
+                spc = video_path_to_spc_dict[video_path][roi_name]
+                doc_window = StdDevDialog(self.parent.project, video_path, spc, self.parent.cm_comboBox.currentText(),
+                                          (round(self.parent.min_sb.value(), 2), round(self.parent.max_sb.value(), 2)),
+                                          roi_name)
+                root, ext = os.path.splitext(video_path)
+                source_name = os.path.basename(root)
+                doc_window.setWindowTitle(source_name)
+                d.addWidget(doc_window)
+
+                # save to file
+                spc_col = doc_window.colorized_spc
+                path_without_ext = os.path.join(self.parent.project.path, video_path + "_" + roi_name)
+                scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.parent.cm_comboBox.currentText() +
+                                                 '.jpg')
+                np.save(path_without_ext + '.npy', spc)
+        # close placeholder docks
+        for spc_dock in spc_docks:
+            area.docks['d'+str(spc_dock+1)].close()
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent.open_dialogs.remove(self)
 
 class Widget(QWidget, WidgetDefault):
   class Labels(WidgetDefault.Labels):

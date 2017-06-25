@@ -56,7 +56,7 @@ class GradientLegend(UIGraphicsItem):
     unit = self.pixelSize()
 
     offset = 10, 10
-    size = 30, 200
+    size = widget.width()/10, widget.height()/3
     padding = 10
 
     x1 = rect.left() + unit[0] * offset[0]
@@ -98,8 +98,8 @@ class GradientLegend(UIGraphicsItem):
     p.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0)))
     for label in self.labels:
       y = y1 + self.labels[label] * (y2 - y1)
-      p.drawText(QtCore.QRectF(x1, y-lh/2.0, 1000, lh),
-                 QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, str(label))
+      p.drawText(QtCore.QRectF(x1 + widget.width()/20, y-lh/2.0, 1000, lh),
+                 QtCore.Qt.AlignVCenter, str(label))
 
 if __name__ == '__main__':
     app = pg.mkQApp()

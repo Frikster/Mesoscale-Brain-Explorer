@@ -3,7 +3,7 @@
 import csv
 import functools
 import os
-import uuid
+import pickle
 from itertools import cycle
 from multiprocessing import Pool
 
@@ -27,6 +27,7 @@ from .util.custom_qt_items import RoiList
 from .util.mygraphicsview import MyGraphicsView
 from .util.plugin import PluginDefault
 from .util.plugin import WidgetDefault
+from .util.visualization_window import DockWindow
 
 
 def corr(pixel, seed_pixel):
@@ -73,12 +74,108 @@ def calc_spc(frames, x, y, progress):
     spc_map[y-1, x+1] = 1
     return spc_map
 
+class DockWindowSPC(DockWindow):
+    def __init__(self, video_path_to_plots_dict, parent, state=None, area=None, title=None):
+        super(DockWindowSPC, self).__init__(None, area, title, parent)
+        self.state = state
+        self.video_path_to_plots_dict = video_path_to_plots_dict
+        self.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
+                                 "and roll the mouse wheel to zoom in and out. Moving the map resets the "
+                                 "position of the gradient legend. Right click to see further options. "
+                                 "Use View All to rest a view.\n"
+                                 "\n"
+                                 "The blue tabs have the name of the seed for a particular map. These tabs can be "
+                                 "dragged "
+                                 "around to highlighted regions to the side of other tabs to split the dock or on "
+                                 "top of "
+                                 "other plots to place the tab in that dock. \n"
+                                 "\n"
+                                 "Use export to save a particular map's data to various image formats. "
+                                 "Note that .jpg and numpy arrays of maps are automatically saved and can be found in "
+                                 "your project directory")
+        self.parent = parent
+        self.plot_to_docks(self.video_path_to_plots_dict, self.area)
+        if state:
+            self.area.restoreState(self.state)
+
+    def save_state(self):
+        save_loc = super().save_state()
+        with open(save_loc, 'rb') as input:
+            state = pickle.load(input)
+        try:
+            with open(save_loc, 'wb') as output:
+                pickle.dump([self.video_path_to_plots_dict, state], output, -1)
+        except:
+            qtutil.critical(save_loc + " failed to save.")
+            return
+
+    def load_state(self):
+        filenames = QFileDialog.getOpenFileNames(
+          self, 'Load images', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+        if not filenames:
+            return
+        QSettings().setValue('last_vis_path', os.path.dirname(filenames[0]))
+        for filename in filenames:
+            try:
+                with open(filename, 'rb') as input:
+                    [video_path_to_plots_dict, state] = pickle.load(input)
+                    new_dw = DockWindowSPC(video_path_to_plots_dict, parent=self.parent,
+                                           state=state, title=os.path.basename(filename))
+                    self.parent.open_dialogs.append(new_dw)
+                    new_dw.show()
+                    new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self.parent,
+                                                                       self.parent.Labels.window_type))
+            except:
+                qtutil.critical(filename + " failed to open. Aborting.")
+                return
+
+    def plot_to_docks(self, video_path_to_spc_dict, area):
+        if not video_path_to_spc_dict:
+            return
+        # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
+        video_paths = list(video_path_to_spc_dict.keys())
+
+        spc_docks = range(len([i for i in self.area.docks.keys()]))
+        spc_docs_cycle = cycle(spc_docks)
+        for video_path in video_paths:
+            roi_names = video_path_to_spc_dict[video_path]
+            for roi_name in roi_names:
+                # put all plots from one ROI on a single plot and place on one of the 4 docs
+                next_dock = next(spc_docs_cycle)
+                d = Dock(roi_name, size=(500, 200), closable=True)
+                area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
+
+                spc = video_path_to_spc_dict[video_path][roi_name]
+                doc_window = SPCMapDialog(self.parent.project, video_path, spc, self.parent.cm_comboBox.currentText(),
+                                          (round(self.parent.min_sb.value(), 2), round(self.parent.max_sb.value(), 2)),
+                                          roi_name)
+                root, ext = os.path.splitext(video_path)
+                source_name = os.path.basename(root)
+                doc_window.setWindowTitle(source_name)
+                d.addWidget(doc_window)
+
+                # save to file
+                spc_col = doc_window.colorized_spc
+                path_without_ext = os.path.join(self.parent.project.path, video_path + "_" + roi_name)
+                scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.parent.cm_comboBox.currentText() +
+                                                 '.jpg')
+                np.save(path_without_ext + '.npy', spc)
+        # close placeholder docks
+        for spc_dock in spc_docks:
+            area.docks['d'+str(spc_dock+1)].close()
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent.open_dialogs.remove(self)
+
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
         colormap_index_label = "Choose Colormap:"
         sb_min_label = "Min correlation value to display"
         sb_max_label = "Max correlation value to display"
         avg_maps_label = "Average maps of selected stacks"
+        window_type = 'spc_window'
 
     class Defaults(WidgetDefault.Defaults):
         colormap_index_default = 1
@@ -87,6 +184,7 @@ class Widget(QWidget, WidgetDefault):
         sb_min_default = -1.00
         sb_max_default = 1.00
         avg_maps_default = False
+        window_type = 'spc_window'
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -142,7 +240,7 @@ class Widget(QWidget, WidgetDefault):
         self.vbox.addLayout(hbox)
         self.vbox.addWidget(QLabel('Seeds'))
         self.vbox.addWidget(self.roi_list)
-        self.vbox.addWidget(self.save_pb)
+        # self.vbox.addWidget(self.save_pb)
         self.vbox.addWidget(self.load_pb)
         self.vbox.addWidget(self.avg_maps_cb)
         self.vbox.addWidget(self.spc_from_rois_pb)
@@ -231,77 +329,57 @@ class Widget(QWidget, WidgetDefault):
         return video_path_to_plots_dict
 
 
-    def setup_docks(self):
-        area = DockArea()
-        d1 = Dock("d1", size=(500, 200), closable=True)
-        d2 = Dock("d2", size=(500, 200), closable=True)
-        d3 = Dock("d3", size=(500, 200), closable=True)
-        d4 = Dock("d4", size=(500, 200), closable=True)
-        d5 = Dock("d5", size=(500, 200), closable=True)
-        d6 = Dock("d6", size=(500, 200), closable=True)
-        area.addDock(d1)
-        area.addDock(d2, 'bottom', d1)
-        area.addDock(d3, 'right', d2)
-        area.addDock(d4, 'right', d3)
-        area.moveDock(d5, 'right', d1)
-        area.moveDock(d6, 'left', d5)
-        return area
+    # def setup_docks(self):
+    #     area = DockArea()
+    #     d1 = Dock("d1", size=(500, 200), closable=True)
+    #     d2 = Dock("d2", size=(500, 200), closable=True)
+    #     d3 = Dock("d3", size=(500, 200), closable=True)
+    #     d4 = Dock("d4", size=(500, 200), closable=True)
+    #     d5 = Dock("d5", size=(500, 200), closable=True)
+    #     d6 = Dock("d6", size=(500, 200), closable=True)
+    #     area.addDock(d1)
+    #     area.addDock(d2, 'bottom', d1)
+    #     area.addDock(d3, 'right', d2)
+    #     area.addDock(d4, 'right', d3)
+    #     area.moveDock(d5, 'right', d1)
+    #     area.moveDock(d6, 'left', d5)
+    #     return area
 
-    def plot_to_docks(self, video_path_to_spc_dict, area):
-        if not video_path_to_spc_dict:
-            return
-        # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
-        video_paths = list(video_path_to_spc_dict.keys())
-
-        spc_docks = [0, 1, 2, 3, 4, 5]
-        spc_docs_cycle = cycle(spc_docks)
-        for video_path in video_paths:
-            roi_names = video_path_to_spc_dict[video_path]
-            for roi_name in roi_names:
-                # put all plots from one ROI on a single plot and place on one of the 4 docs
-                next_dock = next(spc_docs_cycle)
-                d = Dock(roi_name, size=(500, 200), closable=True)
-                area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
-
-                spc = video_path_to_spc_dict[video_path][roi_name]
-                doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
-                                          (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
-                root, ext = os.path.splitext(video_path)
-                source_name = os.path.basename(root)
-                doc_window.setWindowTitle(source_name)
-                d.addWidget(doc_window)
-
-                # save to file
-                spc_col = doc_window.colorized_spc
-                path_without_ext = os.path.join(self.project.path, video_path + "_" + roi_name)
-                scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.cm_comboBox.currentText() + '.jpg')
-                np.save(path_without_ext + '.npy', spc)
-        # close placeholder docks
-        for spc_dock in spc_docks:
-            area.docks['d'+str(spc_dock+1)].close()
+    # def plot_to_docks(self, video_path_to_spc_dict, area):
+    #     if not video_path_to_spc_dict:
+    #         return
+    #     # roi_names = list(list(video_path_to_spc_dict.values())[0].keys()) # same ROIs used for all stacks
+    #     video_paths = list(video_path_to_spc_dict.keys())
+    #
+    #     spc_docks = [0, 1, 2, 3, 4, 5]
+    #     spc_docs_cycle = cycle(spc_docks)
+    #     for video_path in video_paths:
+    #         roi_names = video_path_to_spc_dict[video_path]
+    #         for roi_name in roi_names:
+    #             # put all plots from one ROI on a single plot and place on one of the 4 docs
+    #             next_dock = next(spc_docs_cycle)
+    #             d = Dock(roi_name, size=(500, 200), closable=True)
+    #             area.addDock(d, 'above', area.docks['d' + str(next_dock + 1)])
+    #
+    #             spc = video_path_to_spc_dict[video_path][roi_name]
+    #             doc_window = SPCMapDialog(self.project, video_path, spc, self.cm_comboBox.currentText(),
+    #                                       (round(self.min_sb.value(), 2), round(self.max_sb.value(), 2)), roi_name)
+    #             root, ext = os.path.splitext(video_path)
+    #             source_name = os.path.basename(root)
+    #             doc_window.setWindowTitle(source_name)
+    #             d.addWidget(doc_window)
+    #
+    #             # save to file
+    #             spc_col = doc_window.colorized_spc
+    #             path_without_ext = os.path.join(self.project.path, video_path + "_" + roi_name)
+    #             scipy.misc.toimage(spc_col).save(path_without_ext + "_" + self.cm_comboBox.currentText() + '.jpg')
+    #             np.save(path_without_ext + '.npy', spc)
+    #     # close placeholder docks
+    #     for spc_dock in spc_docks:
+    #         area.docks['d'+str(spc_dock+1)].close()
 
     def spc_triggered(self):
-        main_window = QMainWindow()
-        area = self.setup_docks()
-        main_window.setCentralWidget(area)
-        main_window.resize(2000, 900)
-        main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
-                                   ". Click Shift+F1 for help")
-        main_window.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
-                                 "and roll the mouse wheel to zoom in and out. Moving the map resets the "
-                                 "position of the gradient legend. Right click to see further options. "
-                                 "Use View All to rest a view.\n"
-                                 "\n"
-                                 "The blue tabs have the name of the seed for a particular map. These tabs can be "
-                                 "dragged "
-                                 "around to highlighted regions to the side of other tabs to split the dock or on "
-                                 "top of "
-                                 "other plots to place the tab in that dock. \n"
-                                 "\n"
-                                 "Use export to save a particular map's data to various image formats. "
-                                 "Note that .jpg and numpy arrays of maps are automatically saved and can be found in "
-                                 "your project directory")
-
+        # area = self.setup_docks()
         video_path_to_spc_dict = self.get_video_path_to_spc_dict()
         if self.avg_maps_cb.isChecked():
             roi_name_to_spcs_dict = {}
@@ -318,22 +396,60 @@ class Widget(QWidget, WidgetDefault):
             for roi_name in roi_name_to_spcs_dict.keys():
                 roi_name_to_spcs_dict[roi_name] = roi_name_to_spcs_dict[roi_name] / len(video_path_to_spc_dict.keys())
                 roi_name_roi_name_to_spcs_dict[roi_name] = {roi_name: roi_name_to_spcs_dict[roi_name][0]}
-            self.plot_to_docks(roi_name_roi_name_to_spcs_dict, area)
+
+            # self.plot_to_docks(roi_name_roi_name_to_spcs_dict, area)
             video_path_to_spc_dict = roi_name_roi_name_to_spcs_dict
-        else:
-            self.plot_to_docks(video_path_to_spc_dict, area)
-        main_window.show()
-        self.open_dialogs.append(main_window)
-        self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
+        dock_window = DockWindowSPC(video_path_to_spc_dict, parent=self)
+        dock_window.show()
+        self.open_dialogs.append(dock_window)
 
+        # else:
+            # self.plot_to_docks(video_path_to_spc_dict, area)
+        # pfs.setup_and_get_dock_window(self, video_path_to_spc_dict, DockWindowSPC)
 
+        # state = area.saveState()
+        # main_window = DockWindowSPC(area, state, video_path_to_spc_dict)
+        # main_window.resize(2000, 900)
+        # # main_window.setWindowTitle("Window ID - " + str(uuid.uuid4()) +
+        # #                            ". Click Shift+F1 for help")
+        # # main_window.setWhatsThis("Click to recompute for another seed. Click and drag to move the map around "
+        # #                          "and roll the mouse wheel to zoom in and out. Moving the map resets the "
+        # #                          "position of the gradient legend. Right click to see further options. "
+        # #                          "Use View All to rest a view.\n"
+        # #                          "\n"
+        # #                          "The blue tabs have the name of the seed for a particular map. These tabs can be "
+        # #                          "dragged "
+        # #                          "around to highlighted regions to the side of other tabs to split the dock or on "
+        # #                          "top of "
+        # #                          "other plots to place the tab in that dock. \n"
+        # #                          "\n"
+        # #                          "Use export to save a particular map's data to various image formats. "
+        # #                          "Note that .jpg and numpy arrays of maps are automatically saved and can be found in "
+        # #                          "your project directory")
+        # pfs.setup_dock_window(self, video_path_to_spc_dict, DockWindowSPC, area=area)
+        # main_window.show()
+        # self.open_dialogs.append(main_window)
+        # # self.open_dialogs_data_dict.append((main_window, video_path_to_spc_dict))
+        # main_window.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
+        #                                                         self.Labels.window_type))
 
+    # def setup_dock_window(self, area, video_path_to_spc_dict, DockWindow):
+    #     state = area.saveState()
+    #     main_window = DockWindow(area, state, video_path_to_spc_dict)
+    #     main_window.resize(2000, 900)
+    #     main_window.show()
+    #     self.open_dialogs.append(main_window)
+    #     main_window.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
+    #                                                             self.Labels.window_type))
 
     def save_dock_windows(self):
-        pfs.save_dock_windows(self, 'spc_window')
+        pass
+        # pfs.save_dock_windows(self, 'spc_window')
 
     def load_dock_windows(self):
-        pfs.load_dock_windows(self, 'spc_window')
+        dialog = DockWindowSPC(None, parent=self)
+        dialog.load_state()
+        # pfs.load_dock_windows(self, 'spc_window', DockWindowSPC)
 
     def filedialog(self, name, filters):
         path = self.project.path
