@@ -58,7 +58,7 @@ def correlation_map(seed_x, seed_y, frames, progress):
     return cmap
 
 def calc_spc(frames, x, y, progress):
-    width, height = frames[0].shape
+    height, width = frames[0].shape
     x = int(x)
     y = int(height - y)
     spc_map = correlation_map(y, x, frames, progress)

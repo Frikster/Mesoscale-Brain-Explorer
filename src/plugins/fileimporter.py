@@ -178,8 +178,8 @@ class Widget(QWidget):
   def convert_raw(self, filename):
     rescale_value = float(self.scale_factor.value())
     dtype = str(self.cb_dtype.currentText())
-    width = int(self.sb_width.value())
-    height = int(self.sb_height.value())
+    height = int(self.sb_width.value())
+    width = int(self.sb_height.value())
     rescale_width = int(width * rescale_value)
     rescale_height = int(height * rescale_value)
     channels = int(self.sb_channel.value())
@@ -359,7 +359,7 @@ class Widget(QWidget):
         imported_paths = imported_paths + [imported_path]
     return imported_paths
 
-  def execute_primary_function(self, input_paths = None):
+  def execute_primary_function(self, input_paths=None):
     if not input_paths:
         filenames = QFileDialog.getOpenFileNames(
           self, 'Load images', QSettings().value('last_load_data_path'),

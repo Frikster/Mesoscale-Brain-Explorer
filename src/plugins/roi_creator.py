@@ -178,7 +178,8 @@ class Widget(QWidget, WidgetDefault):
         return
 
       # swap axis for aligned_frames
-      frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+      # frames_swap = np.swapaxes(np.swapaxes(frames, 0, 1), 1, 2)
+      frames_swap = np.swapaxes(frames, 0, 2)
       callback(0.4)
       # Collect ROI's and combine
       numROIs = len(self.view.vb.rois)
@@ -233,11 +234,11 @@ class MyPlugin(PluginDefault):
     super().__init__(self.widget, self.widget.Labels, self.name)
 
   def check_ready_for_automation(self, expected_input_number):
-      if len(self.widget.view.vb.rois) <= 0:
+      if len(self.widget.view.vb.rois) <= 0 or self.widget.view.vb.img == None:
         return False
       else:
         return True
 
   def automation_error_message(self):
-      return "Select at least one ROI for each ROI cropper plugin"
+      return "Select at least one ROI for each ROI cropper plugin and make sure the background is not blank"
 
