@@ -19,6 +19,7 @@ from project import ProjectManager
 from plugins.util import custom_qt_items as cqt
 from plugins import set_coordinate_system as scs
 import traceback
+from plugins.util import constants
 
 APPNAME = 'Mesoscale Brain Explorer'
 VERSION = open('../VERSION').read()
@@ -488,34 +489,75 @@ class MainWindow(QMainWindow):
     self.datadialog.exec_()
 
   def automate_pipeline(self):
-      # qtutil.info('Coming Soon')
-      # return
-
       # order by index
       ordered_q_model_indexes = sorted(self.sidebar.pl_list.selectedIndexes(), key=lambda x: x.row(), reverse=False)
       if not ordered_q_model_indexes:
           qtutil.info("Select all the plugins you want to process through. Use shift or ctrl to select multiple")
+      import_plugin_indexes = [ind for ind in range(len(ordered_q_model_indexes)) if
+                               self.plugins[ordered_q_model_indexes[ind].data(Qt.UserRole)].name in
+                               constants.IMPORT_PLUGINS]
+
+      ordered_q_model_indexes_segments = []
+      for i, import_ind in enumerate(import_plugin_indexes):
+          if i < len(import_plugin_indexes)-1:
+              # ordered_q_model_indexes are the indices in the GUI.
+              # retrieve the indices from where this import plugin is (import_ind) to
+              # the index right before the next import plugin
+            ordered_q_model_indexes_segment = ordered_q_model_indexes[import_ind:(import_plugin_indexes[i+1])]
+          else:
+            ordered_q_model_indexes_segment = ordered_q_model_indexes[import_ind:]
+          ordered_q_model_indexes_segments = ordered_q_model_indexes_segments + [ordered_q_model_indexes_segment]
+
+      import_paths = []
+      for i, ordered_q_model_indexes_segment in enumerate(ordered_q_model_indexes_segments):
+          import_plugin = self.plugins[ordered_q_model_indexes_segment[0].data(Qt.UserRole)]
+          qtutil.info("Please select all your files for the pipeline starting from import plugin " + str(i))
+          input_paths = import_plugin.get_input_paths()
+          import_paths = import_paths + [input_paths]
+          if not input_paths:
+              qtutil.critical("import plugin " + str(i) + " in the pipeline does not have a set of input files selected")
+              return
 
       # ensure all selected plugins are ready for automation
-      p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
-      number_of_outputs = p.output_number_expected()  # find the number of files outputted by the first plugin
-      for q_model_index in ordered_q_model_indexes[1:]:
-          p = self.plugins[q_model_index.data(Qt.UserRole)]
-          if not p.check_ready_for_automation(number_of_outputs):
-            qtutil.critical(p.automation_error_message())
-            return
-          number_of_outputs = p.output_number_expected(number_of_outputs)  # find the number of outputs
+      for i, ordered_q_model_indexes_segment in enumerate(ordered_q_model_indexes_segments):
+          not_import_plugins = [self.plugins[ordered_q_model_indexes_segment[j].data(Qt.UserRole)] for j in
+                                range(1, len(ordered_q_model_indexes_segment))]
+          number_of_outputs = len(import_paths[i])
+          for not_import_plugin in not_import_plugins:
+              if not not_import_plugin.check_ready_for_automation(number_of_outputs):
+                  qtutil.critical(not_import_plugin.automation_error_message())
+                  return
+              number_of_outputs = not_import_plugin.output_number_expected(number_of_outputs)
 
-      p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
-      input_paths = p.get_input_paths()
-      if not input_paths:
-          qtutil.critical("The first plugin in the pipeline does not have a set of input files selected")
-          return
+      # p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+      # if p.name not in constants.IMPORT_PLUGINS:
+      #   number_of_outputs = p.output_number_expected()  # find the number of files outputted by the first plugin
+      # for q_model_index in ordered_q_model_indexes:
+      #     p = self.plugins[q_model_index.data(Qt.UserRole)]
+      #     if p.name not in constants.IMPORT_PLUGINS:
+      #         number_of_outputs = p.output_number_expected()
+      #         if not p.check_ready_for_automation(number_of_outputs):
+      #           qtutil.critical(p.automation_error_message())
+      #           return
+      #     number_of_outputs = p.output_number_expected(number_of_outputs)  # find the number of outputs
 
-      for q_model_index in ordered_q_model_indexes:
-          p = self.plugins[q_model_index.data(Qt.UserRole)]
-          output_paths = p.run(input_paths)
-          input_paths = output_paths
+      for i, ordered_q_model_indexes_segment in enumerate(ordered_q_model_indexes_segments):
+          input_paths = import_paths[i]
+          for q_model_index in ordered_q_model_indexes_segment:
+              p = self.plugins[q_model_index.data(Qt.UserRole)]
+              output_paths = p.run(input_paths)
+              input_paths = output_paths
+
+      # p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+      # input_paths = p.get_input_paths()
+      # if not input_paths:
+      #     qtutil.critical("The first plugin in the pipeline does not have a set of input files selected")
+      #     return
+      #
+      # for q_model_index in ordered_q_model_indexes:
+      #     p = self.plugins[q_model_index.data(Qt.UserRole)]
+      #     output_paths = p.run(input_paths)
+      #     input_paths = output_paths
 
 
       # self.sidebar.pl_list.selectedIndexes()[0].data(Qt.UserRole)
