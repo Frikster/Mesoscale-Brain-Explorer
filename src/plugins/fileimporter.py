@@ -329,7 +329,8 @@ class Widget(QWidget):
       filename = new_filename
 
     if filename in [f['path'] for f in self.project.files]:
-      raise FileAlreadyInProjectError(filename)
+      return filename
+      # raise FileAlreadyInProjectError(filename)
 
     name, ext = os.path.splitext(os.path.basename(filename))
 
