@@ -497,6 +497,31 @@ class MainWindow(QMainWindow):
                                self.plugins[ordered_q_model_indexes[ind].data(Qt.UserRole)].name in
                                constants.IMPORT_PLUGINS]
 
+      if not import_plugin_indexes:
+          p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+          if p.name not in constants.IMPORT_PLUGINS:
+              number_of_outputs = p.output_number_expected()  # find the number of files outputted by the first plugin
+          for q_model_index in ordered_q_model_indexes:
+              p = self.plugins[q_model_index.data(Qt.UserRole)]
+              if p.name not in constants.IMPORT_PLUGINS:
+                  number_of_outputs = p.output_number_expected()
+                  if not p.check_ready_for_automation(number_of_outputs):
+                      qtutil.critical(p.automation_error_message())
+                      return
+              number_of_outputs = p.output_number_expected(number_of_outputs)  # find the number of outputs
+
+          p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
+          input_paths = p.get_input_paths()
+          if not input_paths:
+              qtutil.critical("The first plugin in the pipeline does not have a set of input files selected")
+              return
+
+          for q_model_index in ordered_q_model_indexes:
+              p = self.plugins[q_model_index.data(Qt.UserRole)]
+              output_paths = p.run(input_paths)
+              input_paths = output_paths
+
+
       ordered_q_model_indexes_segments = []
       for i, import_ind in enumerate(import_plugin_indexes):
           if i < len(import_plugin_indexes)-1:
@@ -528,18 +553,6 @@ class MainWindow(QMainWindow):
                   qtutil.critical(not_import_plugin.automation_error_message())
                   return
               number_of_outputs = not_import_plugin.output_number_expected(number_of_outputs)
-
-      # p = self.plugins[ordered_q_model_indexes[0].data(Qt.UserRole)]
-      # if p.name not in constants.IMPORT_PLUGINS:
-      #   number_of_outputs = p.output_number_expected()  # find the number of files outputted by the first plugin
-      # for q_model_index in ordered_q_model_indexes:
-      #     p = self.plugins[q_model_index.data(Qt.UserRole)]
-      #     if p.name not in constants.IMPORT_PLUGINS:
-      #         number_of_outputs = p.output_number_expected()
-      #         if not p.check_ready_for_automation(number_of_outputs):
-      #           qtutil.critical(p.automation_error_message())
-      #           return
-      #     number_of_outputs = p.output_number_expected(number_of_outputs)  # find the number of outputs
 
       for i, ordered_q_model_indexes_segment in enumerate(ordered_q_model_indexes_segments):
           input_paths = import_paths[i]
