@@ -4,13 +4,13 @@ from __future__ import print_function
 import os
 import sys
 
-import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from .util import file_io
 from .util import custom_qt_items as cqt
+from .util import file_io
 from .util.mygraphicsview import MyGraphicsView
+
 sys.path.append('..')
 import qtutil
 import pickle
@@ -23,13 +23,14 @@ from pyqtgraph.Qt import QtGui
 from .util.plugin import WidgetDefault
 from .util.plugin import PluginDefault
 from .util.custom_qt_items import RoiList
-from .util.custom_qt_items import RoiItemModel
 import functools
 import itertools
 import matplotlib.pyplot as plt
 import math
 from .util.custom_pyqtgraph_items import GradientLegend
 from .util.visualization_window import DockWindow
+from pyqtgraph.dockarea import *
+from .util import project_functions as pfs
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -52,15 +53,87 @@ class RoiListModified(RoiList):
         self.widget.selected_rois_list.clear()
         self.widget.selected_rois_list.addItems([r for r in rois_selected])
 
+class DockWindowMat(DockWindow):
+    def __init__(self, win, parent, state=None, area=None, title=None):
+        super(DockWindowMat, self).__init__(None, area, title, parent)
+        self.parent = parent
+        self.state = state
+        self.connectivity_dialog = win
+        docks = range(len([i for i in self.area.docks.keys()]))
+        d = Dock("Connectivity Matrix", size=(500, 200), closable=True)
+        d.addWidget(win)
+        self.area.addDock(d, 'above', self.area.docks['d1'])
+
+        min_label = parent.min_sb.value()
+        max_label = parent.max_sb.value()
+        cm_type = parent.cm_comboBox.currentText()
+        view = MyGraphicsView(parent.project, parent=None, image_view_on=True)
+        l = GradientLegend(min_label, max_label, cm_type)
+        l.setParentItem(view.vb)
+        d = Dock("Gradient Legend", size=(500, 200), closable=True)
+        d.addWidget(view)
+        self.area.addDock(d, 'above', self.area.docks['d2'])
+
+        # close placeholder docks
+        for dock in docks:
+            self.area.docks['d'+str(dock+1)].close()
+        if state:
+            self.area.restoreState(self.state)
+
+    def setup_gradient_legend(self, l):
+        pass
+
+    def save_state(self):
+        save_loc = super().save_state()
+        with open(save_loc, 'rb') as input:
+            state = pickle.load(input)
+        try:
+            with open(save_loc, 'wb') as output:
+                pickle.dump([self.connectivity_dialog.model._data, self.connectivity_dialog.model.roinames,
+                             state], output, -1)
+        except:
+            qtutil.critical(save_loc + " failed to save.")
+            return
+
+    def load_state(self):
+        filenames = QFileDialog.getOpenFileNames(
+          self, 'Load matrix', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+        if not filenames:
+            return
+        QSettings().setValue('last_vis_path', os.path.dirname(filenames[0]))
+        for filename in filenames:
+            try:
+                with open(filename, 'rb') as input:
+                    [mat_data, roinames, state] = pickle.load(input)
+                    cm_type = self.parent.cm_comboBox.currentText()
+                    win = ConnectivityDialog(self.parent, roinames, cm_type, mat_data)
+                    new_dw = DockWindowMat(win, parent=self.parent, state=state, title=os.path.basename(filename))
+                    self.parent.open_dialogs.append(new_dw)
+                    new_dw.show()
+                    new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self.parent,
+                                                                       self.parent.Defaults.window_type))
+            except:
+                qtutil.critical(filename + " failed to open. Aborting.")
+                return
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+        self.parent.open_dialogs.remove(self)
+
 
 class Widget(QWidget, WidgetDefault):
     class Labels(WidgetDefault.Labels):
         colormap_index_label = "Choose Colormap:"
+        sb_min_label = "Min colormap range"
+        sb_max_label = "Max colormap range"
 
     class Defaults(WidgetDefault.Defaults):
         colormap_index_default = 1
         roi_list_types_displayed = ['auto_roi', 'roi']
         window_type = 'connectivity_matrix'
+        sb_min_default = -1.00
+        sb_max_default = 1.00
 
     def __init__(self, project, plugin_position, parent=None):
         super(Widget, self).__init__(parent)
@@ -82,7 +155,9 @@ class Widget(QWidget, WidgetDefault):
         #         item.setData(f['path'], Qt.UserRole)
         #         self.roi_list.model().appendRow(item)
         self.cm_comboBox = QtGui.QComboBox(self)
-        self.save_pb = QPushButton("&Save matrix windows")
+        self.min_sb = QDoubleSpinBox()
+        self.max_sb = QDoubleSpinBox()
+        self.save_pb = QPushButton("Generate csv files of all open matrices")
         self.load_pb = QPushButton("&Load project matrix windows")
         self.mask_checkbox = QCheckBox("Mask Symmetry")
         self.sem_checkbox = QCheckBox("Use SEM instead of SD")
@@ -125,8 +200,26 @@ class Widget(QWidget, WidgetDefault):
         self.cm_comboBox.addItem("PRGn")
         self.cm_comboBox.addItem("seismic")
         self.vbox.addWidget(self.cm_comboBox)
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel(self.Labels.sb_min_label))
+        hbox.addWidget(QLabel(self.Labels.sb_max_label))
+        self.vbox.addLayout(hbox)
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.min_sb)
+        hbox.addWidget(self.max_sb)
+        def min_handler(max_of_min):
+            self.min_sb.setMaximum(max_of_min)
+        def max_handler(min_of_max):
+            self.max_sb.setMinimum(min_of_max)
+        self.min_sb.valueChanged[float].connect(max_handler)
+        self.max_sb.valueChanged[float].connect(min_handler)
+        self.min_sb.setMinimum(-1.0)
+        self.max_sb.setMaximum(1.0)
+        self.min_sb.setSingleStep(0.1)
+        self.max_sb.setSingleStep(0.1)
+        self.vbox.addLayout(hbox)
         self.vbox.addWidget(self.save_pb)
-        self.vbox.addWidget(self.load_pb)
+        # self.vbox.addWidget(self.load_pb)
         self.mask_checkbox.setChecked(True)
         self.sem_checkbox.setChecked(False)
         self.vbox.addWidget(self.mask_checkbox)
@@ -144,7 +237,11 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_params()
         if len(self.params) == 1 or reset:
             self.update_plugin_params(self.Labels.colormap_index_label, self.Defaults.colormap_index_default)
+            self.update_plugin_params(self.Labels.sb_min_label, self.Defaults.sb_min_default)
+            self.update_plugin_params(self.Labels.sb_max_label, self.Defaults.sb_max_default)
         self.cm_comboBox.setCurrentIndex(self.params[self.Labels.colormap_index_label])
+        self.min_sb.setValue(self.params[self.Labels.sb_min_label])
+        self.max_sb.setValue(self.params[self.Labels.sb_max_label])
 
 
     def setup_param_signals(self):
@@ -152,6 +249,10 @@ class Widget(QWidget, WidgetDefault):
         self.roi_list.setup_param_signals()
         self.cm_comboBox.currentIndexChanged[int].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.colormap_index_label))
+        self.min_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_min_label))
+        self.max_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
+                                                                      self.Labels.sb_max_label))
 
     def connectivity_triggered(self):
         cm_type = self.cm_comboBox.currentText()
@@ -173,10 +274,11 @@ class Widget(QWidget, WidgetDefault):
             win = ConnectivityDialog(self, roinames, cm_type, progress_callback=callback)
             win.resize(900, 900)
             callback(1)
-            win.show()
-            self.open_dialogs.append(win)
+            # self.open_dialogs.append(win)
             # todo: add matrices to docks
-            dock_window = DockWindow()
+            dock_window = DockWindowMat(win, parent=self)
+            self.open_dialogs.append(dock_window)
+            dock_window.show()
             self.save_open_dialogs_to_csv()
 
     def filedialog(self, name, filters):
@@ -203,7 +305,10 @@ class Widget(QWidget, WidgetDefault):
         if not self.open_dialogs:
             qtutil.info('No correlation matrix windows are open. ')
             return
-
+        self.save_open_dialogs_to_csv()
+        qtutil.info('csvs saved to project directory')
+        return
+        #todo: improve general user experience (saving,loading etc). Look at below
         continue_msg = "All Correlation Matrices will be closed after saving, *including* ones you have not saved. \n" \
                   "\n" \
                   "Continue?"
@@ -242,7 +347,8 @@ class Widget(QWidget, WidgetDefault):
 
                 # Now save the actual file
                 title = os.path.basename(pickle_path)
-                matrix_output_data = (title, dialog.model.roinames, dialog.model._data)
+                matrix_output_data = (title, dialog.connectivity_dialog.model.roinames,
+                                      dialog.connectivity_dialog.model._data)
                 try:
                     with open(pickle_path, 'wb') as output:
                         pickle.dump(matrix_output_data, output, -1)
@@ -308,7 +414,8 @@ class Widget(QWidget, WidgetDefault):
             return
 
         for i, dialog in enumerate(self.open_dialogs):
-            rois_names = [dialog.model.rois[x].name for x in range(len(dialog.model.rois))]
+            rois_names = [dialog.connectivity_dialog.model.rois[x].name for x in range(
+                len(dialog.connectivity_dialog.model.rois))]
             file_name_avg = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + \
                             '_averaged_correlation_matrix.csv'
             file_name_stdev = os.path.splitext(os.path.basename(dialog.windowTitle()))[0] + \
@@ -317,8 +424,8 @@ class Widget(QWidget, WidgetDefault):
             with open(os.path.join(self.project.path, file_name_avg), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
                 writer.writerow(rois_names)
-                for row_ind in range(len(dialog.model._data)):
-                    row = dialog.model._data[row_ind]
+                for row_ind in range(len(dialog.connectivity_dialog.model._data)):
+                    row = dialog.connectivity_dialog.model._data[row_ind]
                     row = [row[x][0] for x in range(len(row))]
                     writer.writerow(row)
                 writer.writerow(['Selected videos:']+self.selected_videos)
@@ -326,8 +433,8 @@ class Widget(QWidget, WidgetDefault):
             with open(os.path.join(self.project.path, file_name_stdev), 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',')
                 writer.writerow(rois_names)
-                for row_ind in range(len(dialog.model._data)):
-                    row = dialog.model._data[row_ind]
+                for row_ind in range(len(dialog.connectivity_dialog.model._data)):
+                    row = dialog.connectivity_dialog.model._data[row_ind]
                     row = [row[x][1] for x in range(len(row))]
                     writer.writerow(row)
                 writer.writerow(['Selected videos:'] + self.selected_videos)
@@ -356,6 +463,7 @@ class Widget(QWidget, WidgetDefault):
 class ConnectivityModel(QAbstractTableModel):
     def __init__(self, widget, roinames, cm_type, loaded_data=None, progress_callback=None):
         super(ConnectivityModel, self).__init__()
+        self.widget = widget
         self.cm_type = cm_type
         self.roinames = roinames
 
@@ -422,7 +530,6 @@ class ConnectivityModel(QAbstractTableModel):
                     if progress_callback:
                         progress_callback((i*j) / (len(avg_data) * len(avg_data)))
                     avg_data[i][j] = (avg_data[i][j], stdev_dict[(i, j)])
-
             self._data = avg_data
             assert(avg_data != [])
 
@@ -439,9 +546,12 @@ class ConnectivityModel(QAbstractTableModel):
         elif role == Qt.BackgroundRole:
             value = float(tup[0])
 
-            gradient_range = matplotlib.colors.Normalize(-1.0, 1.0)
+            min_label = self.widget.min_sb.value()
+            max_label = self.widget.max_sb.value()
+            gradient_range = matplotlib.colors.Normalize(min_label, max_label)
+            cm_type = self.widget.cm_comboBox.currentText()
             cmap = matplotlib.cm.ScalarMappable(
-                gradient_range, plt.get_cmap(self.cm_type))
+                gradient_range, plt.get_cmap(cm_type))
             color = cmap.to_rgba(value, bytes=True)
             # color = plt.cm.jet(value)
             # color = [x * 255 for x in color]
@@ -475,12 +585,19 @@ class ConnectivityDialog(QDialog):
         self.table.setModel(self.model)
 
         # view.setAspectLocked(True)
-        win = pg.GraphicsWindow()
-        l = GradientLegend(-1.0, 1.0, cm_type)
-        win.setFixedSize(l.labelsize)
-        view = win.addViewBox()
-        l.setParentItem(view)
-        win.setParent(self)
+        #todo: add GradientLegend
+        min_label = widget.min_sb.value()
+        max_label = widget.max_sb.value()
+        l = GradientLegend(min_label, max_label, cm_type)
+        # l.show()
+        # win = pg.GraphicsWindow()
+        # win.setFixedSize(l.labelsize)
+        # view = win.addViewBox()
+        # view.addItem(l)
+        # l.setParentItem(view)
+        # win.show()
+        # win.setParent(self)
+
 
     def setup_ui(self):
         vbox = QVBoxLayout()
