@@ -121,13 +121,13 @@ def refresh_list(project, ui_list, indices, types=None, last_manips_to_display=N
     if len(indices) == 0:
         return
     if len(indices) > 1:
+        ui_list.setCurrentIndex(ui_list.model().index(indices[0], 0))
         theQIndexObjects = [ui_list.model().createIndex(rowIndex, 0) for rowIndex in
                             indices]
         for Qindex in theQIndexObjects:
             ui_list.selectionModel().select(Qindex, QItemSelectionModel.Select)
     elif len(indices) == 1:
         ui_list.setCurrentIndex(ui_list.model().index(indices[0], 0))
-
 
 def refresh_video_list_via_combo_box(widget, list_display_type, trigger_item=None):
     if trigger_item != 0:

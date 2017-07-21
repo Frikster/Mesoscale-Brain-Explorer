@@ -430,6 +430,7 @@ class MainWindow(QMainWindow):
            break
     self.pipeline_model.set_plugins(pipeline)
     self.reload_pipeline_plugins()
+    self.sidebar.setup_sidebar_values(project)
     # self.reset_pipeline_plugins([p[0] for p in pipeline])
 
   def open_project(self, path=''):
