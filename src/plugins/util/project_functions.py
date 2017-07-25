@@ -112,7 +112,7 @@ def refresh_list(project, ui_list, indices, types=None, last_manips_to_display=N
                 item.setDropEnabled(False)
                 if f['type'] != typ:
                     continue
-                if 'All' in last_manips_to_display:
+                if not last_manips_to_display or 'All' in last_manips_to_display:
                     ui_list.model().appendRow(QStandardItem(item))
                 elif f['manipulations'] != []:
                     if ast.literal_eval(f['manipulations'])[-1] in last_manips_to_display:

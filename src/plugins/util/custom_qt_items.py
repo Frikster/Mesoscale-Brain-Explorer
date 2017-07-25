@@ -62,7 +62,7 @@ class FileTable(QTableView):
     super(FileTable, self).__init__(parent)
 
     self.verticalHeader().hide()
-    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+    self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
     # self.horizontalHeader().setStretchLastSection(True)
     self.setSelectionBehavior(QAbstractItemView.SelectRows) 
 
@@ -361,10 +361,10 @@ class MyTableWidget(QTableWidget):
 
   def update(self, data):
       self.data = data
-      self.resizeColumnsToContents()
-      self.resizeRowsToContents()
-      self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-      self.verticalHeader().setResizeMode(QHeaderView.Stretch)
+      # self.resizeColumnsToContents()
+      # self.resizeRowsToContents()
+      self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+      self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
       if self.data is not None:
         self.setmydata()
 

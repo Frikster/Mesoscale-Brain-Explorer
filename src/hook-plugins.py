@@ -1,6 +1,7 @@
 hiddenimports = [
     "plugins.__init__",
     "plugins.alignment",
+    "plugins.alignment_old",
     "plugins.autoROIplacer",
     "plugins.calculate_df_f0",
     "plugins.channel_math",
