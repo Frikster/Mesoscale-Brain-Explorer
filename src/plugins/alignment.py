@@ -285,10 +285,8 @@ class Widget(QWidget, WidgetDefault):
         framek = ndimage.convolve(frame, kernel, mode='constant', cval=0.0)
         return framek
 
-    def spatial_filter(self):
+    def spatial_filter(self, frames_original):
         kernal_size = self.kernal_size.value()
-        ref_no_min = self.ref_no_min.value()
-        ref_no_max = self.ref_no_max.value()
         progress = QProgressDialog('Spatial filtering...', 'Abort', 0, 100, self)
         progress.setAutoClose(True)
         progress.setMinimumDuration(0)
@@ -296,17 +294,14 @@ class Widget(QWidget, WidgetDefault):
             progress.setValue(x * 100)
             QApplication.processEvents()
         progress.canceled.connect(functools.partial(self.cancel_progress_dialog, progress))
-
-        frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
-        reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
-        frames = np.empty((reference_frame_range.shape[0], reference_frame_range.shape[1],
-                           reference_frame_range.shape[2]), dtype=np.float32)
-        for frame_no, frame_original in enumerate(reference_frame_range):
-            frames[frame_no] = self.filter2_test_j(frame_original, kernal_size)
-            callback(frame_no / len(frames))
-        frames = reference_frame_range - frames
+        frames_32 = np.empty((frames_original.shape[0], frames_original.shape[1],
+                              frames_original.shape[2]), dtype=np.float32)
+        for frame_no, frame_original in enumerate(frames_original):
+            frames_32[frame_no] = self.filter2_test_j(frame_original, kernal_size)
+            callback(frame_no / len(frames_original))
+        frames_32 = frames_original - frames_32
         callback(1)
-        return frames
+        return frames_32
 
     def crop_border(self, frames):
         if not frames.any():
@@ -346,7 +341,11 @@ class Widget(QWidget, WidgetDefault):
             qtutil.critical("Cannot compute reference frame of reference frame")
             return
         # find size, assuming all files in project have the same size
-        ref_frames = self.spatial_filter()
+        ref_no_min = self.ref_no_min.value()
+        ref_no_max = self.ref_no_max.value()
+        frames_mmap = np.load(self.shown_video_path, mmap_mode='c')
+        reference_frame_range = np.array(frames_mmap[ref_no_min:ref_no_max])
+        ref_frames = self.spatial_filter(reference_frame_range)
         ref_frames = self.crop_border(ref_frames)
         if not ref_frames.any():
             return
@@ -438,6 +437,11 @@ class Widget(QWidget, WidgetDefault):
             callback_load(1)
 
             to_align_frame = frames[self.ref_no.value()]
+            frame_no, h, w = frames.shape
+            to_align_frame = np.reshape(to_align_frame, (1, h, w))
+            to_align_frame = self.crop_border(self.spatial_filter(to_align_frame))[0]
+            # to_align_frame = to_align_frame[0]
+
             if self.scaling_checkbox.isChecked() or self.rotation_checkbox.isChecked():
                 shift = ird.similarity(reference_frame, to_align_frame)
                 if not self.rotation_checkbox.isChecked():
@@ -452,6 +456,7 @@ class Widget(QWidget, WidgetDefault):
             #              'scale': self.scale_sb.value()}
             shifts[filename] = shift
 
+            # Apply the found shift (row i) to all stacks in row i
             for col_key in self.shift_table_data.keys():
                 # i = row
                 filename = os.path.normpath(os.path.join(self.project.path, self.shift_table_data[col_key][i])) + '.npy'
@@ -468,10 +473,14 @@ class Widget(QWidget, WidgetDefault):
 
                 shifted_frames = self.apply_shifts(frames, shift, callback_apply)
                 path = pfs.save_project(filename, self.project, shifted_frames, self.Defaults.manip, 'video')
-                pfs.refresh_list(self.project, self.video_list, self.video_list_indices,
+                pfs.refresh_list(self.project, self.video_list, [],
                                  self.Defaults.list_display_type, self.toolbutton_values)
                 ret_filenames.append(path)
         callback_global(1)
+
+        # save shifts to csv
+
+
         return ret_filenames
 
 
