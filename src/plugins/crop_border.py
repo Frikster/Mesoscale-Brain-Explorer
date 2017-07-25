@@ -84,12 +84,12 @@ class Widget(QWidget, WidgetDefault):
               selected_videos = self.selected_videos
       else:
           selected_videos = input_paths
-      def crop_center(img, cropx, cropy):
-          """Function to crop center of an image file. Output is of size (cropx, cropy)"""
-          y, x = img.shape
-          startx = x // 2 - (cropx // 2)
-          starty = y // 2 - (cropy // 2)
-          return img[starty:starty + cropy, startx:startx + cropx]
+      # def crop_center(img, cropx, cropy):
+      #     """Function to crop center of an image file. Output is of size (cropx, cropy)"""
+      #     y, x = img.shape
+      #     startx = x // 2 - (cropx // 2)
+      #     starty = y // 2 - (cropy // 2)
+      #     return img[starty:starty + cropy, startx:startx + cropx]
       output_paths = []
       for path in selected_videos:
           frames = file_io.load_file(path, segment=[self.left_frame_range.value(), self.right_frame_range.value()])
