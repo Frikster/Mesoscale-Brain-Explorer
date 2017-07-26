@@ -25,3 +25,4 @@ CMAPS = [('Perceptually Uniform Sequential',
                              'gnuplot', 'gnuplot2', 'gist_ncar',
                              'nipy_spectral', 'jet', 'rainbow',
                              'gist_rainbow', 'hsv', 'flag', 'prism'])]
+QSETTINGS_LABELS = ['path_of_last_project', 'last_vis_path']

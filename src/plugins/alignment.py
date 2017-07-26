@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import csv
 import functools
 import math
 import os
-
+import sys
+import copy
 import imreg_dft as ird
 import numpy as np
 import qtutil
@@ -479,7 +481,61 @@ class Widget(QWidget, WidgetDefault):
         callback_global(1)
 
         # save shifts to csv
+        save_loc = QFileDialog.getSaveFileName(self, 'Save Shifts', QSettings().value('path_of_last_project'),
+                                               '(*.csv)')
+        if save_loc:
+            # fields = list(shifts[list(shifts.keys())[0]].keys())
+            # for key in shifts.keys():
+            #     for field in fields:
+            #         if field not in ['angle', 'tvec', 'scale', 'success']:
+            #             del shifts[key][field]
+            #         else:
+            #             shifts[key][field.encode('ascii')] = shifts[key][field]
+            #             del shifts[key][field]
+            # keys_copy = list(shifts.keys())
+            # for key in keys_copy:
+            #     shifts[key.encode('ascii')] = shifts[key]
+            #     del shifts[key]
+            # # for field in fields:
+            # #     if field not in ["File aligned", 'angle', 'tvec', 'scale', 'success']:
+            # #         for key in shifts.keys():
+            # #             del shifts[key][field]
+            # #     else:
+            # #         shifts[]
+            # keys_copy = list(shifts.keys())
+            # for key in keys_copy:
+            #     x, y = shifts[key][b'tvec']
+            #     shifts[key][b'tvec-x'] = x
+            #     shifts[key][b'tvec-y'] = y
+            #     del shifts[key][b'tvec']
 
+            fields = list(shifts[list(shifts.keys())[0]].keys())
+            for key in list(shifts.keys()):
+                for field in fields:
+                    if field not in ['angle', 'tvec', 'scale', 'success']:
+                        del shifts[key][field]
+            for key in list(shifts.keys()):
+                x, y = shifts[key]['tvec']
+                shifts[key]['tvec-x'] = x
+                shifts[key]['tvec-y'] = y
+                del shifts[key]['tvec']
+
+            fields = ["File aligned"] + list(shifts[list(shifts.keys())[0]].keys())
+            with open(save_loc, "w", newline='') as f:
+                w = csv.DictWriter(f, fields)
+                w.writeheader()
+                for k in shifts:
+                    w.writerow({field: shifts[k].get(field) or k for field in fields})
+
+            # for key, val in sorted(shifts.items()):
+            #     row = {"File aligned": key}
+            #     row.update(val)
+            #     w.writerow(row)
+
+            # with open(save_loc, 'wb') as csv_file:
+            #     writer = csv.writer(csv_file)
+            #     for key, value in shifts.items():
+            #         writer.writerow([key, value])
 
         return ret_filenames
 
