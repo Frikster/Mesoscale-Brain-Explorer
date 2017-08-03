@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import os
 import sys
-
+import math
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -31,6 +31,30 @@ from .util.custom_pyqtgraph_items import GradientLegend
 from .util.visualization_window import DockWindow
 from pyqtgraph.dockarea import *
 from .util import project_functions as pfs
+
+def combined_mean(ns_and_means):
+    ''' ns_and_means = (n1, mean1), (n2, mean2) ...
+    Calculates the combined mean '''
+    numerator = 0
+    denominator = 0
+    for n_and_mean in ns_and_means:
+        numerator = numerator + n_and_mean[0]*n_and_mean[1]
+        denominator = denominator + n_and_mean[0]
+    return numerator / denominator
+
+def combined_st_dev(ns_and_means_and_stdevs):
+    '''ns_and_means_and_stdevs = (n1, mean1, stdev1), (n2, mean2, stdev2) ...
+    Calculates the combined standard deviation
+    Fomula: https://stats.stackexchange.com/questions/55999/is-it-possible-to-find-the-combined-standard-deviation'''
+    numerator = 0
+    denominator = 0
+    ns_and_means = [x[:-1] for x in ns_and_means_and_stdevs]
+    for n_and_mean_and_stdev in ns_and_means_and_stdevs:
+        numerator = numerator + ((n_and_mean_and_stdev[0] - 1)*n_and_mean_and_stdev[2]**2) + \
+                    (n_and_mean_and_stdev[0]*(n_and_mean_and_stdev[1] - combined_mean(ns_and_means))**2)
+        denominator = denominator + n_and_mean_and_stdev[0]
+    denominator = denominator - 1
+    return math.sqrt(numerator / denominator)
 
 def calc_avg(roi, frames, image):
     mask = roi.getROIMask(frames, image, axes=(1, 2))
@@ -90,6 +114,7 @@ class DockWindowMat(DockWindow):
         try:
             with open(save_loc, 'wb') as output:
                 pickle.dump([self.connectivity_dialog.model._data, self.connectivity_dialog.model.roinames,
+                             self.connectivity_dialog.selected_image_stacks,
                              state], output, -1)
         except:
             qtutil.critical(save_loc + " failed to save.")
@@ -105,7 +130,7 @@ class DockWindowMat(DockWindow):
         for filename in filenames:
             try:
                 with open(filename, 'rb') as input:
-                    [mat_data, roinames, state] = pickle.load(input)
+                    [mat_data, roinames, selected_image_stacks, state] = pickle.load(input)
                     cm_type = self.parent.cm_comboBox.currentText()
                     win = ConnectivityDialog(self.parent, roinames, cm_type, mat_data)
                     new_dw = DockWindowMat(win, parent=self.parent, state=state, title=os.path.basename(filename))
@@ -154,6 +179,8 @@ class Widget(QWidget, WidgetDefault):
         #         item = QStandardItem(f['name'])
         #         item.setData(f['path'], Qt.UserRole)
         #         self.roi_list.model().appendRow(item)
+        self.avg_mat_pb = QPushButton("Average Matrices")
+        self.sub_mat_pb = QPushButton("Subtract Matrices")
         self.cm_comboBox = QtGui.QComboBox(self)
         self.min_sb = QDoubleSpinBox()
         self.max_sb = QDoubleSpinBox()
@@ -167,6 +194,12 @@ class Widget(QWidget, WidgetDefault):
 
     def setup_ui(self):
         super().setup_ui()
+        self.vbox.addWidget(qtutil.separator())
+        self.vbox.addWidget(QLabel("Matrix Math Functions"))
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.avg_mat_pb)
+        hbox.addWidget(self.sub_mat_pb)
+        self.vbox.addLayout(hbox)
         self.vbox.addWidget(qtutil.separator())
         self.vbox.addWidget(cqt.InfoWidget('Note that rois can be dragged and dropped in the list but that the order '
                                            'in which they are *selected* determines how the matrix is ordered. The '
@@ -231,6 +264,8 @@ class Widget(QWidget, WidgetDefault):
         self.cm_pb.clicked.connect(self.connectivity_triggered)
         self.save_pb.clicked.connect(self.save_triggered)
         self.load_pb.clicked.connect(self.load_triggered)
+        self.sub_mat_pb.clicked.connect(self.sub_mat_triggered)
+        self.avg_mat_pb.clicked.connect(self.avg_mat_triggered)
 
     def setup_params(self, reset=False):
         super().setup_params(reset)
@@ -253,6 +288,115 @@ class Widget(QWidget, WidgetDefault):
                                                                       self.Labels.sb_min_label))
         self.max_sb.valueChanged[float].connect(functools.partial(self.update_plugin_params,
                                                                       self.Labels.sb_max_label))
+
+    def sub_mat_triggered(self):
+        qtutil.info("Please select the matrix that will act as the minuend")
+        minuend_path = QFileDialog.getOpenFileName(
+          self, 'Load matrix', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+        if not minuend_path:
+            return
+
+        qtutil.info("Please select the matrix that will act as the subtrahend. This second matrix must have the "
+                    "same dimensions and ROIs in the same locations as the minuend matrix")
+        subtrahand_path = QFileDialog.getOpenFileName(
+          self, 'Load matrix', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+        if not subtrahand_path:
+            return
+        QSettings().setValue('last_vis_path', os.path.dirname(subtrahand_path))
+
+        try:
+            with open(minuend_path, 'rb') as input:
+                [minuend_mat_data, minuend_roinames, minuend_selected_image_stacks, minuend_state] = pickle.load(input)
+        except:
+            qtutil.critical(minuend_path + " failed to open. Aborting. Make sure this file is a MATRIX pkl file")
+        try:
+            with open(subtrahand_path, 'rb') as input:
+                [subtrahand_mat_data, subtrahand_roinames, subtrahand_selected_image_stacks,
+                 subtrahand_state] = pickle.load(input)
+        except:
+            qtutil.critical(subtrahand_path + " failed to open. Aborting. Make sure this file is a MATRIX pkl file")
+
+        if subtrahand_roinames != minuend_roinames:
+            qtutil.critical('roi names do not match. The same roi names and same order is required. Aborting.')
+            return
+
+        minuend_number = len(minuend_selected_image_stacks)
+        subtrahand_number = len(subtrahand_selected_image_stacks)
+        altogether = minuend_number + subtrahand_number
+        # minus one = Bessel correction.
+        # See https://stats.stackexchange.com/questions/55999/is-it-possible-to-find-the-combined-standard-deviation
+
+        sub_mat = [[(0, 0)] * len(subtrahand_roinames)] * len(subtrahand_roinames)
+        for row_no, line in enumerate(minuend_mat_data):
+            for col_no, cell in enumerate(line):
+                sub_mat[row_no][col_no][0] = ((minuend_number * minuend_mat_data[row_no][col_no][0]) - \
+                                             (subtrahand_number * subtrahand_mat_data[row_no][col_no][0])) / altogether
+                sub_mat[row_no][col_no][1] = math.sqrt(minuend_mat_data[row_no][col_no][1]**2 +
+                                                       subtrahand_mat_data[row_no][col_no][1]**2)
+
+
+
+        cm_type = self.cm_comboBox.currentText()
+        # win = ConnectivityDialog(self, minuend_roinames, cm_type, sub_mat_data)
+        # new_dw = DockWindowMat(win, parent=self, state=minuend_state, title=os.path.basename(minuend_path) +
+        #                        ' - ' + os.path.basename(subtrahand_path))
+        # self.open_dialogs.append(new_dw)
+        # new_dw.show()
+        # new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
+        #                                                    self.Defaults.window_type))
+
+
+
+    def avg_mat_triggered(self):
+        qtutil.info("Please select all the matrices to be averaged. Matrices must have the same ROIs in the same "
+                    "locations. You might find it easier to move all the matrix pkl files to the same folder before "
+                    "performing this action.")
+        paths = QFileDialog.getOpenFileNames(
+          self, 'Load matrices', QSettings().value('last_vis_path'),
+          'visualization window pickle (*.pkl)')
+
+        dat = []
+        roinames_previous = []
+        path_previous = ''
+        for path in paths:
+            try:
+                with open(path, 'rb') as input:
+                    [mat_data, roinames, selected_image_stacks, state] = \
+                        pickle.load(input)
+                    dat = dat + [[mat_data, roinames, selected_image_stacks, state]]
+                    if roinames != roinames_previous and roinames_previous:
+                        qtutil.critical(path + 'does not have the same ROI names as ' + path_previous)
+                        return
+                    roinames_previous = roinames
+                    path_previous = path
+            except:
+                qtutil.critical(path + " failed to open. Aborting. Make sure this file is a MATRIX pkl file")
+
+        mat_datas = [[len(d[2]), d[0]] for d in dat]
+        ns_and_means_and_stdevs = [[[] for j in range(len(mat_datas[0][1][0]))] for i in range(len(mat_datas[0][1]))]
+        for row_no, row in enumerate(mat_datas[0][1]):
+            for col_no, col in enumerate(mat_datas[0][1][0]):
+                for mat_data in mat_datas:
+                    ns_and_means_and_stdevs[row_no][col_no] = ns_and_means_and_stdevs[row_no][col_no] + \
+                                                              [[mat_data[0]] + list(mat_data[1][row_no][col_no])]
+
+        result = [[[] for j in range(len(mat_datas[0][1][0]))] for i in range(len(mat_datas[0][1]))]
+        for row_no, row in enumerate(result):
+            for col_no, col in enumerate(result[0]):
+                result[row_no][col_no] = (combined_mean([x[:-1] for x in ns_and_means_and_stdevs[row_no][col_no]]),
+                                          combined_st_dev(ns_and_means_and_stdevs[row_no][col_no]))
+
+        cm_type = self.cm_comboBox.currentText()
+        win = ConnectivityDialog(self, roinames, cm_type, loaded_data=result)
+        new_dw = DockWindowMat(win, parent=self, state=state, title=os.path.basename(paths[0]) + ' ' + str(len(paths)) +
+                                                                    ' other matrices averaged')
+        self.open_dialogs.append(new_dw)
+        new_dw.show()
+        new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
+                                                           self.Defaults.window_type))
+
 
     def connectivity_triggered(self):
         cm_type = self.cm_comboBox.currentText()
@@ -583,6 +727,7 @@ class ConnectivityDialog(QDialog):
         self.setup_ui()
         self.model = ConnectivityModel(widget, roinames, cm_type, loaded_data, progress_callback)
         self.table.setModel(self.model)
+        self.selected_image_stacks = widget.selected_videos
 
         # view.setAspectLocked(True)
         #todo: add GradientLegend
