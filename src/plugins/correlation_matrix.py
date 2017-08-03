@@ -328,24 +328,28 @@ class Widget(QWidget, WidgetDefault):
         # minus one = Bessel correction.
         # See https://stats.stackexchange.com/questions/55999/is-it-possible-to-find-the-combined-standard-deviation
 
-        sub_mat = [[(0, 0)] * len(subtrahand_roinames)] * len(subtrahand_roinames)
-        for row_no, line in enumerate(minuend_mat_data):
-            for col_no, cell in enumerate(line):
-                sub_mat[row_no][col_no][0] = ((minuend_number * minuend_mat_data[row_no][col_no][0]) - \
-                                             (subtrahand_number * subtrahand_mat_data[row_no][col_no][0])) / altogether
-                sub_mat[row_no][col_no][1] = math.sqrt(minuend_mat_data[row_no][col_no][1]**2 +
-                                                       subtrahand_mat_data[row_no][col_no][1]**2)
+        ns_and_means_and_stdevs = [[[] for j in range(len(subtrahand_mat_data))]
+                                   for i in range(len(subtrahand_mat_data[0]))]
+        for row_no, row in enumerate(ns_and_means_and_stdevs):
+            for col_no, col in enumerate(ns_and_means_and_stdevs[0]):
+                ns_and_means_and_stdevs[row_no][col_no] = [[minuend_number] + list(minuend_mat_data[row_no][col_no]),
+                                                           [subtrahand_number] +
+                                                           list(subtrahand_mat_data[row_no][col_no])]
 
-
+        sub_mat = [[[] for j in range(len(subtrahand_mat_data[0]))] for i in range(len(subtrahand_mat_data))]
+        for row_no, row in enumerate(sub_mat):
+            for col_no, col in enumerate(sub_mat[0]):
+                sub_mat[row_no][col_no] = (minuend_mat_data[row_no][col_no][0]-subtrahand_mat_data[row_no][col_no][0],
+                                          combined_st_dev(ns_and_means_and_stdevs[row_no][col_no]))
 
         cm_type = self.cm_comboBox.currentText()
-        # win = ConnectivityDialog(self, minuend_roinames, cm_type, sub_mat_data)
-        # new_dw = DockWindowMat(win, parent=self, state=minuend_state, title=os.path.basename(minuend_path) +
-        #                        ' - ' + os.path.basename(subtrahand_path))
-        # self.open_dialogs.append(new_dw)
-        # new_dw.show()
-        # new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
-        #                                                    self.Defaults.window_type))
+        win = ConnectivityDialog(self, minuend_roinames, cm_type, sub_mat)
+        new_dw = DockWindowMat(win, parent=self, state=minuend_state, title=os.path.basename(minuend_path) +
+                               ' - ' + os.path.basename(subtrahand_path))
+        self.open_dialogs.append(new_dw)
+        new_dw.show()
+        new_dw.saving_state[str].connect(functools.partial(pfs.save_dock_window_to_project, self,
+                                                           self.Defaults.window_type))
 
 
 
