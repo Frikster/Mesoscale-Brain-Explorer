@@ -16,7 +16,7 @@ release and run the .exe contained within the pipegui folder.
 The most recent version can be downloaded [here](https://github.com/Frikster/Mesoscale-Brain-Explorer/releases)
 
 #### Visual C++ Redistributable 
-The application does not seem to work with earlier (e.g. 2008) version of Visual C++ Redistributable. If you do not have Visual Studio 2017, follow these instructions to upgrade:
+The application does not seem to work with earlier (e.g. 2008) versions of Visual C++ Redistributable. If you do not have Visual Studio 2017, follow these instructions to upgrade:
 
 1. Install Windows Updates:
   * Go to Start - Control Panel - Windows Update
@@ -45,7 +45,7 @@ sudo pip3 install opencv-python
 sudo pip3 install pyopengl
 ```
 
-The above intrsuctions assume you have pip3 set up. If you don't simply do this:
+The above intructions assume you have pip3 set up. If you don't simply do this:
 ```bash
 sudo apt-get update
 sudo apt-get -y install python3-pip
